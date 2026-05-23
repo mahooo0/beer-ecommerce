@@ -36,7 +36,7 @@ export function WishlistPageClient() {
     const ids = storeItems.map((item) => item.productId);
     api.products.getByIds(ids)
       .then((res) => {
-        const productMap = new Map(res.data.map((p) => [p.id, p]));
+        const productMap = new Map((res.data ?? []).map((p) => [p.id, p]));
         setWishlistItems(
           storeItems.map((item) => ({
             ...item,

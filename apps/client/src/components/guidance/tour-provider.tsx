@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useCallback, useEffect, useState, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Shepherd from 'shepherd.js';
+import type { Tour as ShepherdTour, StepOptionsButton, PopperPlacement } from 'shepherd.js';
 import 'shepherd.js/dist/css/shepherd.css';
 import './shepherd-custom.css';
 import type { TourPage, TourStepDef } from './tours/tour-definitions';
@@ -62,7 +63,7 @@ function clearTourState() {
 export function TourProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const tourRef = useRef<Shepherd.Tour | null>(null);
+  const tourRef = useRef<ShepherdTour | null>(null);
   const [isTourActive, setIsTourActive] = useState(false);
   const [isTourCompleted, setIsTourCompleted] = useState(false);
   const isNavigatingRef = useRef(false);
@@ -127,7 +128,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
         const isLastStepOnPage = idx === steps.length - 1;
         const hasNextPage = pageIndex < TOUR_PAGES.length - 1;
 
-        const buttons: Shepherd.Step.StepOptionsButton[] = [];
+        const buttons: StepOptionsButton[] = [];
 
         // Back button
         if (!isFirstStepOnFirstPage) {
@@ -210,7 +211,7 @@ export function TourProvider({ children }: { children: React.ReactNode }) {
         }
 
         const attachTo = stepDef.element
-          ? { element: stepDef.element, on: (stepDef.position || 'bottom') as Shepherd.Step.PopperPlacement }
+          ? { element: stepDef.element, on: (stepDef.position || 'bottom') as PopperPlacement }
           : undefined;
 
         tour.addStep({

@@ -62,7 +62,7 @@ export function ProfileOrders() {
         </div>
       </div>
 
-      <Accordion type="single" collapsible defaultValue={orders[0].id} className="mt-8 space-y-3">
+      <Accordion type="single" collapsible defaultValue={orders[0]?.id} className="mt-8 space-y-3">
         {orders.map((order) => (
           <OrderAccordion key={order.id} order={order} />
         ))}

@@ -61,7 +61,7 @@ const lockers = lockerCoords.map((c, i) => ({
   lng: c[1],
 }));
 
-const singleLocation = [lockers[0]];
+const singleLocation = [lockers[0]!];
 
 const cities = ['Warszawa', 'Kraków', 'Wrocław', 'Gdańsk', 'Poznań'];
 
@@ -77,7 +77,7 @@ export function CheckoutFlow() {
   const [step, setStep] = useState(1);
   const [tab, setTab] = useState<DeliveryTab>('kurier');
   const [selectedLocker, setSelectedLocker] = useState<number | null>(null);
-  const [payment, setPayment] = useState<string>(payments[0].id);
+  const [payment, setPayment] = useState<string>(payments[0]!.id);
   const [contact, setContact] = useState({ name: '', company: '', email: '' });
 
   const next = () => setStep((s) => Math.min(3, s + 1));

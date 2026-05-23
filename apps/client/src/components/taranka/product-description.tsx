@@ -69,7 +69,7 @@ export function TarankaProductDescription() {
         })}
       </div>
 
-      <div className="mt-6 text-base leading-[24px] text-[#2B2A29]">{tabs[active].content}</div>
+      <div className="mt-6 text-base leading-[24px] text-[#2B2A29]">{tabs[active]?.content}</div>
     </section>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
 import { ChatMessages } from './ChatMessages';
 import { ChatInput } from './ChatInput';
 
@@ -9,7 +10,7 @@ export function ChatWidget() {
   const [open, setOpen] = useState(false);
 
   const { messages, sendMessage, status } = useChat({
-    api: '/api/chat',
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
   });
 
   const isLoading = status === 'submitted' || status === 'streaming';

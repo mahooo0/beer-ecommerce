@@ -14,7 +14,7 @@ import {
 } from 'react-instantsearch';
 import { instantMeiliSearch } from '@meilisearch/instant-meilisearch';
 
-const searchClient = instantMeiliSearch(
+const { searchClient } = instantMeiliSearch(
   process.env.NEXT_PUBLIC_MEILISEARCH_HOST || 'http://localhost:7700',
   process.env.NEXT_PUBLIC_MEILISEARCH_SEARCH_KEY || ''
 );
