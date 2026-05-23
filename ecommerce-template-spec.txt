@@ -1,0 +1,567 @@
+ADVANCED ECOMMERCE TEMPLATE — APPLICATION LOGIC DOCUMENT
+
+
+OVERVIEW
+
+This project is a modern headless eCommerce application designed as a reusable template.
+It provides a scalable architecture for building production-level online stores.
+
+The application integrates with modern services such as:
+
+- Clerk (authentication)
+- Stripe (payments)
+- Cloudinary (media)
+- Algolia / Meilisearch (search)
+- Resend (emails)
+
+Core modules:
+
+- Authentication
+- Product Catalog
+- Categories & Navigation
+- Search & Filters
+- Cart
+- Checkout
+- Orders
+- Payments
+- Inventory
+- Promotions
+- Reviews
+- Wishlist & Compare
+- Notifications
+- Analytics
+- Admin Panel
+
+
+
+========================================
+1. AUTHENTICATION SYSTEM
+========================================
+
+Authentication handled via Clerk.
+
+Features:
+
+- Register
+- Login
+- OAuth providers
+- Password reset
+- Profile management
+
+Supported login providers:
+
+- Email / Password
+- Google
+- Apple
+- GitHub
+
+User account features:
+
+- Profile info
+- Saved addresses
+- Order history
+- Saved payment methods
+- Wishlist
+- Notifications
+
+Optional:
+
+- Two factor authentication
+- Loyalty points
+- Referral system
+
+
+
+========================================
+2. PRODUCT CATALOG
+========================================
+
+The product catalog is the core module.
+
+Product fields:
+
+- id
+- title
+- slug
+- description
+- brand
+- category
+- tags
+- images
+- videos
+- price
+- rating
+- stock status
+
+
+PRODUCT VARIANTS
+
+Products support variants:
+
+- size
+- color
+- material
+- model
+
+Variant fields:
+
+- SKU
+- price
+- stock quantity
+- attributes
+
+
+Example:
+
+Product: T-Shirt
+
+Variants:
+
+T-Shirt / Red / M
+T-Shirt / Red / L
+T-Shirt / Blue / M
+
+
+
+PRODUCT MEDIA
+
+Products support:
+
+- image gallery
+- videos
+- 360 view
+- AR preview (optional)
+
+
+
+========================================
+3. CATEGORIES & NAVIGATION
+========================================
+
+Catalog structure:
+
+- categories
+- subcategories
+- collections
+- brands
+- tags
+
+Navigation features:
+
+- mega menu
+- breadcrumbs
+- featured collections
+
+
+
+========================================
+4. SEARCH SYSTEM
+========================================
+
+Search services:
+
+- Algolia
+- Meilisearch
+- Elasticsearch
+
+Features:
+
+- full-text search
+- autocomplete
+- search suggestions
+- trending searches
+
+
+
+========================================
+5. FILTER SYSTEM
+========================================
+
+Filters supported:
+
+- price range
+- brand
+- rating
+- size
+- color
+- stock availability
+- dynamic attributes
+
+Filter features:
+
+- multi select
+- dynamic attributes
+- URL state persistence
+
+
+
+========================================
+6. PRODUCT PAGE FEATURES
+========================================
+
+Product page includes:
+
+- image gallery
+- variant selector
+- product description
+- specifications
+- reviews
+- related products
+- frequently bought together
+- delivery estimate
+- share buttons
+
+
+
+========================================
+7. WISHLIST
+========================================
+
+Users can:
+
+- add product to wishlist
+- remove product
+- move product to cart
+- share wishlist
+
+
+
+========================================
+8. PRODUCT COMPARISON
+========================================
+
+Users can:
+
+- compare multiple products
+- see specification differences
+
+
+
+========================================
+9. CART SYSTEM
+========================================
+
+Cart features:
+
+- add product
+- update quantity
+- remove item
+- save for later
+- apply coupon
+- shipping estimate
+
+Cart supports:
+
+- guest users
+- logged in users
+- persistent cart
+
+
+
+========================================
+10. CHECKOUT
+========================================
+
+Checkout supports:
+
+- guest checkout
+- multi-step checkout
+- address selection
+- shipping method selection
+- payment method selection
+- order summary
+
+
+
+========================================
+11. PAYMENTS
+========================================
+
+Payment handled via Stripe.
+
+Supported methods:
+
+- credit cards
+- Apple Pay
+- Google Pay
+- PayPal (optional)
+- Klarna (optional)
+
+
+
+========================================
+12. ORDER SYSTEM
+========================================
+
+Order statuses:
+
+- pending
+- paid
+- processing
+- shipped
+- delivered
+- cancelled
+- refunded
+
+User actions:
+
+- view order history
+- track shipment
+- download invoice
+- request return
+
+
+
+========================================
+13. SHIPPING
+========================================
+
+Shipping features:
+
+- shipping zones
+- shipping methods
+- shipping rate calculation
+- tracking numbers
+
+
+
+========================================
+14. INVENTORY MANAGEMENT
+========================================
+
+Inventory system:
+
+- stock tracking
+- low stock alerts
+- SKU management
+- multi warehouse support
+- stock reservation
+
+
+
+========================================
+15. PROMOTIONS & DISCOUNTS
+========================================
+
+Promotion system:
+
+- coupon codes
+- percentage discounts
+- fixed discounts
+- bulk discounts
+- buy-one-get-one
+- flash sales
+- seasonal campaigns
+
+
+
+========================================
+16. REVIEWS & RATINGS
+========================================
+
+Customers can:
+
+- rate products
+- write reviews
+- upload photos
+
+Admin features:
+
+- review moderation
+- spam filtering
+
+
+
+========================================
+17. NOTIFICATIONS
+========================================
+
+Notifications:
+
+- order confirmation email
+- shipping updates
+- abandoned cart emails
+- marketing emails
+- SMS notifications
+
+
+
+========================================
+18. ANALYTICS
+========================================
+
+Analytics features:
+
+- revenue analytics
+- conversion rate
+- best selling products
+- customer insights
+
+Integrations:
+
+- Google Analytics
+- Posthog
+
+
+
+========================================
+19. ADMIN PANEL
+========================================
+
+Admin management:
+
+- products
+- categories
+- orders
+- users
+- inventory
+- promotions
+- analytics
+
+
+
+========================================
+20. SEO FEATURES
+========================================
+
+SEO system:
+
+- meta tags
+- canonical URLs
+- sitemap
+- structured data
+- SEO-friendly URLs
+
+
+
+========================================
+21. MULTI STORE FEATURES
+========================================
+
+System supports:
+
+- multi language
+- multi currency
+- multi region
+- multiple storefronts
+
+
+
+========================================
+22. RECOMMENDED TECH STACK
+========================================
+
+Frontend:
+
+- Next.js
+- Tailwind
+- React Query
+- shadcn/ui
+
+Backend:
+
+- Node.js / NestJS
+- PostgreSQL
+- Redis
+
+Services:
+
+- Clerk
+- Stripe
+- Cloudinary
+- Algolia
+- Resend
+
+
+
+========================================
+RELUME AI PROMPT
+========================================
+
+Design the structure for a modern advanced eCommerce website template.
+
+Pages:
+
+Homepage
+Product Catalog Page
+Product Details Page
+Cart Page
+Checkout Page
+User Dashboard
+Wishlist Page
+Product Comparison Page
+Order History
+Admin Dashboard
+
+
+Homepage sections:
+
+Hero section with featured products
+Category navigation grid
+Trending products
+Featured collections
+Promotional banners
+Customer reviews
+Newsletter signup
+Footer
+
+
+Product Catalog sections:
+
+Category header
+Search bar
+Advanced filters
+Product grid
+Sorting options
+Pagination or infinite scroll
+
+
+Product Page sections:
+
+Product gallery
+Variant selector
+Price and stock
+Add to cart button
+Description
+Specifications
+Reviews
+Related products
+Frequently bought together
+
+
+Cart Page sections:
+
+Cart items
+Quantity controls
+Coupon code
+Order summary
+Checkout button
+
+
+Checkout Page sections:
+
+Shipping address
+Shipping method
+Payment method
+Order summary
+Place order button
+
+
+User Dashboard sections:
+
+Profile settings
+Saved addresses
+Order history
+Wishlist
+Payment methods
+
+
+Admin Dashboard sections:
+
+Product management
+Order management
+Customer management
+Inventory management
+Analytics overview
+
+The design should follow modern Shopify-style eCommerce UI patterns.
