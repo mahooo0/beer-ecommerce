@@ -1,66 +1,44 @@
-import React from 'react';
-import type { Metadata } from 'next';
-import { ProductGrid } from '@/components/product/product-grid';
-import { SortSelector } from '@/components/product/sort-selector';
-import { Pagination } from '@/components/product/pagination';
-import { api } from '@/lib/api';
+import type { Metadata } from "next";
+import { CatalogSidebar } from "@/components/taranka/catalog-sidebar";
+import { CatalogToolbar } from "@/components/taranka/catalog-toolbar";
+import { CatalogCard, type CatalogProduct } from "@/components/taranka/catalog-card";
+import { TarankaAbout } from "@/components/taranka/about";
+import { TarankaFooter } from "@/components/taranka/footer";
 
 export const metadata: Metadata = {
-  title: 'Products | STORE',
-  description: 'Browse our product catalog',
+  title: "Katalog | Taranka",
+  description: "Katalog produktów Taranka",
 };
 
-interface ProductsPageProps {
-  searchParams: Promise<{
-    page?: string;
-    limit?: string;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
-  }>;
-}
+const products: CatalogProduct[] = Array.from({ length: 12 }, (_, i) => ({
+  id: i,
+  name: "Chrupki kukurydziane słodkie o smaku mleka",
+  weight: "140g",
+  oldPrice: "6.45zł",
+  newPrice: "6.45zł",
+  image: "/categories/product-chrupki.png",
+}));
 
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  const params = await searchParams;
-  const page = parseInt(params.page || '1', 10);
-  const limit = parseInt(params.limit || '20', 10);
-  const sortBy = params.sortBy || 'createdAt';
-  const sortOrder = params.sortOrder || 'desc';
-
-  const result = await api.products.getAll({
-    page,
-    limit,
-    sortBy,
-    sortOrder,
-    status: 'ACTIVE',
-  });
-
-  const products = result.data || [];
-  const total = result.total || 0;
-  const totalPages = result.totalPages || 1;
-
+export default function ProductsPage() {
   return (
-    <div className="mx-auto max-w-container px-4 py-12 sm:px-6 lg:px-8">
-      <div className="mb-10">
-        <div data-tour="products-header" className="flex items-end justify-between">
-          <div>
-            <p className="text-xs font-semibold tracking-[0.3em] text-neutral-400 uppercase">Collection</p>
-            <h1 className="mt-1 text-display-xs font-light text-neutral-900">
-              All Products
-            </h1>
-            <p className="mt-1 text-sm text-neutral-500">{total} products</p>
-          </div>
-          <div data-tour="sort-selector">
-            <SortSelector currentSort={sortBy} currentOrder={sortOrder} />
+    <>
+      <div className="mx-auto max-w-[1440px] px-[120px] py-8 font-taranka-body">
+        <div className="flex gap-6">
+          <CatalogSidebar />
+
+          <div className="flex-1">
+            <CatalogToolbar shown={12} total={1345} />
+
+            <div className="mt-9 grid grid-cols-3 gap-6">
+              {products.map((p) => (
+                <CatalogCard key={p.id} product={p} />
+              ))}
+            </div>
           </div>
         </div>
-        <div className="mt-6 h-px bg-neutral-200" />
       </div>
-
-      <ProductGrid products={products} />
-
-      {totalPages > 1 && (
-        <Pagination currentPage={page} totalPages={totalPages} basePath="/products" />
-      )}
-    </div>
+      <TarankaAbout />
+      <TarankaFooter />
+    </>
   );
 }

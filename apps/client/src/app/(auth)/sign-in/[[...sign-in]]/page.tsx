@@ -1,9 +1,14 @@
-import { SignIn } from '@clerk/nextjs';
+import type { Metadata } from "next";
+import { AuthForm } from "@/components/taranka/auth-form";
+
+export const metadata: Metadata = {
+  title: "Zaloguj się | Taranka",
+};
 
 export default function SignInPage() {
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
-      <SignIn />
+    <div className="mx-auto flex max-w-[1440px] justify-center px-[120px] py-12 font-taranka-body">
+      <AuthForm mode="sign-in" />
     </div>
   );
 }

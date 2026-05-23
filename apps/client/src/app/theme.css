@@ -1,4 +1,49 @@
 @theme {
+    /* ============================================================
+       TARANKA BRAND TOKENS — extracted from Figma (frames 823:49707, 823:50264)
+       See .planning/design-system/DESIGN-SYSTEM.md for source mapping.
+       ============================================================ */
+
+    /* Brand fonts — wired to next/font in src/app/fonts.ts */
+    --font-taranka-display: var(--font-murs-gothic), "Bowlby One SC", "Anton", "Archivo Black", system-ui, sans-serif;
+    --font-taranka-body: var(--font-montserrat), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-taranka-ui: var(--font-poppins), var(--font-montserrat), system-ui, sans-serif;
+
+    /* Brand colors — semantic */
+    --color-cream-50:  rgb(235 232 221);  /* #EBE8DD — page bg */
+    --color-cream-100: rgb(226 223 212);  /* #E2DFD4 — surface alt */
+    --color-cream-200: rgb(204 201 190);  /* #CCC9BE — border light */
+    --color-cream-300: rgb(181 178 167);  /* #B5B2A7 — muted */
+    --color-cream-400: rgb(158 155 144);  /* #9E9B90 — muted foreground */
+
+    --color-ink-900: rgb(39 36 34);       /* #272422 — body text / footer bg */
+    --color-ink-950: rgb(0 0 0);          /* #000000 */
+
+    --color-brand-red-500: rgb(170 60 55); /* #AA3C37 — primary CTA */
+    --color-brand-red-700: rgb(101 36 33); /* #652421 — hover / dark accent */
+
+    /* shadcn/ui semantic tokens — mapped to Taranka brand */
+    --color-background: var(--color-cream-50);
+    --color-foreground: var(--color-ink-900);
+    --color-card: rgb(255 255 255);
+    --color-card-foreground: var(--color-ink-900);
+    --color-popover: rgb(255 255 255);
+    --color-popover-foreground: var(--color-ink-900);
+    --color-primary: var(--color-brand-red-500);
+    --color-primary-foreground: rgb(255 255 255);
+    --color-secondary: var(--color-cream-100);
+    --color-secondary-foreground: var(--color-ink-900);
+    --color-muted: var(--color-cream-100);
+    --color-muted-foreground: var(--color-cream-400);
+    --color-accent: var(--color-cream-100);
+    --color-accent-foreground: var(--color-ink-900);
+    --color-destructive: var(--color-brand-red-700);
+    --color-destructive-foreground: rgb(255 255 255);
+    --color-border: var(--color-cream-200);
+    --color-input: var(--color-cream-200);
+    --color-ring: var(--color-brand-red-500);
+    --radius: 0.5rem;
+
     /* FONT FAMILY */
     --font-body: var(--font-inter, "Inter"), -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
     --font-display: var(--font-inter, "Inter"), -apple-system, "Segoe UI", Roboto, Arial, sans-serif;

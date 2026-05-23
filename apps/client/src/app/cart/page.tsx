@@ -1,11 +1,20 @@
-import type { Metadata } from 'next';
-import { CartPageClient } from './cart-page-client';
+import type { Metadata } from "next";
+import { TarankaCartPage } from "@/components/taranka/cart-page";
+import { TarankaAbout } from "@/components/taranka/about";
+import { TarankaFooter } from "@/components/taranka/footer";
 
 export const metadata: Metadata = {
-  title: 'Shopping Cart',
-  description: 'Review and manage your shopping cart',
+  title: "Koszyk | Taranka",
 };
 
 export default function CartPage() {
-  return <CartPageClient />;
+  return (
+    <>
+      <div className="mx-auto max-w-[1440px] px-[120px] py-8 font-taranka-body">
+        <TarankaCartPage />
+      </div>
+      <TarankaAbout />
+      <TarankaFooter />
+    </>
+  );
 }

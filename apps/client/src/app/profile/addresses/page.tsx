@@ -1,29 +1,22 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
-import { getAddresses } from './actions';
-import { AddressesClient } from './addresses-client';
+import type { Metadata } from "next";
+import { ProfileSidebar } from "@/components/taranka/profile-sidebar";
+import { ProfileAddresses } from "@/components/taranka/profile-addresses";
+import { TarankaFooter } from "@/components/taranka/footer";
 
-export default async function AddressesPage() {
-  const { userId } = await auth();
-  if (!userId) {
-    redirect('/sign-in');
-  }
+export const metadata: Metadata = {
+  title: "Twoje adresy | Taranka",
+};
 
-  const addresses = await getAddresses();
-
+export default function AddressesPage() {
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Saved Addresses</h1>
-        <a
-          href="/profile"
-          className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
-        >
-          Back to Profile
-        </a>
+    <>
+      <div className="mx-auto max-w-[1440px] px-[120px] py-8 font-taranka-body">
+        <div className="flex gap-6">
+          <ProfileSidebar />
+          <ProfileAddresses />
+        </div>
       </div>
-
-      <AddressesClient initialAddresses={addresses} />
-    </div>
+      <TarankaFooter />
+    </>
   );
 }

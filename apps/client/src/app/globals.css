@@ -34,6 +34,11 @@ body {
     font-kerning: normal;
 }
 
+button:not(:disabled),
+[role="button"]:not(:disabled) {
+    cursor: pointer;
+}
+
 details summary::-webkit-details-marker {
     display: none;
 }
