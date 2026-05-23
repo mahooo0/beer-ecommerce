@@ -73,7 +73,6 @@ export async function POST(req: Request): Promise<Response> {
     model: openai('gpt-4o-mini'),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
-    maxTokens: 500,
   });
 
   return result.toUIMessageStreamResponse();
