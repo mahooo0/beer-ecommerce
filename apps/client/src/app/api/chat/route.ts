@@ -72,7 +72,7 @@ export async function POST(req: Request): Promise<Response> {
   const result = streamText({
     model: openai('gpt-4o-mini'),
     system: systemPrompt,
-    messages: convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages),
     maxTokens: 500,
   });
 
