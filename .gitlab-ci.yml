@@ -1,0 +1,38 @@
+stages:
+  - build
+
+# Build the monorepo image with Kaniko (no privileged Docker needed on shared runners)
+# and push it to the project's GitLab Container Registry.
+build-image:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.23.2-debug
+    entrypoint: [""]
+  variables:
+    # PROD public values baked into the Next.js bundles at build time.
+    NEXT_PUBLIC_API_URL: "https://api.taranka.online/api"
+    NEXT_PUBLIC_STORAGE_URL: "https://storage.taranka.online"
+    NEXT_PUBLIC_SITE_URL: "https://taranka.online"
+    NEXT_PUBLIC_CLIENT_URL: "https://taranka.online"
+    NEXT_PUBLIC_MEILISEARCH_HOST: "https://api.taranka.online"
+    # Publishable key is public. TODO: swap to a PROD Clerk instance key via CI/CD variable.
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "pk_test_YW1wbGUtc25ha2UtODYuY2xlcmsuYWNjb3VudHMuZGV2JA"
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf '%s:%s' "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+    - >-
+      /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:latest"
+      --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHORT_SHA}"
+      --build-arg "NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}"
+      --build-arg "NEXT_PUBLIC_STORAGE_URL=${NEXT_PUBLIC_STORAGE_URL}"
+      --build-arg "NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}"
+      --build-arg "NEXT_PUBLIC_CLIENT_URL=${NEXT_PUBLIC_CLIENT_URL}"
+      --build-arg "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}"
+      --build-arg "NEXT_PUBLIC_MEILISEARCH_HOST=${NEXT_PUBLIC_MEILISEARCH_HOST}"
+      --snapshot-mode=redo
+      --use-new-run
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
