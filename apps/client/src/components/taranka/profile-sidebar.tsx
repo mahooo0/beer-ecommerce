@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { useAuth } from "@/lib/auth-store";
+import { useClerk, useUser } from "@clerk/nextjs";
+import { cn } from "@/lib/utils";
 
-const navItems = [
+type NavItem = { label: string; href: string; wholesaleOnly?: boolean };
+
+const navItems: NavItem[] = [
   { label: "Dane osobowe", href: "/profile" },
   { label: "Twoje adresy", href: "/profile/addresses" },
-  { label: "Cenniki", href: "/profile/cenniki" },
+  { label: "Cenniki", href: "/profile/cenniki", wholesaleOnly: true },
   { label: "Historia zamówień", href: "/orders" },
   { label: "Ulubione", href: "/wishlist" },
   { label: "Twoje zniżki", href: "/profile/znizki" },
@@ -17,18 +20,43 @@ const navItems = [
 export function ProfileSidebar() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
-  const signOut = useAuth((s) => s.signOut);
+  const { signOut } = useClerk();
+  const { user } = useUser();
 
-  const handleLogout = () => {
-    signOut();
+  // customerType is set in unsafeMetadata at sign-up and promoted to
+  // publicMetadata by the server webhook — read either so it shows immediately.
+  const customerType =
+    (user?.publicMetadata?.customerType as string | undefined) ??
+    (user?.unsafeMetadata?.customerType as string | undefined);
+  const isWholesale = customerType === "WHOLESALE";
+
+  const handleLogout = async () => {
+    await signOut();
     router.push("/");
   };
 
+  const visibleItems = navItems.filter(
+    (item) => !item.wholesaleOnly || isWholesale
+  );
+
   return (
     <aside className="flex h-fit min-h-[450px] w-[280px] shrink-0 flex-col rounded-[20px] bg-[#D6D3C8] p-6 font-taranka-body">
+      <span
+        className={cn(
+          "mb-4 inline-flex w-fit items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide",
+          isWholesale
+            ? "bg-brand-red-500 text-cream-50"
+            : "bg-white text-ink-900"
+        )}
+      >
+        {isWholesale ? "Dostawca" : "Klient detaliczny"}
+      </span>
+
       <nav className="flex flex-col gap-2">
-        {navItems.map((item) => {
-          const active = item.href === pathname || (item.href !== "/profile" && pathname.startsWith(item.href));
+        {visibleItems.map((item) => {
+          const active =
+            item.href === pathname ||
+            (item.href !== "/profile" && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}

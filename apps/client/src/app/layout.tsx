@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   description: 'Polsko-ukraiński sklep internetowy: piwo, ryba, snacks, słodycze.',
 };
 
+// Storefront reads live data in server components — render dynamically,
+// don't prerender at build (which has no DATABASE_URL).
+export const dynamic = 'force-dynamic';
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>

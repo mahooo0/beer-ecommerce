@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { AuthForm } from "@/components/taranka/auth-form";
+import { SignUpForm } from "@/components/taranka/sign-up-form";
 
 export const metadata: Metadata = {
   title: "Rejestracja | Taranka",
@@ -7,8 +7,8 @@ export const metadata: Metadata = {
 
 export default function SignUpPage() {
   return (
-    <div className="mx-auto flex max-w-[1440px] justify-center px-[120px] py-12 font-taranka-body">
-      <AuthForm mode="sign-up" />
+    <div className="mx-auto flex max-w-[1440px] justify-center px-6 py-12 font-taranka-body">
+      <SignUpForm />
     </div>
   );
 }
