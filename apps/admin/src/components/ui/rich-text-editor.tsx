@@ -29,6 +29,9 @@ interface RichTextEditorProps {
 
 export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorProps) {
   const editor = useEditor({
+    // Next.js App Router renders this on the server first; defer initial render
+    // to the client to avoid SSR hydration mismatches.
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Underline,

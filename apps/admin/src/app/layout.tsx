@@ -1,29 +1,80 @@
-import type { Metadata } from 'next';
-import { ClerkProvider } from '@clerk/nextjs';
-import { Geist, Geist_Mono } from 'next/font/google';
-import './globals.css';
+import type { ReactNode } from "react";
 
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
+import type { Metadata } from "next";
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
+import { ClerkProvider } from "@clerk/nextjs";
+import { ToastContainer } from "react-toastify";
+
+import QueryProvider from "@/components/providers/QueryProvider";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { APP_CONFIG } from "@/config/app-config";
+import { fontVars } from "@/lib/fonts/registry";
+import { PREFERENCE_DEFAULTS } from "@/lib/preferences/preferences-config";
+import { ThemeBootScript } from "@/scripts/theme-boot";
+import { PreferencesStoreProvider } from "@/stores/preferences/preferences-provider";
+
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'Admin Dashboard',
-  description: 'E-commerce admin panel',
+  title: APP_CONFIG.meta.title,
+  description: APP_CONFIG.meta.description,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+// Admin pages read live DB data in server components — render dynamically,
+// don't prerender at build (which has no DATABASE_URL).
+export const dynamic = "force-dynamic";
+
+export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const {
+    theme_mode,
+    theme_preset,
+    content_layout,
+    navbar_style,
+    sidebar_variant,
+    sidebar_collapsible,
+    font,
+    density,
+    layout_mode,
+    direction,
+    language,
+  } = PREFERENCE_DEFAULTS;
   return (
     <ClerkProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          {children}
+      <html
+        lang={language}
+        dir={direction}
+        data-theme-mode={theme_mode}
+        data-theme-preset={theme_preset}
+        data-content-layout={content_layout}
+        data-navbar-style={navbar_style}
+        data-sidebar-variant={sidebar_variant}
+        data-sidebar-collapsible={sidebar_collapsible}
+        data-font={font}
+        data-density={density}
+        data-layout-mode={layout_mode}
+        data-direction={direction}
+        data-language={language}
+        suppressHydrationWarning
+      >
+        <head>
+          {/* Applies theme and layout preferences on load to avoid flicker and unnecessary server rerenders. */}
+          <ThemeBootScript />
+        </head>
+        <body className={`${fontVars} min-h-screen antialiased`}>
+          <TooltipProvider>
+            <PreferencesStoreProvider
+              themeMode={theme_mode}
+              themePreset={theme_preset}
+              contentLayout={content_layout}
+              navbarStyle={navbar_style}
+              font={font}
+            >
+              <QueryProvider>{children}</QueryProvider>
+              <Toaster />
+              <ToastContainer position="bottom-right" />
+            </PreferencesStoreProvider>
+          </TooltipProvider>
         </body>
       </html>
     </ClerkProvider>

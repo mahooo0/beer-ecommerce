@@ -24,10 +24,12 @@ export default function UnauthorizedPage() {
           </svg>
         </div>
 
-        <h1 className="mb-4 text-4xl font-bold text-gray-900">Access Denied</h1>
+        <h1 className="mb-4 text-4xl font-bold text-gray-900">Access pending</h1>
 
         <p className="mb-6 text-gray-600">
-          You do not have permission to access the admin panel. Only administrators can access this area.
+          Your account was created successfully, but it doesn&apos;t have admin access yet.
+          The store owner needs to grant you a role. Once that&apos;s done, sign out and
+          sign back in to enter the dashboard.
         </p>
 
         <div className="space-y-3">
