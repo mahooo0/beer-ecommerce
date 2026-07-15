@@ -36,3 +36,5 @@ yarn-error.log*
 
 # Prisma
 packages/db/src/generated/
+.pnpm-store/
+._*

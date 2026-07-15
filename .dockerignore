@@ -1,0 +1,14 @@
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+.turbo
+.git
+.github
+.planning
+.pnpm-store
+.agents
+.claude
+tests
+*.log
+.DS_Store
