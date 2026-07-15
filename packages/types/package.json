@@ -8,6 +8,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./product-schemas": "./src/product-schemas.ts",
+    "./rbac": "./src/rbac.ts",
     "./clerk": "./src/clerk.d.ts"
   },
   "dependencies": {
