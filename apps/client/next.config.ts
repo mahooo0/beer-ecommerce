@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
       { protocol: 'https' as const, hostname: 'loremflickr.com' },
       { protocol: 'https' as const, hostname: 'picsum.photos' },
       { protocol: 'https' as const, hostname: 'images.unsplash.com' },
+      // MinIO object storage (dev + prod) — product/category/brand images
+      { protocol: 'https' as const, hostname: 's3.dev.taranka.online' },
+      { protocol: 'https' as const, hostname: 's3.taranka.online' },
     ],
   },
 };
