@@ -80,7 +80,7 @@ export default async function ProductsPage(props: PageProps) {
   const filterParams = {
     page,
     limit: PAGE_SIZE,
-    status: sp.status || undefined,
+    status: sp.status || 'ALL',
     categoryId: sp.categoryId || undefined,
     isAvailable: isAvailableParam,
     minPrice,
@@ -94,7 +94,7 @@ export default async function ProductsPage(props: PageProps) {
     api.products.filter(filterParams),
     api.products
       .completenessStats({
-        status: sp.status || undefined,
+        status: sp.status || 'ALL',
         categoryId: sp.categoryId || undefined,
         isAvailable: isAvailableParam,
         attributeValues: sp.attributeValues || undefined,

@@ -18,6 +18,9 @@ export const filterQuerySchema = z.object({
     .transform((v: 'true' | 'false' | undefined) => (v === undefined ? undefined : v === 'true')),
   categoryId: z.string().optional(),
   categoryPath: z.string().optional(),
+  // Status filter. Admin passes DRAFT/ACTIVE/ARCHIVED to narrow, or 'ALL' to see
+  // every status; when omitted the list defaults to ACTIVE (storefront-safe).
+  status: z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED', 'ALL']).optional(),
   // In-memory completeness bucketing after fetch.
   completenessFilter: z.enum(['complete', 'incomplete']).optional(),
   page: z.coerce.number().default(1),

@@ -52,6 +52,7 @@ interface FilterOptions {
   isAvailable?: boolean;
   categoryId?: string;
   categoryPath?: string;
+  status?: 'DRAFT' | 'ACTIVE' | 'ARCHIVED' | 'ALL';
   completenessFilter?: 'complete' | 'incomplete';
   page?: number;
   limit?: number;
@@ -516,7 +517,8 @@ export class ProductService {
       where: { id: { in: ids } },
       data: {
         status,
-        isActive: status === 'ACTIVE',
+        // Match updateStatus: only ARCHIVED hides a product from the storefront.
+        isActive: status !== 'ARCHIVED',
       },
     });
 
@@ -558,9 +560,19 @@ export class ProductService {
       isAvailable,
       categoryId,
       categoryPath,
+      status,
     } = filters;
 
-    const where: any = { status: 'ACTIVE' };
+    // Status: explicit value narrows; 'ALL' removes the constraint (admin view);
+    // omitting it defaults to ACTIVE so storefront callers stay safe.
+    const where: any = {};
+    if (status === 'ALL') {
+      // no status constraint
+    } else if (status) {
+      where.status = status;
+    } else {
+      where.status = 'ACTIVE';
+    }
     const andClauses: any[] = [];
 
     // Direct category id filter.
@@ -727,8 +739,15 @@ export class ProductService {
   }
 
   async getFacetCounts(categoryPath: string, currentFilters: Omit<FilterOptions, 'categoryPath'>): Promise<FacetCounts> {
-    // Build base where clause: active + category path/id
-    const baseWhere: any = { status: 'ACTIVE' };
+    // Build base where clause: honor status ('ALL' = no constraint, absent = ACTIVE) + category path/id
+    const baseWhere: any = {};
+    if (currentFilters.status === 'ALL') {
+      // no status constraint
+    } else if (currentFilters.status) {
+      baseWhere.status = currentFilters.status;
+    } else {
+      baseWhere.status = 'ACTIVE';
+    }
     if (categoryPath) {
       baseWhere.category = { path: { startsWith: categoryPath } };
     }

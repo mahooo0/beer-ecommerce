@@ -132,12 +132,14 @@ export function ProductForm({
     setError(null);
     try {
       const token = await getToken();
-      // Normalize: empty optional strings → undefined so we don't overwrite with "".
-      const payload: ProductFormData = {
+      // Normalize: cleared optional fields → null so the update service actually
+      // writes the cleared value (undefined keys are dropped by JSON and skipped
+      // by the `!== undefined` guards, so an emptied field would never clear).
+      const payload: any = {
         ...data,
         salePrice: data.salePrice ? data.salePrice : null,
-        manufacturer: data.manufacturer?.trim() || undefined,
-        composition: data.composition?.trim() || undefined,
+        manufacturer: data.manufacturer?.trim() || null,
+        composition: data.composition?.trim() || null,
         slug: data.slug?.trim() ? slugify(data.slug) : undefined,
         attributeValues: attributeValues,
       };
