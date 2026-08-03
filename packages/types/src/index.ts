@@ -224,16 +224,26 @@ export interface Product {
   name: string;
   slug: string;
   description: string;
-  price: number; // cents
-  compareAtPrice?: number; // cents
+  price: number; // cents — regular price ("цена")
+  salePrice?: number | null; // cents — active discount price ("цена со скидкой")
+  compareAtPrice?: number; // cents (legacy, unused by the new product form)
+  baseUnit: string; // базовая единица прайса (default "piece")
   images: string[];
   sku: string;
+  manufacturer?: string | null; // виробник
+  composition?: string | null; // склад (rich HTML)
+  searchKeywords: string[]; // ключевые слова (persisted; admin input disabled)
   productType: ProductType;
   status: ProductStatus;
-  attributes: Record<string, any>;
+  attributes: Record<string, any>; // legacy JSONB dynamic attributes
+  // Dual-mode stock.
+  trackQuantity: boolean;
+  quantity: number;
+  isAvailable: boolean; // в наявності (manual flag, independent of quantity)
   isActive: boolean;
   categoryId: string;
   brandId?: string;
+  attributeValues?: ProductAttributeValue[]; // normalized per-category selections
   createdAt: Date;
   updatedAt: Date;
 }
@@ -296,6 +306,8 @@ export interface Category {
   parentId?: string;
   metaTitle?: string;
   metaDescription?: string;
+  attributeDefs?: Attribute[]; // normalized attribute definitions (4fr-style)
+  filters?: CategoryFilter[]; // manual category filters
   createdAt: Date;
   updatedAt: Date;
 }
@@ -311,6 +323,80 @@ export interface CategoryAttribute {
   isRequired: boolean;
   position: number;
   categoryId: string;
+}
+
+// ============================================================================
+// STRUCTURED ATTRIBUTES (normalized, 4fr-style) + CATEGORY FILTERS
+// ============================================================================
+
+// Per-category attribute definition (e.g. "Вага", "Смак", "Порода").
+export interface Attribute {
+  id: string;
+  categoryId: string;
+  name: string; // machine slug (snake_case)
+  displayName: string;
+  isFilterable: boolean;
+  isVisibleOnProductPage: boolean;
+  usedForVariations: boolean; // column kept; UI toggle disabled (no variants)
+  showValueIcons: boolean;
+  displayType: string; // checkbox | select | button | color | range
+  sortOrder: number;
+  isActive: boolean;
+  values?: AttributeValue[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Reusable value belonging to an attribute — the "common option / общая опция".
+export interface AttributeValue {
+  id: string;
+  attributeId: string;
+  value: string; // machine value
+  displayValue?: string | null; // shown label
+  colorCode?: string | null; // for displayType=color
+  iconUrl?: string | null; // optional value icon
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Junction: which attribute values a product has chosen.
+export interface ProductAttributeValue {
+  id: string;
+  productId: string;
+  attributeId: string;
+  attributeValueId: string;
+  attribute?: Attribute;
+  attributeValue?: AttributeValue;
+  createdAt: Date;
+}
+
+// Manual category filter ("добавить фильтр для категории"), distinct from attributes.
+export interface CategoryFilter {
+  id: string;
+  categoryId: string;
+  name: string; // machine slug
+  displayName: string;
+  type: string; // select | multi-select | range | checkbox
+  source: string; // manual | manufacturer
+  required: boolean;
+  sortOrder: number;
+  isActive: boolean;
+  options?: CategoryFilterOption[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CategoryFilterOption {
+  id: string;
+  filterId: string;
+  value: string;
+  label?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // ============================================================================

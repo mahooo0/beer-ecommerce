@@ -7,13 +7,52 @@ import { productSchema } from '@repo/types/product-schemas';
 import type { ProductStatus } from '@repo/types';
 import Papa from 'papaparse';
 
+/**
+ * Ceil a whole-currency price up to the next integer unit. Prices are stored as
+ * integer cents but taranka pricing never carries fractions, so we strip float
+ * noise (toFixed 2) then ceil. 136.45 → 137, 136.00 → 136. Non-finite → 0.
+ * Ported from 4fr `@repo/types` ceilPrice.
+ */
+function ceilPrice(value: number | string): number {
+  const n = typeof value === 'string' ? parseFloat(value) : Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.ceil(Number(n.toFixed(2)));
+}
+
+/**
+ * `sku` is @unique + required in the DB, but the taranka admin form no longer
+ * surfaces it. Generate a collision-free SKU server-side when the caller omits
+ * one. Format: SKU-<base36 timestamp>-<random> uppercased, re-rolled on the
+ * astronomically-rare collision.
+ */
+async function generateUniqueSku(): Promise<string> {
+  // Bounded retry loop; the timestamp+random space makes >1 iteration virtually
+  // impossible, but we still verify against the unique index.
+  for (let i = 0; i < 10; i++) {
+    const candidate = `SKU-${Date.now().toString(36)}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}`.toUpperCase();
+    const existing = await prisma.product.findUnique({
+      where: { sku: candidate },
+      select: { id: true },
+    });
+    if (!existing) return candidate;
+  }
+  // Fallback that cannot collide within a process lifetime.
+  return `SKU-${Date.now().toString(36)}-${process.hrtime.bigint().toString(36)}`.toUpperCase();
+}
+
 interface FilterOptions {
   minPrice?: number;
   maxPrice?: number;
   brands?: string;
   attributes?: string;
+  attributeValues?: string;
   availability?: string;
+  isAvailable?: boolean;
+  categoryId?: string;
   categoryPath?: string;
+  completenessFilter?: 'complete' | 'incomplete';
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -23,8 +62,45 @@ interface FilterOptions {
 interface FacetCounts {
   brands: Array<{ id: string; name: string; count: number }>;
   attributes: Record<string, Array<{ value: string; count: number }>>;
+  attributeValues: Array<{ attributeValueId: string; count: number }>;
   availability: Array<{ status: string; count: number }>;
+  isAvailable: Array<{ value: boolean; count: number }>;
   priceRange: { min: number; max: number } | null;
+}
+
+// ── Completeness bucketing ───────────────────────────────────────────────
+// Six product-level fields drive the admin "Заповнення" column and the
+// /products/completeness-stats endpoint. Kept in one place so the stats
+// endpoint and the in-memory completenessFilter agree exactly.
+const COMPLETENESS_FIELDS = 6;
+
+interface CompletenessRow {
+  name: string | null;
+  categoryId: string | null;
+  description: string | null;
+  images: unknown;
+  searchKeywords: string[] | null;
+  manufacturer: string | null;
+}
+
+function htmlIsEmpty(html: string | null): boolean {
+  if (!html) return true;
+  return !html.replace(/<[^>]*>/g, '').trim();
+}
+
+function countFilledCompletenessFields(p: CompletenessRow): number {
+  let filled = 0;
+  if (p.name && p.name.trim()) filled++;
+  if (typeof p.categoryId === 'string' && p.categoryId.length > 0) filled++;
+  if (!htmlIsEmpty(p.description)) filled++;
+  if (Array.isArray(p.images) && p.images.length > 0) filled++;
+  if (Array.isArray(p.searchKeywords) && p.searchKeywords.length > 0) filled++;
+  if (p.manufacturer && p.manufacturer.trim()) filled++;
+  return filled;
+}
+
+function computeCompletenessPercent(p: CompletenessRow): number {
+  return Math.round((countFilledCompletenessFields(p) / COMPLETENESS_FIELDS) * 100);
 }
 
 interface GetAllOptions {
@@ -145,6 +221,8 @@ export class ProductService {
             collection: true,
           },
         },
+        // Normalized attribute selections so the admin edit form can hydrate.
+        attributeValues: { include: { attribute: true, attributeValue: true } },
       },
     });
 
@@ -207,6 +285,8 @@ export class ProductService {
             collection: true,
           },
         },
+        // Normalized attribute selections for the storefront product page specs.
+        attributeValues: { include: { attribute: true, attributeValue: true } },
       },
     });
 
@@ -215,65 +295,38 @@ export class ProductService {
   }
 
   async create(data: ProductFormData) {
-    // Generate unique slug
-    const slug = await generateUniqueSlug(data.name);
+    // Explicit slug override wins; otherwise derive a unique slug from the name.
+    const slug = data.slug && data.slug.trim()
+      ? await generateUniqueSlug(data.slug)
+      : await generateUniqueSlug(data.name);
 
-    // Build create data based on product type
+    // `sku` is @unique + required but hidden from the admin UI — auto-generate
+    // one when the caller omits it.
+    const sku = data.sku && data.sku.trim() ? data.sku.trim() : await generateUniqueSku();
+
+    // Flat scalar mapping. No product-type nested creates (taranka has no
+    // variants); the DB `productType` column keeps its SIMPLE default.
     const createData: any = {
       name: data.name,
       description: data.description,
-      price: data.price,
-      compareAtPrice: data.compareAtPrice,
+      price: ceilPrice(data.price),
+      salePrice: data.salePrice == null ? null : ceilPrice(data.salePrice),
       categoryId: data.categoryId,
       brandId: data.brandId,
       status: data.status || 'DRAFT',
       images: data.images || [],
-      sku: data.sku,
-      attributes: data.attributes || {},
-      isActive: data.isActive ?? true,
-      productType: data.productType,
+      sku,
       slug,
+      baseUnit: data.baseUnit || 'piece',
+      manufacturer: data.manufacturer,
+      composition: data.composition,
+      searchKeywords: data.searchKeywords ?? [],
+      attributes: data.attributes || {},
+      trackQuantity: data.trackQuantity ?? false,
+      quantity: data.quantity ?? 0,
+      isAvailable: data.isAvailable ?? true,
+      isActive: data.isActive ?? true,
     };
-
-    // Type-specific nested creates
-    if (data.productType === 'VARIABLE' && 'variants' in data) {
-      createData.variants = {
-        create: data.variants.map((v) => ({
-          sku: v.sku,
-          price: v.price,
-          stock: v.stock || 0,
-          isActive: v.isActive ?? true,
-          images: v.images || [],
-          options: {
-            create: v.options.map((o) => ({
-              optionId: o.valueId,
-            })),
-          },
-        })),
-      };
-    }
-
-    if (data.productType === 'WEIGHTED' && 'weightedMeta' in data) {
-      createData.weightedMeta = {
-        create: data.weightedMeta,
-      };
-    }
-
-    if (data.productType === 'DIGITAL' && 'digitalMeta' in data) {
-      createData.digitalMeta = {
-        create: data.digitalMeta,
-      };
-    }
-
-    if (data.productType === 'BUNDLED' && 'bundleItems' in data) {
-      createData.bundleItems = {
-        create: data.bundleItems.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity || 1,
-          discount: item.discount || 0,
-        })),
-      };
-    }
 
     // Handle tags and collections
     if (data.tagIds && data.tagIds.length > 0) {
@@ -288,97 +341,91 @@ export class ProductService {
       };
     }
 
-    const product = await prisma.product.create({
-      data: createData,
-      include: {
-        category: true,
-        brand: true,
-        variants: true,
-        digitalMeta: true,
-        weightedMeta: true,
-        bundleItems: true,
-        tags: true,
-        collections: true,
-      },
+    const attributeValues = data.attributeValues ?? [];
+
+    const product = await prisma.$transaction(async (tx) => {
+      const created = await tx.product.create({
+        data: createData,
+        include: {
+          category: true,
+          brand: true,
+          tags: true,
+          collections: true,
+        },
+      });
+
+      // Normalized attribute selections — junction createMany.
+      if (attributeValues.length > 0) {
+        await tx.productAttributeValue.createMany({
+          data: attributeValues.map((av) => ({
+            productId: created.id,
+            attributeId: av.attributeId,
+            attributeValueId: av.attributeValueId,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      return tx.product.findUnique({
+        where: { id: created.id },
+        include: {
+          category: true,
+          brand: true,
+          tags: true,
+          collections: true,
+          attributeValues: { include: { attribute: true, attributeValue: true } },
+        },
+      });
     });
 
-    eventBus.emit('product.created', { productId: product.id });
+    eventBus.emit('product.created', { productId: product!.id });
     return product;
   }
 
   async update(id: string, data: ProductUpdateData) {
-    // Regenerate slug if name changed
+    const oldProduct = await prisma.product.findUnique({
+      where: { id },
+      select: { categoryId: true, slug: true },
+    });
+    if (!oldProduct) throw new AppError(404, 'Product not found');
+
+    // Slug policy: an explicit `slug` override wins; otherwise regenerate from
+    // the name only when the name actually changed.
     let slug: string | undefined;
-    if (data.name) {
+    if (data.slug !== undefined && data.slug.trim()) {
+      slug = await generateUniqueSlug(data.slug, id);
+    } else if (data.name) {
       slug = await generateUniqueSlug(data.name, id);
     }
 
+    // Flat scalar mapping — only write keys the caller actually sent.
     const updateData: any = {
-      ...(data.name && { name: data.name }),
-      ...(data.description && { description: data.description }),
-      ...(data.price !== undefined && { price: data.price }),
-      ...(data.compareAtPrice !== undefined && { compareAtPrice: data.compareAtPrice }),
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.price !== undefined && { price: ceilPrice(data.price) }),
       ...(data.categoryId && { categoryId: data.categoryId }),
       ...(data.brandId !== undefined && { brandId: data.brandId }),
       ...(data.status && { status: data.status }),
       ...(data.images && { images: data.images }),
-      ...(data.sku && { sku: data.sku }),
-      ...(data.attributes && { attributes: data.attributes }),
+      ...(data.sku !== undefined && data.sku.trim() && { sku: data.sku.trim() }),
+      ...(data.baseUnit !== undefined && { baseUnit: data.baseUnit }),
+      ...(data.manufacturer !== undefined && { manufacturer: data.manufacturer }),
+      ...(data.composition !== undefined && { composition: data.composition }),
+      ...(data.searchKeywords !== undefined && { searchKeywords: data.searchKeywords }),
+      ...(data.attributes !== undefined && { attributes: data.attributes }),
+      ...(data.trackQuantity !== undefined && { trackQuantity: data.trackQuantity }),
+      ...(data.quantity !== undefined && { quantity: data.quantity }),
+      ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
       ...(data.isActive !== undefined && { isActive: data.isActive }),
       ...(slug && { slug }),
     };
-
-    // Handle type-specific updates (simplified approach: delete and recreate)
-    if ('variants' in data && data.variants) {
-      // Delete existing variants and recreate
-      await prisma.productVariant.deleteMany({ where: { productId: id } });
-      updateData.variants = {
-        create: data.variants.map((v) => ({
-          sku: v.sku,
-          price: v.price,
-          stock: v.stock || 0,
-          isActive: v.isActive ?? true,
-          images: v.images || [],
-          options: {
-            create: v.options.map((o) => ({
-              optionId: o.valueId,
-            })),
-          },
-        })),
-      };
+    // salePrice is nullable — a `null` clears it, a number is ceil'd.
+    if (data.salePrice !== undefined) {
+      updateData.salePrice = data.salePrice == null ? null : ceilPrice(data.salePrice);
     }
 
-    if ('weightedMeta' in data && data.weightedMeta) {
-      // Upsert weighted meta
-      updateData.weightedMeta = {
-        upsert: {
-          create: data.weightedMeta,
-          update: data.weightedMeta,
-        },
-      };
-    }
-
-    if ('digitalMeta' in data && data.digitalMeta) {
-      // Upsert digital meta
-      updateData.digitalMeta = {
-        upsert: {
-          create: data.digitalMeta,
-          update: data.digitalMeta,
-        },
-      };
-    }
-
-    if ('bundleItems' in data && data.bundleItems) {
-      // Delete existing bundle items and recreate
-      await prisma.bundleItem.deleteMany({ where: { bundleProductId: id } });
-      updateData.bundleItems = {
-        create: data.bundleItems.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity || 1,
-          discount: item.discount || 0,
-        })),
-      };
-    }
+    const categoryChanged =
+      data.categoryId !== undefined && data.categoryId !== oldProduct.categoryId;
 
     // Handle tags and collections
     if (data.tagIds) {
@@ -399,22 +446,47 @@ export class ProductService {
       }
     }
 
-    const product = await prisma.product.update({
-      where: { id },
-      data: updateData,
-      include: {
-        category: true,
-        brand: true,
-        variants: true,
-        digitalMeta: true,
-        weightedMeta: true,
-        bundleItems: true,
-        tags: true,
-        collections: true,
-      },
+    const product = await prisma.$transaction(async (tx) => {
+      // On a category change the old category's attribute selections no longer
+      // apply — wipe them.
+      if (categoryChanged) {
+        await tx.productAttributeValue.deleteMany({ where: { productId: id } });
+      }
+
+      // Explicit attributeValues array → delete-all-then-recreate. When the
+      // category changed we already cleared them above, so this only re-seeds
+      // whatever the caller sent (may be empty).
+      if (data.attributeValues !== undefined) {
+        if (!categoryChanged) {
+          await tx.productAttributeValue.deleteMany({ where: { productId: id } });
+        }
+        if (data.attributeValues.length > 0) {
+          await tx.productAttributeValue.createMany({
+            data: data.attributeValues.map((av) => ({
+              productId: id,
+              attributeId: av.attributeId,
+              attributeValueId: av.attributeValueId,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      await tx.product.update({ where: { id }, data: updateData });
+
+      return tx.product.findUnique({
+        where: { id },
+        include: {
+          category: true,
+          brand: true,
+          tags: true,
+          collections: true,
+          attributeValues: { include: { attribute: true, attributeValue: true } },
+        },
+      });
     });
 
-    eventBus.emit('product.updated', { productId: product.id });
+    eventBus.emit('product.updated', { productId: product!.id });
     return product;
   }
 
@@ -474,22 +546,27 @@ export class ProductService {
     eventBus.emit('product.deleted', { productId: id });
   }
 
-  async filterProducts(filters: FilterOptions) {
+  /** Build the shared Prisma WHERE from the filter params (no pagination). */
+  private buildFilterWhere(filters: FilterOptions): any {
     const {
-      page = 1,
-      limit = 20,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
       minPrice,
       maxPrice,
       brands,
       attributes,
+      attributeValues,
       availability,
+      isAvailable,
+      categoryId,
       categoryPath,
     } = filters;
 
-    const skip = (page - 1) * limit;
     const where: any = { status: 'ACTIVE' };
+    const andClauses: any[] = [];
+
+    // Direct category id filter.
+    if (categoryId) {
+      where.categoryId = categoryId;
+    }
 
     // Category path filter (startsWith for materialized path)
     if (categoryPath) {
@@ -511,7 +588,12 @@ export class ProductService {
       }
     }
 
-    // Attribute filter: OR within same key, AND across different keys
+    // Manual in/out-of-stock flag filter (independent of quantity).
+    if (isAvailable !== undefined) {
+      where.isAvailable = isAvailable;
+    }
+
+    // Legacy JSONB attribute filter: OR within same key, AND across keys.
     if (attributes) {
       const pairs = attributes.split(',').map((p) => p.trim()).filter(Boolean);
       const grouped: Record<string, string[]> = {};
@@ -523,19 +605,27 @@ export class ProductService {
         if (!grouped[key]) grouped[key] = [];
         grouped[key].push(value);
       }
-
-      const andClauses = Object.entries(grouped).map(([key, values]) => ({
-        OR: values.map((value) => ({
-          attributes: { path: [key], equals: value },
-        })),
-      }));
-
-      if (andClauses.length > 0) {
-        where.AND = andClauses;
+      for (const [key, values] of Object.entries(grouped)) {
+        andClauses.push({
+          OR: values.map((value) => ({
+            attributes: { path: [key], equals: value },
+          })),
+        });
       }
     }
 
-    // Availability filter
+    // Normalized attribute-value junction filter: any product carrying at least
+    // one of the requested AttributeValue ids.
+    if (attributeValues) {
+      const valueIds = attributeValues.split(',').map((v) => v.trim()).filter(Boolean);
+      if (valueIds.length > 0) {
+        andClauses.push({
+          attributeValues: { some: { attributeValueId: { in: valueIds } } },
+        });
+      }
+    }
+
+    // Availability filter (variant-stock based; legacy).
     if (availability) {
       const statuses = availability.split(',').map((s) => s.trim()).filter(Boolean);
       const orClauses: any[] = [];
@@ -558,17 +648,70 @@ export class ProductService {
       }
     }
 
+    if (andClauses.length > 0) {
+      where.AND = andClauses;
+    }
+
+    return where;
+  }
+
+  async filterProducts(filters: FilterOptions) {
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+      completenessFilter,
+    } = filters;
+
+    const where = this.buildFilterWhere(filters);
+    const include = {
+      category: true,
+      brand: true,
+      variants: { select: { stock: true } },
+      _count: { select: { variants: true } },
+    } as const;
+
+    // completenessFilter is computed in-memory (it depends on 6 product-level
+    // fields), so when it's active we fetch the full matching set, bucket, then
+    // paginate the filtered result.
+    if (completenessFilter) {
+      const all = await prisma.product.findMany({
+        where,
+        include,
+        orderBy: { [sortBy]: sortOrder },
+      });
+      const matching = all.filter((p: any) => {
+        const pct = computeCompletenessPercent({
+          name: p.name,
+          categoryId: p.categoryId,
+          description: p.description,
+          images: p.images,
+          searchKeywords: p.searchKeywords,
+          manufacturer: p.manufacturer,
+        });
+        if (completenessFilter === 'complete') return pct === 100;
+        return pct !== 100; // incomplete
+      });
+      const total = matching.length;
+      const skip = (page - 1) * limit;
+      const products = matching.slice(skip, skip + limit);
+      return {
+        products,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    }
+
+    const skip = (page - 1) * limit;
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         skip,
         take: limit,
         where,
-        include: {
-          category: true,
-          brand: true,
-          variants: { select: { stock: true } },
-          _count: { select: { variants: true } },
-        },
+        include,
         orderBy: { [sortBy]: sortOrder },
       }),
       prisma.product.count({ where }),
@@ -584,10 +727,13 @@ export class ProductService {
   }
 
   async getFacetCounts(categoryPath: string, currentFilters: Omit<FilterOptions, 'categoryPath'>): Promise<FacetCounts> {
-    // Build base where clause: active + category path
+    // Build base where clause: active + category path/id
     const baseWhere: any = { status: 'ACTIVE' };
     if (categoryPath) {
       baseWhere.category = { path: { startsWith: categoryPath } };
+    }
+    if (currentFilters.categoryId) {
+      baseWhere.categoryId = currentFilters.categoryId;
     }
 
     // Brand facets: groupBy brandId (exclude brand filter from where)
@@ -660,6 +806,21 @@ export class ProductService {
         .sort((a, b) => b.count - a.count);
     }
 
+    // Normalized attribute-value facets: how many products carry each
+    // AttributeValue, via the ProductAttributeValue junction. groupBy over the
+    // junction, scoped to the same base product set.
+    const attrValueGroups = await prisma.productAttributeValue.groupBy({
+      by: ['attributeValueId'],
+      where: { product: baseWhere },
+      _count: { productId: true },
+    });
+    const attributeValueFacets = attrValueGroups
+      .map((g: any) => ({
+        attributeValueId: g.attributeValueId as string,
+        count: g._count.productId as number,
+      }))
+      .sort((a, b) => b.count - a.count);
+
     // Availability counts
     const [inStockCount, outOfStockCount, preOrderCount] = await Promise.all([
       prisma.product.count({ where: { ...baseWhere, variants: { some: { stock: { gt: 0 } } } } }),
@@ -671,6 +832,16 @@ export class ProductService {
       { status: 'in_stock', count: inStockCount },
       { status: 'out_of_stock', count: outOfStockCount },
       { status: 'pre_order', count: preOrderCount },
+    ];
+
+    // Manual in/out-of-stock flag counts (the taranka dual-mode isAvailable).
+    const [availTrue, availFalse] = await Promise.all([
+      prisma.product.count({ where: { ...baseWhere, isAvailable: true } }),
+      prisma.product.count({ where: { ...baseWhere, isAvailable: false } }),
+    ]);
+    const isAvailableFacets = [
+      { value: true, count: availTrue },
+      { value: false, count: availFalse },
     ];
 
     // Dynamic price range
@@ -686,8 +857,60 @@ export class ProductService {
     return {
       brands: brandFacets,
       attributes: attributeFacets,
+      attributeValues: attributeValueFacets,
       availability: availabilityFacets,
+      isAvailable: isAvailableFacets,
       priceRange,
+    };
+  }
+
+  /**
+   * Completeness analytics for the admin /products page. Buckets every matching
+   * product by the same six product-level fields the catalog "Заповнення"
+   * column uses (name / category / description / images / searchKeywords /
+   * manufacturer). Accepts the same filter params as the list so the numbers
+   * agree with the visible table.
+   */
+  async getCompletenessStats(filters: FilterOptions = {}) {
+    // Reuse the list WHERE builder but ignore completenessFilter itself (stats
+    // describe the whole matching set, not one bucket).
+    const where = this.buildFilterWhere({ ...filters, completenessFilter: undefined });
+    const products = await prisma.product.findMany({
+      where,
+      select: {
+        name: true,
+        categoryId: true,
+        description: true,
+        images: true,
+        searchKeywords: true,
+        manufacturer: true,
+      },
+    });
+
+    let complete = 0;
+    let high = 0;
+    let medium = 0;
+    let low = 0;
+    let empty = 0;
+    for (const p of products) {
+      const pct = computeCompletenessPercent(p as CompletenessRow);
+      if (pct === 100) complete++;
+      else if (pct >= 60) high++;
+      else if (pct >= 30) medium++;
+      else if (pct > 0) low++;
+      else empty++;
+    }
+
+    return {
+      total: products.length,
+      complete,
+      high,
+      medium,
+      low,
+      empty,
+      // Anything not 100% — used by the page header subtitle.
+      incomplete: products.length - complete,
+      fields: COMPLETENESS_FIELDS,
     };
   }
 
@@ -734,72 +957,33 @@ export class ProductService {
       const rowNumber = i + 2; // +2 because row 1 is headers and arrays are 0-indexed
 
       try {
-        // Build ProductFormData from CSV row
-        const productType = row.producttype?.toUpperCase();
-
-        // Skip VARIABLE products (not supported in CSV import)
-        if (productType === 'VARIABLE') {
-          result.failed++;
-          result.errors.push({
-            row: rowNumber,
-            message: 'VARIABLE product type is not supported in CSV import. Use the admin form to create variable products.',
-          });
-          continue;
-        }
-
-        // Parse common fields
+        // Flat product only — variant/weighted/digital/bundled types were
+        // dropped in taranka, so the CSV importer maps the base catalog fields.
         const images = splitPipes(row.images);
         const price = parsePrice(row.price);
+        const salePrice = row.saleprice ? parsePrice(row.saleprice) : undefined;
+        const searchKeywords = splitPipes(row.searchkeywords || row.keywords || '');
 
         const productData: any = {
           name: row.name,
           description: row.description,
           price,
-          sku: row.sku,
-          productType,
+          ...(salePrice ? { salePrice } : {}),
+          sku: row.sku || undefined,
           categoryId: row.categoryid,
           brandId: row.brandid || undefined,
           status: row.status?.toUpperCase() || 'DRAFT',
           images,
+          baseUnit: row.baseunit || 'piece',
+          manufacturer: row.manufacturer || undefined,
+          composition: row.composition || undefined,
+          searchKeywords,
           attributes: {},
+          trackQuantity: row.trackquantity === 'true',
+          quantity: row.quantity ? parseInt(row.quantity, 10) : 0,
+          isAvailable: row.isavailable !== undefined ? row.isavailable !== 'false' : true,
           isActive: true,
         };
-
-        // Add type-specific fields
-        if (productType === 'WEIGHTED') {
-          productData.weightedMeta = {
-            unit: row.unit?.toUpperCase() || 'KG',
-            pricePerUnit: parsePrice(row.priceperunit),
-            minWeight: row.minweight ? parseFloat(row.minweight) : undefined,
-            maxWeight: row.maxweight ? parseFloat(row.maxweight) : undefined,
-            stepWeight: row.stepweight ? parseFloat(row.stepweight) : undefined,
-          };
-        }
-
-        if (productType === 'DIGITAL') {
-          productData.digitalMeta = {
-            fileUrl: row.fileurl,
-            fileName: row.filename,
-            fileSize: row.filesize ? parseInt(row.filesize, 10) : 0,
-            fileFormat: row.fileformat,
-            maxDownloads: row.maxdownloads ? parseInt(row.maxdownloads, 10) : undefined,
-            accessDuration: row.accessduration ? parseInt(row.accessduration, 10) : undefined,
-          };
-        }
-
-        if (productType === 'BUNDLED') {
-          const bundleProductIds = splitPipes(row.bundleproductids);
-          const bundleQuantities = splitPipes(row.bundlequantities);
-          const bundleDiscounts = splitPipes(row.bundlediscounts || '');
-
-          if (bundleProductIds.length >= 2) {
-            productData.bundleItems = bundleProductIds.map((productId, idx) => ({
-              productId,
-              quantity: bundleQuantities[idx] ? parseInt(bundleQuantities[idx], 10) : 1,
-              discount: bundleDiscounts[idx] ? parseInt(bundleDiscounts[idx], 10) : 0,
-            }));
-          }
-        }
 
         // Validate with Zod schema
         const validated = productSchema.safeParse(productData);

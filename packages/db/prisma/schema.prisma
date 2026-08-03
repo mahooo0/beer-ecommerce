@@ -210,13 +210,23 @@ model Product {
   name            String
   slug            String   @unique
   description     String   @db.Text
-  price           Int      // cents
-  compareAtPrice  Int?     // optional original price for sale display
+  price           Int      // cents — regular price ("цена")
+  salePrice       Int?     // cents — active discount price ("цена со скидкой"); when set it is the selling price and `price` shows struck-through
+  compareAtPrice  Int?     // legacy original-price field (unused by the new product form)
+  baseUnit        String   @default("piece") // базовая единица прайса
   images          String[] // array of URLs
   sku             String   @unique
+  manufacturer    String?  // виробник
+  composition     String?  @db.Text // склад (rich HTML, same format as description)
+  searchKeywords  String[] @default([]) // ключевые слова (persisted; admin input is disabled)
   productType     ProductType @default(SIMPLE)
   status          ProductStatus @default(DRAFT)
-  attributes      Json     @default("{}") // JSONB for dynamic attributes
+  attributes      Json     @default("{}") // legacy JSONB dynamic attributes (superseded by ProductAttributeValue)
+  // Stock — dual mode: trackQuantity=true → numeric `quantity` that decrements on order;
+  // trackQuantity=false → manual `isAvailable` in/out-of-stock flag (no number tracked)
+  trackQuantity   Boolean  @default(false)
+  quantity        Int      @default(0)
+  isAvailable     Boolean  @default(true) // в наявності (manual flag, independent of quantity)
   isActive        Boolean  @default(true)
   allowPreorder   Boolean  @default(false)
 
@@ -232,6 +242,7 @@ model Product {
   collections     ProductCollection[]
   reviews         Review[]
   wishlistItems   WishlistItem[]
+  attributeValues ProductAttributeValue[] // normalized per-category attribute selections
 
   // Type-specific metadata
   digitalMeta     DigitalMeta?
@@ -316,7 +327,9 @@ model Category {
 
   // Relations
   products        Product[]
-  attributes      CategoryAttribute[]
+  attributes      CategoryAttribute[] // legacy flat attributes (retired once new UI ships)
+  attributeDefs   Attribute[]         // normalized attribute definitions (4fr-style)
+  filters         CategoryFilter[]    // manual category filters
 
   // SEO
   metaTitle       String?
@@ -348,6 +361,111 @@ model CategoryAttribute {
   @@unique([categoryId, key]) // one attribute key per category
   @@index([categoryId])
   @@map("category_attributes")
+}
+
+// ============================================================================
+// STRUCTURED ATTRIBUTES (normalized, 4fr-style) + CATEGORY FILTERS
+// ============================================================================
+
+// Per-category attribute definition (e.g. "Вага", "Смак", "Порода").
+model Attribute {
+  id                     String   @id @default(cuid())
+  categoryId             String
+  category               Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name                   String   // machine slug (snake_case)
+  displayName            String   // shown to admins/users
+  isFilterable           Boolean  @default(true)
+  isVisibleOnProductPage Boolean  @default(true)
+  usedForVariations      Boolean  @default(false) // column kept; UI toggle disabled (no variants)
+  showValueIcons         Boolean  @default(false)
+  displayType            String   @default("checkbox") // checkbox | select | button | color | range
+  sortOrder              Int      @default(0)
+  isActive               Boolean  @default(true)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  values                 AttributeValue[]
+  productAttributeValues ProductAttributeValue[]
+
+  @@unique([categoryId, name])
+  @@index([categoryId])
+  @@map("attributes")
+}
+
+// Reusable value belonging to an attribute — the "common option / общая опция".
+model AttributeValue {
+  id           String    @id @default(cuid())
+  attributeId  String
+  attribute    Attribute @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  value        String    // machine value
+  displayValue String?   // shown label
+  colorCode    String?   // for displayType=color
+  iconUrl      String?   // optional value icon
+  sortOrder    Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  productAttributeValues ProductAttributeValue[]
+
+  @@unique([attributeId, value])
+  @@index([attributeId])
+  @@map("attribute_values")
+}
+
+// Junction: which attribute values a product has chosen.
+model ProductAttributeValue {
+  id               String         @id @default(cuid())
+  productId        String
+  product          Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  attributeId      String
+  attribute        Attribute      @relation(fields: [attributeId], references: [id], onDelete: Cascade)
+  attributeValueId String
+  attributeValue   AttributeValue @relation(fields: [attributeValueId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+
+  @@unique([productId, attributeId, attributeValueId])
+  @@index([productId])
+  @@index([attributeId])
+  @@index([attributeValueId])
+  @@map("product_attribute_values")
+}
+
+// Manual category filter ("добавить фильтр для категории"), distinct from attributes.
+model CategoryFilter {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String   // machine slug
+  displayName String
+  type        String   @default("select") // select | multi-select | range | checkbox
+  source      String   @default("manual") // manual | manufacturer
+  required    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  options CategoryFilterOption[]
+
+  @@unique([categoryId, name])
+  @@index([categoryId])
+  @@map("category_filters")
+}
+
+model CategoryFilterOption {
+  id        String         @id @default(cuid())
+  filterId  String
+  filter    CategoryFilter @relation(fields: [filterId], references: [id], onDelete: Cascade)
+  value     String
+  label     String?
+  sortOrder Int            @default(0)
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([filterId])
+  @@map("category_filter_options")
 }
 
 // ============================================================================

@@ -156,6 +156,17 @@ export class ProductController {
     }
   }
 
+  async completenessStats(req: Request, res: Response, next: NextFunction) {
+    try {
+      const parsed = filterQuerySchema.partial().safeParse(req.query);
+      const filters = parsed.success ? parsed.data : {};
+      const stats = await productService.getCompletenessStats(filters);
+      return res.json({ success: true, data: stats });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async importProducts(req: Request, res: Response, next: NextFunction) {
     try {
       if (!req.file) {

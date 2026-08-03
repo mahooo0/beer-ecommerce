@@ -6,7 +6,8 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Tree, NodeModel } from '@minoru/react-dnd-treeview';
 import type { Category } from '@repo/types';
 import { useAuth } from '@clerk/nextjs';
-import { Pencil, Tag, Trash2 } from 'lucide-react';
+import { Pencil, SlidersHorizontal, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { DataTableRowActions } from '@/components/DataTableRowActions';
 import { showError } from '@/lib/toast';
@@ -125,17 +126,20 @@ export default function CategoryTree({ categories, onEditCategory }: CategoryTre
               )}
               {!hasChildren && <span className="w-4" />}
 
-              {/* Category name */}
-              <span className="flex-1 text-sm font-medium text-foreground">
+              {/* Category name — links to the detail page (attributes + filters) */}
+              <Link
+                href={`/dashboard/categories/${node.id}`}
+                className="flex-1 text-sm font-medium text-foreground hover:underline"
+              >
                 {node.text}
-              </span>
+              </Link>
 
               {/* Product count badge - optional, would come from API if included */}
 
               {/* Action buttons */}
               <DataTableRowActions actions={[
-                { label: 'Edit', ...(onEditCategory ? { onClick: () => onEditCategory(category) } : { href: `/dashboard/categories?action=edit&id=${node.id}` }), icon: <Pencil className="h-4 w-4" /> },
-                { label: 'Attributes', href: `/dashboard/categories?action=attributes&id=${node.id}`, icon: <Tag className="h-4 w-4" /> },
+                { label: 'Edit', ...(onEditCategory ? { onClick: () => onEditCategory(category) } : { href: `/dashboard/categories/${node.id}` }), icon: <Pencil className="h-4 w-4" /> },
+                { label: 'Attributes & Filters', href: `/dashboard/categories/${node.id}`, icon: <SlidersHorizontal className="h-4 w-4" /> },
                 { label: 'Delete', onClick: () => handleDelete(String(node.id)), variant: 'destructive', icon: <Trash2 className="h-4 w-4" />, confirm: 'Are you sure you want to delete this category?' },
               ]} />
             </div>

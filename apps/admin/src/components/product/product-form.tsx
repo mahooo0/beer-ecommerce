@@ -1,23 +1,49 @@
 'use client';
 
-import { useState } from 'react';
+/**
+ * ProductForm — FLAT single React-Hook-Form product create/edit form.
+ *
+ * Rewritten from the old 4fr-style `productType` discriminated-union form into
+ * one flat RHF form driven by the flat `productSchema` from `@repo/types`.
+ * taranka has NO product variants — the Simple/Variable/Weighted/Digital/Bundled
+ * branches and the productType Select are GONE.
+ *
+ * Fields (the user's INCLUDE list):
+ *   name, category (CategoryPicker), price, salePrice, baseUnit,
+ *   dual-mode STOCK (tab: "Кількість" numeric quantity | "Наявність" in/out flag),
+ *   manufacturer, description (rich text), composition (rich text),
+ *   slug (live-transliterated), attributes (<ProductAttributeFields/>),
+ *   images (gallery), keywords (DISABLED — display only), status.
+ *
+ * SKU is omitted from the UI — the server auto-generates a unique sku.
+ *
+ * Attribute values live in RHF state as `attributeValues: {attributeId,
+ * attributeValueId}[]` and are submitted with the flat payload. On a category
+ * change the selections are RESET (a product's attributes belong to its
+ * category).
+ */
+
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductFormData } from '@repo/types';
+import type { ProductAttributeValueInput } from '@/lib/api';
 import { api } from '@/lib/api';
 import { ImageManager } from './image-manager';
-import { SimpleFields } from './simple-fields';
-import { VariableFields } from './variable-fields';
-import { WeightedFields } from './weighted-fields';
-import { DigitalFields } from './digital-fields';
-import { BundledFields } from './bundled-fields';
+import { ProductAttributeFields } from './product-attribute-fields';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
-import CategoryPicker from '@/components/CategoryPicker';
+import { KeywordsInput } from '@/components/ui/keywords-input';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -25,51 +51,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-interface Category {
-  id: string;
-  name: string;
-  path: string;
-}
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
+import CategoryPicker from '@/components/CategoryPicker';
+import { slugify, slugifyLive } from '@/lib/slug';
+import { showError, showSuccess } from '@/lib/toast';
 
 interface Brand {
   id: string;
   name: string;
 }
 
-interface OptionGroup {
-  id: string;
-  name: string;
-  displayName: string;
-  values: Array<{
-    id: string;
-    value: string;
-    label: string;
-  }>;
-}
-
-interface ProductReference {
-  id: string;
-  name: string;
-  price: number;
-}
-
 interface ProductFormProps {
   defaultValues?: Partial<ProductFormData>;
-  categories: Category[];
   brands: Brand[];
-  optionGroups: OptionGroup[];
-  products: ProductReference[];
   isEdit?: boolean;
   productId?: string;
 }
 
+// Full flat defaults so every controlled field starts defined.
+const EMPTY_DEFAULTS: ProductFormData = {
+  name: '',
+  description: '',
+  price: 0,
+  salePrice: null,
+  categoryId: '',
+  brandId: undefined,
+  status: 'DRAFT',
+  images: [],
+  slug: '',
+  baseUnit: 'piece',
+  manufacturer: '',
+  composition: '',
+  searchKeywords: [],
+  trackQuantity: false,
+  quantity: 0,
+  isAvailable: true,
+  isActive: true,
+  attributes: {},
+  attributeValues: [],
+};
+
 export function ProductForm({
   defaultValues,
-  categories,
   brands,
-  optionGroups,
-  products,
   isEdit = false,
   productId,
 }: ProductFormProps) {
@@ -77,343 +102,451 @@ export function ProductForm({
   const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Tracks whether the admin has manually edited the slug — once true we stop
+  // auto-deriving it from the name.
+  const slugTouched = useRef<boolean>(Boolean(defaultValues?.slug));
 
-  const form = useForm<any>({
-    resolver: zodResolver(productSchema) as any,
-    defaultValues: defaultValues || {
-      productType: 'SIMPLE',
-      name: '',
-      description: '',
-      price: 0,
-      sku: '',
-      categoryId: '',
-      status: 'DRAFT',
-      images: [],
-      attributes: {},
-      isActive: true,
-    },
+  const form = useForm<ProductFormData>({
+    // Cast: zod `.default()` fields make the schema's INPUT type diverge from the
+    // inferred OUTPUT type (ProductFormData). The resolver is sound at runtime.
+    resolver: zodResolver(productSchema) as unknown as Resolver<ProductFormData>,
+    defaultValues: { ...EMPTY_DEFAULTS, ...defaultValues },
   });
 
-  const productType = form.watch('productType');
-  const images = form.watch('images');
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    control,
+    formState: { errors },
+  } = form;
 
-  const handleSubmit = async (data: ProductFormData) => {
+  const images = watch('images');
+  const categoryId = watch('categoryId');
+  const trackQuantity = watch('trackQuantity');
+  const attributeValues = (watch('attributeValues') ?? []) as ProductAttributeValueInput[];
+
+  const onSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
     setError(null);
-
     try {
       const token = await getToken();
-      if (isEdit && productId) {
-        await api.products.update(productId, data as any, token || undefined);
-      } else {
-        await api.products.create(data as any, token || undefined);
-      }
+      // Normalize: empty optional strings → undefined so we don't overwrite with "".
+      const payload: ProductFormData = {
+        ...data,
+        salePrice: data.salePrice ? data.salePrice : null,
+        manufacturer: data.manufacturer?.trim() || undefined,
+        composition: data.composition?.trim() || undefined,
+        slug: data.slug?.trim() ? slugify(data.slug) : undefined,
+        attributeValues: attributeValues,
+      };
 
+      if (isEdit && productId) {
+        await api.products.update(productId, payload as any, token || undefined);
+        showSuccess('Товар оновлено');
+      } else {
+        await api.products.create(payload as any, token || undefined);
+        showSuccess('Товар створено');
+      }
       router.push('/dashboard/products');
       router.refresh();
     } catch (err) {
-      setError((err as Error).message || 'Failed to save product');
+      const msg = (err as Error).message || 'Не вдалося зберегти товар';
+      setError(msg);
+      showError(msg);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleImageChange = (newImages: string[]) => {
-    form.setValue('images', newImages);
-  };
-
-  // Auto-generate SKU from name if empty
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;
-    form.setValue('name', name);
-
-    // Only auto-generate SKU if it's empty and we're creating a new product
-    if (!isEdit && !form.getValues('sku')) {
-      const sku = name
-        .toUpperCase()
-        .replace(/[^A-Z0-9\s]/g, '')
-        .replace(/\s+/g, '-')
-        .slice(0, 50);
-      if (sku) {
-        form.setValue('sku', sku);
-      }
+    setValue('name', name, { shouldDirty: true });
+    // Auto-derive the slug from the name until the admin edits it by hand.
+    if (!slugTouched.current) {
+      setValue('slug', slugify(name), { shouldDirty: true });
     }
   };
 
+  // Reset the normalized attribute selections whenever the category changes —
+  // a product's attribute values belong to its category.
+  const handleCategoryChange = (id: string | null) => {
+    const next = id ?? '';
+    if (next !== categoryId) {
+      setValue('attributeValues', [], { shouldDirty: true });
+    }
+    setValue('categoryId', next, { shouldValidate: true, shouldDirty: true });
+  };
+
   return (
-    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
-      {/* Error Display */}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-          <p className="text-destructive text-sm">{error}</p>
+        <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
 
-      {/* Main Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left Column - Base Fields */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Basic Information */}
-          <div className="bg-card border rounded-lg p-6 space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Basic Information</h2>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Left column — main fields */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Basic info */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Основна інформація</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="mb-1 block">Назва *</Label>
+                <Input
+                  {...register('name')}
+                  onChange={handleNameChange}
+                  placeholder="Введіть назву товару"
+                />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-destructive">
+                    {String(errors.name.message)}
+                  </p>
+                )}
+              </div>
 
-            {/* Product Type */}
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Product Type *
-              </label>
-              <Select
-                value={form.watch('productType')}
-                onValueChange={(v) => form.setValue('productType', v)}
-                disabled={isEdit}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="SIMPLE">Simple Product</SelectItem>
-                  <SelectItem value="VARIABLE">Variable Product</SelectItem>
-                  <SelectItem value="WEIGHTED">Weighted Product</SelectItem>
-                  <SelectItem value="DIGITAL">Digital Product</SelectItem>
-                  <SelectItem value="BUNDLED">Bundled Product</SelectItem>
-                </SelectContent>
-              </Select>
-              {isEdit && (
+              <div>
+                <Label className="mb-1 block">Опис *</Label>
+                <Controller
+                  control={control}
+                  name="description"
+                  render={({ field }) => (
+                    <RichTextEditor
+                      value={field.value || ''}
+                      onChange={(html) => field.onChange(html)}
+                      placeholder="Опишіть товар"
+                    />
+                  )}
+                />
+                {errors.description && (
+                  <p className="mt-1 text-sm text-destructive">
+                    {String(errors.description.message)}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="mb-1 block">Склад</Label>
+                <Controller
+                  control={control}
+                  name="composition"
+                  render={({ field }) => (
+                    <RichTextEditor
+                      value={field.value || ''}
+                      onChange={(html) => field.onChange(html)}
+                      placeholder="Склад / інгредієнти"
+                    />
+                  )}
+                />
+                {errors.composition && (
+                  <p className="mt-1 text-sm text-destructive">
+                    {String(errors.composition.message)}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="mb-1 block">Slug (URL)</Label>
+                <Controller
+                  control={control}
+                  name="slug"
+                  render={({ field }) => (
+                    <Input
+                      value={field.value || ''}
+                      onChange={(e) => {
+                        slugTouched.current = true;
+                        field.onChange(slugifyLive(e.target.value));
+                      }}
+                      placeholder="url-tovaru"
+                    />
+                  )}
+                />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Product type cannot be changed after creation
+                  Формується з назви. Сервер перевіряє унікальність під час
+                  збереження.
                 </p>
-              )}
-              {form.formState.errors.productType && (
-                <p className="mt-1 text-sm text-destructive">
-                  {String(form.formState.errors.productType.message)}
-                </p>
-              )}
-            </div>
-
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Product Name *
-              </label>
-              <Input
-                {...form.register('name')}
-                type="text"
-                onChange={handleNameChange}
-                placeholder="Enter product name"
-              />
-              {form.formState.errors.name && (
-                <p className="mt-1 text-sm text-destructive">
-                  {String(form.formState.errors.name.message)}
-                </p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                Description *
-              </label>
-              <RichTextEditor
-                value={form.watch('description') || ''}
-                onChange={(html) => form.setValue('description', html, { shouldDirty: true })}
-                placeholder="Describe your product"
-              />
-              {form.formState.errors.description && (
-                <p className="mt-1 text-sm text-destructive">
-                  {String(form.formState.errors.description.message)}
-                </p>
-              )}
-            </div>
-
-            {/* SKU */}
-            <div>
-              <label className="block text-sm font-medium text-muted-foreground mb-1">
-                SKU *
-              </label>
-              <Input
-                {...form.register('sku')}
-                type="text"
-                placeholder="PRODUCT-SKU-001"
-              />
-              <p className="mt-1 text-xs text-muted-foreground">
-                Unique product identifier (auto-generated from name if empty)
-              </p>
-              {form.formState.errors.sku && (
-                <p className="mt-1 text-sm text-destructive">
-                  {String(form.formState.errors.sku.message)}
-                </p>
-              )}
-            </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Pricing */}
-          <div className="bg-card border rounded-lg p-6 space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Pricing</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Base Price */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Ціна</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Base Price (cents) *
-                </label>
+                <Label className="mb-1 block">Ціна (копійки) *</Label>
                 <Input
-                  {...form.register('price', { valueAsNumber: true })}
                   type="number"
+                  min="0"
+                  step="1"
                   placeholder="1999"
-                  min="0"
-                  step="1"
+                  {...register('price', { valueAsNumber: true })}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Price in cents (e.g., 1999 = $19.99)
-                </p>
-                {form.formState.errors.price && (
+                {errors.price && (
                   <p className="mt-1 text-sm text-destructive">
-                    {String(form.formState.errors.price.message)}
+                    {String(errors.price.message)}
                   </p>
                 )}
               </div>
-
-              {/* Compare At Price */}
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Compare At Price (cents)
-                </label>
+                <Label className="mb-1 block">Ціна зі знижкою (копійки)</Label>
                 <Input
-                  {...form.register('compareAtPrice', { valueAsNumber: true })}
                   type="number"
-                  placeholder="2499"
                   min="0"
                   step="1"
+                  placeholder="1499"
+                  {...register('salePrice', {
+                    setValueAs: (v) =>
+                      v === '' || v === null || v === undefined
+                        ? null
+                        : Number(v),
+                  })}
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Optional - show as strikethrough price
-                </p>
-                {form.formState.errors.compareAtPrice && (
+                {errors.salePrice && (
                   <p className="mt-1 text-sm text-destructive">
-                    {String(form.formState.errors.compareAtPrice.message)}
+                    {String(errors.salePrice.message)}
                   </p>
                 )}
               </div>
-            </div>
-          </div>
-
-          {/* Organization */}
-          <div className="bg-card border rounded-lg p-6 space-y-4">
-            <h2 className="text-xl font-semibold text-foreground">Organization</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Category */}
               <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Category *
-                </label>
-                <CategoryPicker
-                  value={form.watch('categoryId') || undefined}
-                  onChange={(id) =>
-                    form.setValue('categoryId', id ?? '', { shouldValidate: true })
-                  }
-                  placeholder="Select a category"
-                />
-                {form.formState.errors.categoryId && (
+                <Label className="mb-1 block">Одиниця виміру</Label>
+                <Input {...register('baseUnit')} placeholder="piece" />
+                {errors.baseUnit && (
                   <p className="mt-1 text-sm text-destructive">
-                    {String(form.formState.errors.categoryId.message)}
+                    {String(errors.baseUnit.message)}
                   </p>
                 )}
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Brand */}
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Brand
-                </label>
-                <Select
-                  value={form.watch('brandId') || ''}
-                  onValueChange={(v) => form.setValue('brandId', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a brand (optional)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {brands.map((brand) => (
-                      <SelectItem key={brand.id} value={brand.id}>
-                        {brand.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Stock — dual mode */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Наявність / Запас</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs
+                value={trackQuantity ? 'quantity' : 'availability'}
+                onValueChange={(v) =>
+                  setValue('trackQuantity', v === 'quantity', {
+                    shouldDirty: true,
+                  })
+                }
+              >
+                <TabsList className="grid w-full max-w-sm grid-cols-2">
+                  <TabsTrigger value="quantity">Кількість</TabsTrigger>
+                  <TabsTrigger value="availability">Наявність</TabsTrigger>
+                </TabsList>
 
-              {/* Status */}
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Status *
-                </label>
-                <Select
-                  value={form.watch('status') || 'DRAFT'}
-                  onValueChange={(v) => form.setValue('status', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="DRAFT">Draft</SelectItem>
-                    <SelectItem value="ACTIVE">Active</SelectItem>
-                    <SelectItem value="ARCHIVED">Archived</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
+                {/* Mode A: numeric quantity */}
+                <TabsContent value="quantity" className="pt-4">
+                  <Label className="mb-1 block">Кількість на складі</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    className="max-w-xs"
+                    {...register('quantity', { valueAsNumber: true })}
+                  />
+                  {errors.quantity && (
+                    <p className="mt-1 text-sm text-destructive">
+                      {String(errors.quantity.message)}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Відстежується числом; списується при замовленні.
+                  </p>
+                </TabsContent>
 
-          {/* Type-Specific Fields */}
-          <div className="bg-card border rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-4">
-              Product Type Details
-            </h2>
+                {/* Mode B: in/out-of-stock flag */}
+                <TabsContent value="availability" className="pt-4">
+                  <Controller
+                    control={control}
+                    name="isAvailable"
+                    render={({ field }) => (
+                      <label className="flex items-center gap-3">
+                        <Switch
+                          checked={!!field.value}
+                          onCheckedChange={(checked) => field.onChange(checked)}
+                        />
+                        <span className="text-sm">
+                          {field.value ? 'В наявності' : 'Немає в наявності'}
+                        </span>
+                      </label>
+                    )}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ручний перемикач наявності без обліку кількості.
+                  </p>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
 
-            {productType === 'SIMPLE' && <SimpleFields form={form} />}
-            {productType === 'VARIABLE' && (
-              <VariableFields form={form} optionGroups={optionGroups} />
-            )}
-            {productType === 'WEIGHTED' && <WeightedFields form={form} />}
-            {productType === 'DIGITAL' && <DigitalFields form={form} />}
-            {productType === 'BUNDLED' && (
-              <BundledFields
-                form={form}
-                products={products.filter((p) => p.id !== productId)}
+          {/* Attributes */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Атрибути</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ProductAttributeFields
+                categoryId={categoryId}
+                value={attributeValues}
+                onChange={(vals) =>
+                  setValue('attributeValues', vals, { shouldDirty: true })
+                }
               />
-            )}
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Right Column - Media */}
-        <div className="lg:col-span-1">
-          <div className="bg-card border rounded-lg p-6 sticky top-4">
-            <h2 className="text-xl font-semibold text-foreground mb-4">Media</h2>
-            <ImageManager
-              images={images || []}
-              onChange={handleImageChange}
-              maxFiles={10}
-            />
-          </div>
+        {/* Right column — organization, media, keywords */}
+        <div className="space-y-6 lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Організація</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="mb-1 block">Категорія *</Label>
+                <CategoryPicker
+                  value={categoryId || undefined}
+                  onChange={handleCategoryChange}
+                  placeholder="Оберіть категорію"
+                />
+                {errors.categoryId && (
+                  <p className="mt-1 text-sm text-destructive">
+                    {String(errors.categoryId.message)}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label className="mb-1 block">Виробник</Label>
+                <Input
+                  {...register('manufacturer')}
+                  placeholder="Назва виробника"
+                />
+              </div>
+
+              <div>
+                <Label className="mb-1 block">Бренд</Label>
+                <Controller
+                  control={control}
+                  name="brandId"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || ''}
+                      onValueChange={(v) => field.onChange(v || undefined)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Оберіть бренд (необов'язково)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {brands.map((brand) => (
+                          <SelectItem key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+
+              <div>
+                <Label className="mb-1 block">Статус *</Label>
+                <Controller
+                  control={control}
+                  name="status"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || 'DRAFT'}
+                      onValueChange={(v) =>
+                        field.onChange(v as ProductFormData['status'])
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DRAFT">Чернетка</SelectItem>
+                        <SelectItem value="ACTIVE">Активний</SelectItem>
+                        <SelectItem value="ARCHIVED">Архів</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Зображення</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ImageManager
+                images={images || []}
+                onChange={(next) =>
+                  setValue('images', next, { shouldDirty: true })
+                }
+                maxFiles={10}
+              />
+              {errors.images && (
+                <p className="mt-1 text-sm text-destructive">
+                  {String(errors.images.message)}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Ключові слова</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Controller
+                control={control}
+                name="searchKeywords"
+                render={({ field }) => (
+                  <KeywordsInput
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    disabled
+                    placeholder="Формуються автоматично на сервері"
+                  />
+                )}
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      {/* Submit Button - Sticky at bottom */}
-      <div className="sticky bottom-0 bg-card border-t p-4 -mx-4 flex justify-end space-x-4">
+      {/* Sticky action bar */}
+      <div className="sticky bottom-0 -mx-4 flex justify-end gap-3 border-t bg-background p-4">
         <Button
           type="button"
           variant="outline"
           onClick={() => router.push('/dashboard/products')}
           disabled={isSubmitting}
         >
-          Cancel
+          Скасувати
         </Button>
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Saving...' : isEdit ? 'Update Product' : 'Create Product'}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting
+            ? 'Збереження…'
+            : isEdit
+              ? 'Оновити товар'
+              : 'Створити товар'}
         </Button>
       </div>
     </form>

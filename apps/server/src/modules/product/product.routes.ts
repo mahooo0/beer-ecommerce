@@ -60,6 +60,8 @@ router.post('/option-groups/:id/values', requireAdmin, async (req, res, next) =>
 router.get('/', (req, res, next) => productController.getAll(req, res, next));
 router.get('/filter', (req, res, next) => productController.filter(req, res, next));
 router.get('/facets', (req, res, next) => productController.facets(req, res, next));
+// Specific routes must be declared BEFORE the dynamic /:id route below.
+router.get('/completeness-stats', (req, res, next) => productController.completenessStats(req, res, next));
 router.post('/batch', (req, res, next) => productController.getByIds(req, res, next));
 router.get('/slug/:slug', (req, res, next) => productController.getBySlug(req, res, next));
 router.get('/:id/related', (req, res, next) => productController.getRelated(req, res, next));

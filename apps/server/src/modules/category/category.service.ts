@@ -555,6 +555,268 @@ export class CategoryService {
       where: { id }
     });
   }
+
+  // ==========================================================================
+  // CATEGORY FILTER methods (manual "добавить фильтр для категории")
+  // ==========================================================================
+
+  // Build a unique machine `name` slug for a filter within its category,
+  // honouring the @@unique([categoryId, name]) constraint. Transliterates
+  // Cyrillic display names (e.g. "Виробник" → "virobnik").
+  private async generateUniqueFilterName(
+    categoryId: string,
+    displayName: string,
+    excludeId?: string
+  ): Promise<string> {
+    const base =
+      (slugifyFn as any)(displayName, { lower: true, strict: true, trim: true }).replace(/-/g, '_') ||
+      'filter';
+
+    let name = base;
+    let counter = 2;
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const existing = await prisma.categoryFilter.findUnique({
+        where: { categoryId_name: { categoryId, name } }
+      });
+
+      if (!existing || existing.id === excludeId) {
+        return name;
+      }
+
+      name = `${base}_${counter}`;
+      counter++;
+    }
+  }
+
+  async getFilters(categoryId: string) {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId }
+    });
+
+    if (!category) {
+      throw new AppError(404, 'Category not found');
+    }
+
+    const filters = await prisma.categoryFilter.findMany({
+      where: { categoryId },
+      include: {
+        options: {
+          orderBy: { sortOrder: 'asc' }
+        }
+      },
+      orderBy: { sortOrder: 'asc' }
+    });
+
+    return filters;
+  }
+
+  async createFilter(categoryId: string, data: {
+    name?: string;
+    displayName: string;
+    type?: string;
+    source?: string;
+    required?: boolean;
+    sortOrder?: number;
+    isActive?: boolean;
+  }) {
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId }
+    });
+
+    if (!category) {
+      throw new AppError(404, 'Category not found');
+    }
+
+    const name = await this.generateUniqueFilterName(
+      categoryId,
+      data.name ?? data.displayName
+    );
+
+    const filter = await prisma.categoryFilter.create({
+      data: {
+        categoryId,
+        name,
+        displayName: data.displayName,
+        type: data.type ?? 'select',
+        source: data.source ?? 'manual',
+        required: data.required ?? false,
+        sortOrder: data.sortOrder ?? 0,
+        isActive: data.isActive ?? true,
+      },
+      include: {
+        options: {
+          orderBy: { sortOrder: 'asc' }
+        }
+      }
+    });
+
+    return filter;
+  }
+
+  async updateFilter(id: string, data: {
+    name?: string;
+    displayName?: string;
+    type?: string;
+    source?: string;
+    required?: boolean;
+    sortOrder?: number;
+    isActive?: boolean;
+  }) {
+    const filter = await prisma.categoryFilter.findUnique({
+      where: { id }
+    });
+
+    if (!filter) {
+      throw new AppError(404, 'Filter not found');
+    }
+
+    // Regenerate the unique machine name only when explicitly provided.
+    let name = data.name;
+    if (name !== undefined) {
+      name = await this.generateUniqueFilterName(filter.categoryId, name, id);
+    }
+
+    const updated = await prisma.categoryFilter.update({
+      where: { id },
+      data: {
+        name,
+        displayName: data.displayName,
+        type: data.type,
+        source: data.source,
+        required: data.required,
+        sortOrder: data.sortOrder,
+        isActive: data.isActive,
+      },
+      include: {
+        options: {
+          orderBy: { sortOrder: 'asc' }
+        }
+      }
+    });
+
+    return updated;
+  }
+
+  async deleteFilter(id: string) {
+    const filter = await prisma.categoryFilter.findUnique({
+      where: { id }
+    });
+
+    if (!filter) {
+      throw new AppError(404, 'Filter not found');
+    }
+
+    // Options cascade via onDelete: Cascade on CategoryFilterOption.filter
+    await prisma.categoryFilter.delete({
+      where: { id }
+    });
+  }
+
+  // Filter option methods
+
+  async createFilterOption(data: {
+    filterId: string;
+    value: string;
+    label?: string;
+    sortOrder?: number;
+    isActive?: boolean;
+  }) {
+    const filter = await prisma.categoryFilter.findUnique({
+      where: { id: data.filterId }
+    });
+
+    if (!filter) {
+      throw new AppError(404, 'Filter not found');
+    }
+
+    const option = await prisma.categoryFilterOption.create({
+      data: {
+        filterId: data.filterId,
+        value: data.value,
+        label: data.label,
+        sortOrder: data.sortOrder ?? 0,
+        isActive: data.isActive ?? true,
+      }
+    });
+
+    return option;
+  }
+
+  async deleteFilterOption(id: string) {
+    const option = await prisma.categoryFilterOption.findUnique({
+      where: { id }
+    });
+
+    if (!option) {
+      throw new AppError(404, 'Filter option not found');
+    }
+
+    await prisma.categoryFilterOption.delete({
+      where: { id }
+    });
+  }
+
+  // Auto-populate a manufacturer-source filter from the distinct
+  // Product.manufacturer values within the filter's category. Returns the
+  // number of newly-created options (existing values are skipped).
+  async autoPopulateFilter(filterId: string): Promise<{ count: number }> {
+    const filter = await prisma.categoryFilter.findUnique({
+      where: { id: filterId },
+      include: { options: true }
+    });
+
+    if (!filter) {
+      throw new AppError(404, 'Filter not found');
+    }
+
+    const isManufacturer =
+      filter.source === 'manufacturer' || filter.name === 'manufacturer';
+
+    if (!isManufacturer) {
+      throw new AppError(
+        400,
+        'Auto-populate is only supported for manufacturer-source filters'
+      );
+    }
+
+    const products = await prisma.product.findMany({
+      where: {
+        categoryId: filter.categoryId,
+        manufacturer: { not: null },
+      },
+      select: { manufacturer: true },
+      distinct: ['manufacturer'],
+    });
+
+    const values = products
+      .map((p) => p.manufacturer)
+      .filter((m): m is string => Boolean(m));
+
+    const existingValues = new Set(filter.options.map((o) => o.value));
+    let created = 0;
+
+    for (const value of values) {
+      if (existingValues.has(value)) {
+        continue;
+      }
+
+      await prisma.categoryFilterOption.create({
+        data: {
+          filterId,
+          value,
+          label: value,
+          sortOrder: filter.options.length + created,
+        }
+      });
+
+      existingValues.add(value);
+      created++;
+    }
+
+    return { count: created };
+  }
 }
 
 export const categoryService = new CategoryService();

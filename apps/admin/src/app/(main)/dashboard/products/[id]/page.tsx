@@ -2,6 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect, notFound } from 'next/navigation';
 import { api } from '@/lib/api';
 import { ProductForm } from '@/components/product/product-form';
+import type { ProductFormData } from '@repo/types';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -28,63 +29,50 @@ export default async function EditProductPage(props: PageProps) {
     notFound();
   }
 
-  const [categoriesRes, brandsRes, productsRes] = await Promise.all([
-    api.categories.getAll(token),
-    api.brands.getAll({ token }),
-    api.products.getAll({ token, limit: 100 }),
-  ]);
-
-  let optionGroups: any[] = [];
-  try {
-    const ogRes = await api.optionGroups.getAll(token);
-    optionGroups = ogRes.data || [];
-  } catch {
-    // Option groups endpoint may not exist yet
-  }
-
-  const categories = (categoriesRes.data || []).map((c: any) => ({
-    id: c.id,
-    name: c.name,
-    path: c.name,
-  }));
-
+  const brandsRes = await api.brands.getAll({ token, limit: 200 });
   const brands = (brandsRes.data || []).map((b: any) => ({
     id: b.id,
     name: b.name,
   }));
 
-  const productsList = (productsRes.data || []).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
+  // Map the persisted product onto the flat form shape. attributeValues come as
+  // junction rows { attributeId, attributeValueId } — the form expects exactly
+  // that flat pair array.
+  const attributeValues = (product.attributeValues || []).map((av: any) => ({
+    attributeId: av.attributeId,
+    attributeValueId: av.attributeValueId,
   }));
 
-  const defaultValues = {
-    productType: product.productType,
-    name: product.name,
-    description: product.description,
-    price: product.price,
-    compareAtPrice: product.compareAtPrice,
-    sku: product.sku,
-    categoryId: product.categoryId,
-    brandId: product.brandId,
-    status: product.status,
+  const defaultValues: Partial<ProductFormData> = {
+    name: product.name ?? '',
+    description: product.description ?? '',
+    price: product.price ?? 0,
+    salePrice: product.salePrice ?? null,
+    categoryId: product.categoryId ?? '',
+    brandId: product.brandId ?? undefined,
+    status: product.status ?? 'DRAFT',
     images: product.images || [],
+    slug: product.slug ?? '',
+    baseUnit: product.baseUnit ?? 'piece',
+    manufacturer: product.manufacturer ?? '',
+    composition: product.composition ?? '',
+    searchKeywords: product.searchKeywords || [],
+    trackQuantity: product.trackQuantity ?? false,
+    quantity: product.quantity ?? 0,
+    isAvailable: product.isAvailable ?? true,
+    isActive: product.isActive ?? true,
     attributes: product.attributes || {},
-    isActive: product.isActive,
+    attributeValues,
   };
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Edit Product</h1>
+      <h1 className="mb-6 text-2xl font-bold">Редагувати товар</h1>
       <ProductForm
         isEdit
         productId={id}
         defaultValues={defaultValues}
-        categories={categories}
         brands={brands}
-        optionGroups={optionGroups}
-        products={productsList}
       />
     </div>
   );

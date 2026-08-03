@@ -1,8 +1,13 @@
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Product } from '@repo/types';
+import {
+  computeProductCompleteness,
+  type ProductLike,
+} from '@/lib/product-completeness';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -13,8 +18,8 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
-import { AnalyticsPanel, StatCard, MiniBar } from '@/components/AnalyticsPanel';
-import { Package, Eye, Archive, DollarSign } from 'lucide-react';
+import { CompletenessBar } from '@/components/product/completeness-bar';
+import { ProductStatusBadge } from '@/components/product/product-status-badge';
 import { ProductsFilters } from './products-filters';
 import { ProductRowActions } from './product-row-actions';
 
@@ -22,30 +27,33 @@ interface PageProps {
   searchParams: Promise<{
     page?: string;
     status?: string;
-    productType?: string;
-    search?: string;
     categoryId?: string;
-    sortBy?: string;
-    sortOrder?: string;
+    isAvailable?: string; // 'in' | 'out'
+    minPrice?: string;
+    maxPrice?: string;
+    completeness?: string; // 'complete' | 'incomplete'
+    attributeValues?: string; // comma-separated AttributeValue ids
   }>;
 }
 
-const statusColors: Record<string, string> = {
-  ACTIVE: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-  DRAFT: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-  ARCHIVED: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400',
+// Admin-only per-row annotations the catalog filter endpoint may attach.
+type ProductRow = Product & {
+  category?: { id: string; name: string } | null;
+  categoryAttrCount?: number;
+  productAttrFilledCount?: number;
 };
 
-const typeColors: Record<string, string> = {
-  SIMPLE: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-  VARIABLE: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
-  WEIGHTED: 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
-  DIGITAL: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400',
-  BUNDLED: 'bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-400',
-};
+const PAGE_SIZE = 20;
 
-function formatCurrency(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
+function formatPrice(cents: number) {
+  return `${(cents / 100).toFixed(2)} ₴`;
+}
+
+function rowCompleteness(product: ProductRow) {
+  return computeProductCompleteness(product as ProductLike, {
+    attributesNeeded: product.categoryAttrCount ?? 0,
+    attributesFilled: product.productAttrFilledCount ?? 0,
+  });
 }
 
 export default async function ProductsPage(props: PageProps) {
@@ -56,211 +64,267 @@ export default async function ProductsPage(props: PageProps) {
     redirect('/sign-in');
   }
 
-  const searchParams = await props.searchParams;
-  const page = Number(searchParams.page) || 1;
-  const status = searchParams.status;
-  const productType = searchParams.productType;
-  const search = searchParams.search;
-  const categoryId = searchParams.categoryId;
-  const sortBy = searchParams.sortBy;
-  const sortOrder = searchParams.sortOrder;
+  const sp = await props.searchParams;
+  const page = Number(sp.page) || 1;
 
-  const [response, categoriesRes] = await Promise.all([
-    api.products.getAll({
-      page,
-      limit: 20,
-      status,
-      productType,
-      search,
-      categoryId,
-      sortBy,
-      sortOrder,
-      token,
-    }),
-    api.categories.getAll(token),
+  // Map the URL filter contract onto api.products.filter (lib/api.ts).
+  const isAvailableParam =
+    sp.isAvailable === 'in' ? true : sp.isAvailable === 'out' ? false : undefined;
+  const minPrice = sp.minPrice ? Number(sp.minPrice) : undefined;
+  const maxPrice = sp.maxPrice ? Number(sp.maxPrice) : undefined;
+  const completenessFilter =
+    sp.completeness === 'complete' || sp.completeness === 'incomplete'
+      ? sp.completeness
+      : undefined;
+
+  const filterParams = {
+    page,
+    limit: PAGE_SIZE,
+    status: sp.status || undefined,
+    categoryId: sp.categoryId || undefined,
+    isAvailable: isAvailableParam,
+    minPrice,
+    maxPrice,
+    completenessFilter,
+    attributeValues: sp.attributeValues || undefined,
+    token,
+  } as const;
+
+  const [response, statsRes] = await Promise.all([
+    api.products.filter(filterParams),
+    api.products
+      .completenessStats({
+        status: sp.status || undefined,
+        categoryId: sp.categoryId || undefined,
+        isAvailable: isAvailableParam,
+        attributeValues: sp.attributeValues || undefined,
+        token,
+      })
+      .catch(() => null),
   ]);
 
-  const products = response.data || [];
+  const products = (response.data || []) as ProductRow[];
+  const total = response.total ?? products.length;
   const totalPages = response.totalPages || 1;
-  const categories = categoriesRes.data || [];
 
-  const categoryOptions = categories.map((c) => ({
-    value: c.id,
-    label: c.name,
-  }));
+  // Server stats win (whole result set); fall back to a per-page client compute
+  // when /completeness-stats isn't reachable.
+  const serverStats = statsRes?.data ?? null;
+  const clientIncomplete = products.filter(
+    (p) => rowCompleteness(p).percent < 100,
+  ).length;
+  const incompleteCount = serverStats?.incomplete ?? clientIncomplete;
+  const isClientStats = !serverStats;
 
-  // Build query string helper for pagination
+  // Build a query string preserving the active filters (used for pagination).
   function buildQuery(overrides: Record<string, string | undefined>) {
     const params = new URLSearchParams();
-    const merged = { page: String(page), status, productType, search, categoryId, sortBy, sortOrder, ...overrides };
+    const merged: Record<string, string | undefined> = {
+      status: sp.status,
+      categoryId: sp.categoryId,
+      isAvailable: sp.isAvailable,
+      minPrice: sp.minPrice,
+      maxPrice: sp.maxPrice,
+      completeness: sp.completeness,
+      attributeValues: sp.attributeValues,
+      page: String(page),
+      ...overrides,
+    };
     for (const [key, value] of Object.entries(merged)) {
       if (value) params.set(key, value);
     }
     return params.toString();
   }
 
-  // Compute stats
-  const totalProducts = response.total || products.length;
-  const activeCount = products.filter((p: Product) => p.status === 'ACTIVE').length;
-  const draftCount = products.filter((p: Product) => p.status === 'DRAFT').length;
-  const archivedCount = products.filter((p: Product) => p.status === 'ARCHIVED').length;
-
-  const typeBreakdown: Record<string, number> = {};
-  products.forEach((p: Product) => {
-    typeBreakdown[p.productType] = (typeBreakdown[p.productType] || 0) + 1;
-  });
-
-  const avgPrice = products.length > 0
-    ? Math.round(products.reduce((sum: number, p: Product) => sum + p.price, 0) / products.length)
-    : 0;
-
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Products</h1>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Товари</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {total} товарів
+            {incompleteCount > 0 &&
+              ` • ${incompleteCount} не заповнено повністю${
+                isClientStats ? ' (за поточну сторінку)' : ''
+              }`}
+          </p>
+        </div>
         <Button asChild>
-          <Link href="/dashboard/products/new">Add Product</Link>
+          <Link href="/dashboard/products/new">
+            <Plus className="w-4 h-4 mr-2" />
+            Новий товар
+          </Link>
         </Button>
       </div>
 
-      {/* Analytics */}
-      <div className="mb-6">
-        <AnalyticsPanel title="Product Analytics">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <StatCard label="Total Products" value={totalProducts} icon={<Package className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-            <StatCard label="Active" value={activeCount} icon={<Eye className="h-4 w-4 text-green-600" />} color="bg-green-50" />
-            <StatCard label="Draft" value={draftCount} icon={<Archive className="h-4 w-4 text-yellow-600" />} color="bg-yellow-50" />
-            <StatCard label="Avg Price" value={formatCurrency(avgPrice)} icon={<DollarSign className="h-4 w-4 text-emerald-600" />} color="bg-emerald-50" />
-          </div>
-          <div className="space-y-2">
-            {Object.entries(typeBreakdown).map(([type, count]) => (
-              <MiniBar key={type} label={type} value={count} max={products.length} color={typeColors[type]?.split(' ')[0] || 'bg-gray-500'} />
-            ))}
-          </div>
-        </AnalyticsPanel>
-      </div>
-
       {/* Filters */}
-      <div className="mb-6">
-        <ProductsFilters
-          initialValues={{
-            search: search || '',
-            status: status || '',
-            productType: productType || '',
-            categoryId: categoryId || '',
-            sortBy: sortBy || '',
-            sortOrder: sortOrder || '',
-          }}
-          categoryOptions={categoryOptions}
-        />
-      </div>
+      <ProductsFilters
+        initialValues={{
+          categoryId: sp.categoryId || '',
+          status: sp.status || '',
+          isAvailable: sp.isAvailable || '',
+          minPrice: sp.minPrice || '',
+          maxPrice: sp.maxPrice || '',
+          completeness: sp.completeness || '',
+          attributeValues: sp.attributeValues || '',
+        }}
+      />
 
       {/* Products table */}
       <div className="rounded-lg border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>Зображення</TableHead>
+              <TableHead>Назва</TableHead>
+              <TableHead>Категорія</TableHead>
+              <TableHead>Ціна</TableHead>
+              <TableHead>Наявність</TableHead>
+              <TableHead>Статус</TableHead>
+              <TableHead>Заповнення</TableHead>
+              <TableHead className="text-right">Дії</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product: Product) => (
-              <TableRow key={product.id} className="hover:bg-muted/50">
-                <TableCell className="whitespace-nowrap">
-                  <div className="flex items-center gap-3">
+            {products.map((product) => {
+              const completeness = rowCompleteness(product);
+              return (
+                <TableRow key={product.id} className="hover:bg-muted/50">
+                  {/* Image */}
+                  <TableCell>
                     {product.images?.[0] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={product.images[0]}
                         alt={product.name}
-                        className="h-10 w-10 object-cover rounded"
+                        className="h-12 w-12 rounded-lg object-cover"
                       />
                     ) : (
-                      <div className="h-10 w-10 bg-muted rounded flex items-center justify-center text-muted-foreground text-xs">
-                        No img
-                      </div>
+                      <div className="h-12 w-12 rounded-lg bg-muted" />
                     )}
-                    <div>
-                      <div className="text-sm font-medium text-foreground">{product.name}</div>
-                      <div className="text-xs text-muted-foreground">{product.slug}</div>
+                  </TableCell>
+
+                  {/* Name */}
+                  <TableCell>
+                    <Link
+                      href={`/dashboard/products/${product.id}`}
+                      className="block max-w-[280px] font-medium text-foreground hover:underline"
+                    >
+                      <span className="line-clamp-2 break-words">{product.name}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {product.slug}
+                      </span>
+                    </Link>
+                  </TableCell>
+
+                  {/* Category */}
+                  <TableCell className="text-sm text-muted-foreground">
+                    {product.category?.name ?? '—'}
+                  </TableCell>
+
+                  {/* Price — salePrice active, regular struck-through when set */}
+                  <TableCell className="whitespace-nowrap text-sm text-foreground">
+                    {product.salePrice != null ? (
+                      <div className="flex items-baseline gap-2">
+                        <span className="font-medium text-green-600">
+                          {formatPrice(product.salePrice)}
+                        </span>
+                        <span className="text-xs text-muted-foreground line-through">
+                          {formatPrice(product.price)}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-medium">{formatPrice(product.price)}</span>
+                    )}
+                  </TableCell>
+
+                  {/* Availability — numeric quantity in track mode, else in/out */}
+                  <TableCell className="whitespace-nowrap">
+                    {product.trackQuantity ? (
+                      <Badge
+                        variant="secondary"
+                        className={
+                          product.quantity > 0
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        }
+                      >
+                        {product.quantity} шт
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="secondary"
+                        className={
+                          product.isAvailable
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                        }
+                      >
+                        {product.isAvailable ? 'В наявності' : 'Немає'}
+                      </Badge>
+                    )}
+                  </TableCell>
+
+                  {/* Status */}
+                  <TableCell className="whitespace-nowrap">
+                    <ProductStatusBadge status={product.status} />
+                  </TableCell>
+
+                  {/* Completeness */}
+                  <TableCell className="whitespace-nowrap">
+                    <CompletenessBar data={completeness} showPercent />
+                  </TableCell>
+
+                  {/* Actions */}
+                  <TableCell className="whitespace-nowrap text-right text-sm">
+                    <div className="flex items-center justify-end gap-3">
+                      <Link
+                        href={`/dashboard/products/${product.id}`}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        Редагувати
+                      </Link>
+                      <ProductRowActions productId={product.id} />
                     </div>
-                  </div>
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm text-muted-foreground font-mono">
-                  {product.sku}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <Badge
-                    variant="secondary"
-                    className={typeColors[product.productType] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'}
-                  >
-                    {product.productType}
-                  </Badge>
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm text-foreground">
-                  {formatCurrency(product.price)}
-                  {product.compareAtPrice && (
-                    <span className="ml-2 text-xs text-muted-foreground line-through">
-                      {formatCurrency(product.compareAtPrice)}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  <Badge
-                    variant="secondary"
-                    className={statusColors[product.status] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'}
-                  >
-                    {product.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
-                  {(product as any).category?.name || '-'}
-                </TableCell>
-                <TableCell className="whitespace-nowrap text-sm">
-                  <ProductRowActions productId={product.id} />
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
         {products.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            No products found.
+            Товарів не знайдено.
           </div>
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-6">
+        <div className="flex items-center justify-center gap-4">
           {page > 1 ? (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/dashboard/products?${buildQuery({ page: String(page - 1) })}`}>
-                Previous
+                Назад
               </Link>
             </Button>
           ) : (
             <Button variant="outline" size="sm" disabled>
-              Previous
+              Назад
             </Button>
           )}
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            Сторінка {page} з {totalPages}
           </span>
           {page < totalPages ? (
             <Button variant="outline" size="sm" asChild>
               <Link href={`/dashboard/products?${buildQuery({ page: String(page + 1) })}`}>
-                Next
+                Далі
               </Link>
             </Button>
           ) : (
             <Button variant="outline" size="sm" disabled>
-              Next
+              Далі
             </Button>
           )}
         </div>

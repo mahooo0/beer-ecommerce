@@ -6,9 +6,20 @@ export const filterQuerySchema = z.object({
   minPrice: z.coerce.number().optional(),
   maxPrice: z.coerce.number().optional(),
   brands: z.string().optional(), // comma-separated brand IDs
-  attributes: z.string().optional(), // comma-separated "key:value" pairs
+  attributes: z.string().optional(), // comma-separated "key:value" pairs (legacy JSONB)
+  // Normalized attribute-value filter: comma-separated AttributeValue ids.
+  // Matches products via the ProductAttributeValue junction.
+  attributeValues: z.string().optional(),
   availability: z.string().optional(), // comma-separated: "in_stock", "out_of_stock", "pre_order"
+  // Manual in/out-of-stock flag filter ("true"/"false").
+  isAvailable: z
+    .enum(['true', 'false'])
+    .optional()
+    .transform((v: 'true' | 'false' | undefined) => (v === undefined ? undefined : v === 'true')),
+  categoryId: z.string().optional(),
   categoryPath: z.string().optional(),
+  // In-memory completeness bucketing after fetch.
+  completenessFilter: z.enum(['complete', 'incomplete']).optional(),
   page: z.coerce.number().default(1),
   limit: z.coerce.number().default(20),
   sortBy: z.string().default('createdAt'),

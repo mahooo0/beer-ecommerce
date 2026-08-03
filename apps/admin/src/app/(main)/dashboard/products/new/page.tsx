@@ -11,46 +11,20 @@ export default async function NewProductPage() {
     redirect('/sign-in');
   }
 
-  const [categoriesRes, brandsRes, productsRes] = await Promise.all([
-    api.categories.getAll(token),
-    api.brands.getAll({ token }),
-    api.products.getAll({ token, limit: 100 }),
-  ]);
-
-  let optionGroups: any[] = [];
-  try {
-    const ogRes = await api.optionGroups.getAll(token);
-    optionGroups = ogRes.data || [];
-  } catch {
-    // Option groups endpoint may not exist yet
-  }
-
-  const categories = (categoriesRes.data || []).map((c: any) => ({
-    id: c.id,
-    name: c.name,
-    path: c.name,
-  }));
+  // The flat form only needs brands for the (optional) brand select. Categories
+  // are loaded client-side by CategoryPicker via react-query; attributes by the
+  // ProductAttributeFields hook.
+  const brandsRes = await api.brands.getAll({ token, limit: 200 });
 
   const brands = (brandsRes.data || []).map((b: any) => ({
     id: b.id,
     name: b.name,
   }));
 
-  const products = (productsRes.data || []).map((p: any) => ({
-    id: p.id,
-    name: p.name,
-    price: p.price,
-  }));
-
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Create Product</h1>
-      <ProductForm
-        categories={categories}
-        brands={brands}
-        optionGroups={optionGroups}
-        products={products}
-      />
+      <h1 className="mb-6 text-2xl font-bold">Створити товар</h1>
+      <ProductForm brands={brands} />
     </div>
   );
 }
