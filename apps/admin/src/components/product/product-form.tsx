@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import CategoryPicker from '@/components/CategoryPicker';
 import {
   Select,
   SelectContent,
@@ -306,21 +307,13 @@ export function ProductForm({
                 <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Category *
                 </label>
-                <Select
-                  value={form.watch('categoryId') || ''}
-                  onValueChange={(v) => form.setValue('categoryId', v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.path || category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <CategoryPicker
+                  value={form.watch('categoryId') || undefined}
+                  onChange={(id) =>
+                    form.setValue('categoryId', id ?? '', { shouldValidate: true })
+                  }
+                  placeholder="Select a category"
+                />
                 {form.formState.errors.categoryId && (
                   <p className="mt-1 text-sm text-destructive">
                     {String(form.formState.errors.categoryId.message)}

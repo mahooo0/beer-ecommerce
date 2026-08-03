@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import CategoryPicker from '@/components/CategoryPicker';
+import { slugify } from '@/lib/slugify';
 
 const categoryFormSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
@@ -67,26 +68,9 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
   // Auto-generate slug from name (only on create, and if slug hasn't been manually edited)
   useEffect(() => {
     if (!category && name && !slugManuallyEdited) {
-      const autoSlug = name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
-      setValue('slug', autoSlug);
+      setValue('slug', slugify(name));
     }
   }, [name, category, slugManuallyEdited, setValue]);
-
-  // Filter out current category and its descendants from parent options (for edit mode)
-  const getDescendantIds = (catId: string): string[] => {
-    const descendants = categories.filter((c) => c.parentId === catId);
-    return [
-      catId,
-      ...descendants.flatMap((d) => getDescendantIds(d.id)),
-    ];
-  };
-
-  const availableParents = category
-    ? categories.filter((c) => !getDescendantIds(category.id).includes(c.id))
-    : categories;
 
   const onSubmit = async (data: CategoryFormData) => {
     setIsLoading(true);
@@ -165,17 +149,14 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
         <Label htmlFor="parentId" className="mb-1">
           Parent Category
         </Label>
-        <Select value={watch('parentId') || 'none'} onValueChange={(v) => setValue('parentId', v === 'none' ? null : v)}>
-          <SelectTrigger className="w-full"><SelectValue placeholder="None (Root Category)" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">None (Root Category)</SelectItem>
-            {availableParents.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
-                {'\u2014'.repeat(cat.depth)} {cat.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CategoryPicker
+          value={watch('parentId') ?? null}
+          onChange={(id) => setValue('parentId', id, { shouldValidate: true })}
+          allowNone
+          noneLabel="None (Root Category)"
+          placeholder="None (Root Category)"
+          excludeSubtreeId={category?.id}
+        />
         {errors.parentId && (
           <p className="text-sm text-red-600 mt-1">{String(errors.parentId.message)}</p>
         )}

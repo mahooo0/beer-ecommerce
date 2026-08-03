@@ -1,12 +1,17 @@
 import { prisma } from '@repo/db';
+import slugifyFn from 'slugify';
 import { AppError } from '../../common/middleware/error-handler.js';
 
-// Helper: Generate unique slug from name
+// Base slug from a (possibly Cyrillic) name. Transliterates RU/UA → Latin via
+// the `slugify` package (e.g. "Пиво Світле" → "pivo-svitle") so Cyrillic names
+// don't collapse to an empty slug.
+function baseSlugify(name: string): string {
+  return (slugifyFn as any)(name, { lower: true, strict: true, trim: true }) || 'category';
+}
+
+// Helper: Generate unique slug from name (collision-checked against categories)
 async function generateUniqueSlug(name: string): Promise<string> {
-  const baseSlug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const baseSlug = baseSlugify(name);
 
   let slug = baseSlug;
   let counter = 2;
@@ -201,10 +206,7 @@ export class CategoryService {
     // Handle slug regeneration
     if (data.name && !data.slug) {
       // If name changed and slug wasn't explicitly provided
-      const oldSlugFromName = category.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '');
+      const oldSlugFromName = baseSlugify(category.name);
 
       if (category.slug === oldSlugFromName || category.slug.startsWith(oldSlugFromName + '-')) {
         // Auto-generated slug, regenerate it
