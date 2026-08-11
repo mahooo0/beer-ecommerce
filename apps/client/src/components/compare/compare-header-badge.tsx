@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { useCompareStore } from '@/stores/compare-store';
 
 export function CompareHeaderBadge() {
+  const { t } = useTranslation('misc');
   const [mounted, setMounted] = useState(false);
   const items = useCompareStore((s) => s.items);
 
@@ -17,7 +19,7 @@ export function CompareHeaderBadge() {
   return (
     <Link
       href="/compare"
-      aria-label={`Compare${count > 0 ? ` (${count} items)` : ''}`}
+      aria-label={count > 0 ? t('compare.badge.ariaCount', { n: count }) : t('compare.badge.aria')}
       className="relative flex items-center text-neutral-600 transition hover:text-neutral-900"
     >
       <svg

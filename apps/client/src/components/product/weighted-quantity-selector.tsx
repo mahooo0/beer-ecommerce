@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@/lib/utils';
 
 interface WeightedQuantitySelectorProps {
@@ -20,6 +21,7 @@ export function WeightedQuantitySelector({
   onWeightChange,
   onPriceChange,
 }: WeightedQuantitySelectorProps) {
+  const { t } = useTranslation('shop');
   const [weight, setWeight] = useState<number>(minWeight);
 
   const totalCents = Math.round(pricePerUnit * weight);
@@ -35,12 +37,12 @@ export function WeightedQuantitySelector({
     <div className="space-y-4">
       <div className="text-lg font-semibold text-gray-800">
         {formatPrice(pricePerUnit)}{' '}
-        <span className="text-base font-normal text-gray-500">per {unit}</span>
+        <span className="text-base font-normal text-gray-500">{t('weighted.perUnit', { unit })}</span>
       </div>
 
       <div className="space-y-2">
         <label className="block text-sm font-medium text-gray-700">
-          Quantity ({unit})
+          {t('weighted.quantity', { unit })}
         </label>
 
         <input
@@ -65,7 +67,7 @@ export function WeightedQuantitySelector({
       </div>
 
       <div className="rounded-lg bg-gray-50 p-3">
-        <span className="text-sm text-gray-500">Total price:</span>
+        <span className="text-sm text-gray-500">{t('weighted.totalPrice')}</span>
         <span className="ml-2 text-xl font-bold text-gray-900">
           {formatPrice(totalCents)}
         </span>

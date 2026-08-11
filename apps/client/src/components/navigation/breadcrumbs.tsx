@@ -1,12 +1,14 @@
 import React from 'react';
 import type { Category } from '@repo/types';
 import { api } from '@/lib/api';
+import { getServerT } from '@/lib/i18n/server';
 
 interface BreadcrumbsProps {
   categorySlug: string;
 }
 
 export async function Breadcrumbs({ categorySlug }: BreadcrumbsProps) {
+  const t = await getServerT('categories');
   let category: Category | null = null;
   let ancestors: Category[] = [];
 
@@ -47,7 +49,7 @@ export async function Breadcrumbs({ categorySlug }: BreadcrumbsProps) {
 
   // Build breadcrumb list items
   const breadcrumbItems = [
-    { position: 1, name: 'Home', url: siteUrl, isLink: true },
+    { position: 1, name: t('breadcrumbs.home'), url: siteUrl, isLink: true },
     ...ancestors.map((ancestor, index) => ({
       position: index + 2,
       name: ancestor.name,
@@ -80,7 +82,7 @@ export async function Breadcrumbs({ categorySlug }: BreadcrumbsProps) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <nav aria-label="Breadcrumb" className="mb-4">
+      <nav aria-label={t('breadcrumbs.ariaLabel')} className="mb-4">
         <ol className="flex items-center space-x-2 text-sm text-gray-500">
           {breadcrumbItems.map((item, index) => (
             <li key={item.position} className="flex items-center">

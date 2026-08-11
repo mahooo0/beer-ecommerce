@@ -12,26 +12,38 @@ datasource db {
 // ============================================================================
 
 model User {
-  id          String    @id @default(cuid())
-  clerkId     String    @unique
-  email       String    @unique
+  id          String       @id @default(cuid())
+  clerkId     String       @unique
+  email       String       @unique
   firstName   String
   lastName    String
-  role        Role      @default(CUSTOMER)
-  avatar      String?   // URL to user avatar
-  phone       String?
-  isActive    Boolean   @default(true)
+  role        Role         @default(CUSTOMER)
+  // Storefront segment. Kept separate from `role` so admin RBAC and the
+  // retail/wholesale distinction never collide.
+  customerType CustomerType @default(RETAIL)
+  companyName String?      // wholesale: "Nazwa firmy"
+  taxId       String?      // wholesale: NIP / tax id (optional)
+  avatar      String?      // URL to user avatar
+  phone       String?      // unverified, captured at sign-up; identifier lives on CustomerPhone
+  isActive    Boolean      @default(true)
   lastLoginAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   // Relations
   addresses Address[]
   reviews   Review[]
   wishlists Wishlist[]
 
+  // The phone number is the customer identifier that carries a discount. Many
+  // accounts (or guest checkouts) may resolve to the same CustomerPhone.
+  customerPhoneId String?
+  customerPhone   CustomerPhone? @relation(fields: [customerPhoneId], references: [id], onDelete: SetNull)
+
   @@index([clerkId])
   @@index([role])
+  @@index([customerType])
+  @@index([customerPhoneId])
   @@map("users")
 }
 
@@ -39,6 +51,30 @@ enum Role {
   CUSTOMER
   ADMIN
   SUPER_ADMIN
+}
+
+enum CustomerType {
+  RETAIL
+  WHOLESALE
+}
+
+// Phone-number-as-customer-identifier. The number (normalized) is the unique
+// key; a discount can be attached to it and is inherited by any account or
+// guest order that presents the same number. Phone is NOT verified via Clerk —
+// it is captured as plain data at sign-up / checkout.
+model CustomerPhone {
+  id            String        @id @default(cuid())
+  phone         String        @unique // normalized (E.164-ish)
+  // --- discount payload: created nullable now, populated in Phase 2 ---
+  discountType  DiscountType?
+  discountValue Int?          // percentage (15 = 15%) or cents, per discountType
+  note          String?       // admin note, e.g. why this number gets a discount
+  users         User[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([phone])
+  @@map("customer_phones")
 }
 
 // ============================================================================

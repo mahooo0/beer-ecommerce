@@ -3,18 +3,18 @@
 import { auth, clerkClient } from '@clerk/nextjs/server';
 import { prisma } from '@repo/db';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
+import { hasPermission, PERMISSIONS, type Permission } from '@repo/types/rbac';
 
 /**
- * Verify that the current user has admin privileges
+ * Verify that the current user holds a specific permission.
  * @returns The user's role
- * @throws Redirects to /unauthorized if user is not an admin
+ * @throws Error if the user lacks the permission
  */
-async function verifyAdmin() {
+async function verifyPermission(permission: Permission) {
   const { sessionClaims } = await auth();
-  const role = sessionClaims?.metadata?.role;
-  if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
-    redirect('/unauthorized');
+  const role = sessionClaims?.metadata?.role as string | undefined;
+  if (!hasPermission(role, permission)) {
+    throw new Error('Forbidden: you do not have permission to perform this action');
   }
   return role;
 }
@@ -23,7 +23,7 @@ async function verifyAdmin() {
  * Create a new user via Clerk Backend API and sync to local DB
  */
 export async function createUser(formData: FormData) {
-  await verifyAdmin();
+  await verifyPermission(PERMISSIONS.USERS_MANAGE);
 
   const firstName = formData.get('firstName') as string;
   const lastName = formData.get('lastName') as string;
@@ -46,9 +46,11 @@ export async function createUser(formData: FormData) {
     publicMetadata: { role },
   });
 
-  // Sync to local database
-  await prisma.user.create({
-    data: {
+  // Sync to local database (upsert to tolerate a racing Clerk webhook)
+  await prisma.user.upsert({
+    where: { clerkId: clerkUser.id },
+    update: { email, firstName, lastName, role: role as 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN' },
+    create: {
       clerkId: clerkUser.id,
       email,
       firstName,
@@ -65,7 +67,7 @@ export async function createUser(formData: FormData) {
  * Get paginated list of all users
  */
 export async function getUsers(page = 1, limit = 20) {
-  await verifyAdmin();
+  await verifyPermission(PERMISSIONS.USERS_VIEW);
 
   const skip = (page - 1) * limit;
 
@@ -99,13 +101,23 @@ export async function getUsers(page = 1, limit = 20) {
 }
 
 /**
- * Get detailed information about a specific user
+ * Get detailed information about a specific user (keyed by clerkId).
+ * Clerk is the source of truth; local DB rows are joined when present so this
+ * works even for users who haven't been synced to the DB yet.
  */
-export async function getUserDetail(userId: string) {
-  await verifyAdmin();
+export async function getUserDetail(clerkId: string) {
+  await verifyPermission(PERMISSIONS.USERS_VIEW);
+
+  const clerk = await clerkClient();
+  let clerkUser;
+  try {
+    clerkUser = await clerk.users.getUser(clerkId);
+  } catch {
+    return null;
+  }
 
   const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { clerkId },
     include: {
       addresses: true,
       _count: {
@@ -117,16 +129,33 @@ export async function getUserDetail(userId: string) {
     },
   });
 
-  if (!dbUser) {
-    return null;
-  }
-
-  // Get Clerk user for status info
-  const clerkUser = await (await clerkClient()).users.getUser(dbUser.clerkId);
+  const primaryEmail =
+    clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)
+      ?.emailAddress ||
+    clerkUser.emailAddresses[0]?.emailAddress ||
+    '';
 
   return {
-    ...dbUser,
+    id: clerkUser.id, // clerkId
+    clerkId: clerkUser.id,
+    email: primaryEmail,
+    firstName: clerkUser.firstName || dbUser?.firstName || '',
+    lastName: clerkUser.lastName || dbUser?.lastName || '',
+    role:
+      ((clerkUser.publicMetadata?.role as string) ||
+        dbUser?.role ||
+        'CUSTOMER') as 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN',
+    avatar: clerkUser.imageUrl || dbUser?.avatar || undefined,
+    phone: dbUser?.phone || clerkUser.phoneNumbers?.[0]?.phoneNumber || undefined,
+    isActive: dbUser ? dbUser.isActive : !clerkUser.banned,
     banned: clerkUser.banned,
+    createdAt: new Date(clerkUser.createdAt),
+    lastLoginAt: clerkUser.lastActiveAt
+      ? new Date(clerkUser.lastActiveAt)
+      : dbUser?.lastLoginAt ?? null,
+    addresses: dbUser?.addresses ?? [],
+    _count: dbUser?._count ?? { reviews: 0, wishlists: 0 },
+    inDb: !!dbUser,
   };
 }
 
@@ -134,35 +163,41 @@ export async function getUserDetail(userId: string) {
  * Update a user's role
  */
 export async function setUserRole(
-  userId: string,
+  clerkId: string,
   newRole: 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN'
 ) {
-  await verifyAdmin();
+  await verifyPermission(PERMISSIONS.ROLES_MANAGE);
 
-  // Get database user to get clerkId
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { clerkId: true },
-  });
+  const clerk = await clerkClient();
 
-  if (!dbUser) {
-    throw new Error('User not found');
-  }
-
-  // Update Clerk metadata
-  await (await clerkClient()).users.updateUserMetadata(dbUser.clerkId, {
+  // Update Clerk metadata (the source of truth for the session-claim role)
+  await clerk.users.updateUserMetadata(clerkId, {
     publicMetadata: { role: newRole },
   });
 
-  // Update local database for immediate consistency
-  await prisma.user.update({
-    where: { id: userId },
-    data: { role: newRole },
+  // Upsert the local DB row so the list/detail stay consistent even if the
+  // user hasn't been synced by the webhook yet.
+  const clerkUser = await clerk.users.getUser(clerkId);
+  const email =
+    clerkUser.emailAddresses.find((e) => e.id === clerkUser.primaryEmailAddressId)
+      ?.emailAddress ||
+    clerkUser.emailAddresses[0]?.emailAddress ||
+    '';
+  await prisma.user.upsert({
+    where: { clerkId },
+    update: { role: newRole },
+    create: {
+      clerkId,
+      email,
+      firstName: clerkUser.firstName || '',
+      lastName: clerkUser.lastName || '',
+      role: newRole,
+    },
   });
 
   // Revalidate pages
   revalidatePath('/dashboard/users');
-  revalidatePath(`/dashboard/users/${userId}`);
+  revalidatePath(`/dashboard/users/${clerkId}`);
 
   return { success: true };
 }
@@ -170,35 +205,27 @@ export async function setUserRole(
 /**
  * Toggle user account status (ban/unban)
  */
-export async function toggleUserStatus(userId: string, shouldBan: boolean) {
-  await verifyAdmin();
+export async function toggleUserStatus(clerkId: string, shouldBan: boolean) {
+  await verifyPermission(PERMISSIONS.USERS_MANAGE);
 
-  // Get database user to get clerkId
-  const dbUser = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { clerkId: true },
-  });
-
-  if (!dbUser) {
-    throw new Error('User not found');
-  }
+  const clerk = await clerkClient();
 
   // Ban or unban in Clerk
   if (shouldBan) {
-    await (await clerkClient()).users.banUser(dbUser.clerkId);
+    await clerk.users.banUser(clerkId);
   } else {
-    await (await clerkClient()).users.unbanUser(dbUser.clerkId);
+    await clerk.users.unbanUser(clerkId);
   }
 
-  // Update local database
-  await prisma.user.update({
-    where: { id: userId },
+  // Mirror to the local DB if the user exists there (no-op otherwise).
+  await prisma.user.updateMany({
+    where: { clerkId },
     data: { isActive: !shouldBan },
   });
 
   // Revalidate pages
   revalidatePath('/dashboard/users');
-  revalidatePath(`/dashboard/users/${userId}`);
+  revalidatePath(`/dashboard/users/${clerkId}`);
 
   return { success: true };
 }

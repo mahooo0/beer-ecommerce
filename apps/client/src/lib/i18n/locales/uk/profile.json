@@ -1,0 +1,125 @@
+{
+  "sidebar": {
+    "badgeWholesale": "Постачальник",
+    "badgeRetail": "Роздрібний клієнт",
+    "personalData": "Особисті дані",
+    "addresses": "Ваші адреси",
+    "cenniki": "Прайс-листи",
+    "orders": "Історія замовлень",
+    "wishlist": "Обране",
+    "discounts": "Ваші знижки",
+    "logout": "Вийти з облікового запису"
+  },
+  "account": {
+    "saveError": "Не вдалося зберегти.",
+    "yourAccount": "Ваш обліковий запис",
+    "wholesaleBadge": "Профіль постачальника",
+    "retailBadge": "Роздрібний клієнт",
+    "accountManager": "Менеджер облікового запису",
+    "loading": "Завантаження…",
+    "personalDataTitle": "Особисті дані",
+    "firstName": "Ім'я",
+    "lastName": "Прізвище",
+    "email": "Email",
+    "phone": "Телефон",
+    "phonePlaceholder": "+48 600 000 000",
+    "phoneHint": "Номер є ідентифікатором клієнта та переносить ваші знижки.",
+    "saving": "Збереження…",
+    "saveButton": "Зберегти",
+    "saved": "Збережено ✓",
+    "accountTypeTitle": "Тип облікового запису",
+    "accountTypeDesc": "Виберіть, чи купуєте вроздріб, чи оптом.",
+    "retailOption": "Роздрібний клієнт",
+    "wholesaleOption": "Постачальник",
+    "companyName": "Назва компанії",
+    "taxId": "NIP (необов'язково)"
+  },
+  "addresses": {
+    "title": "Ваші адреси",
+    "add": "Додати адресу",
+    "edit": "Редагувати",
+    "remove": "Видалити"
+  },
+  "cenniki": {
+    "title": "Прайс-листи",
+    "searchPlaceholder": "пошук за датою",
+    "item": "Прайс-лист {{date}}",
+    "previewAria": "Перегляд прайс-листа",
+    "downloadAria": "Завантажити прайс-лист",
+    "empty": "Немає прайс-листів, що відповідають пошуку."
+  },
+  "znizki": {
+    "currentDiscount": "Ваша знижка зараз становить 3%",
+    "howItWorks": "Як працюють знижки?",
+    "tierDesc": "для щомісячних покупок на суму {{amount}} PLN або більше",
+    "tiers": {
+      "small": { "title": "Малий опт" },
+      "medium": { "title": "Середній опт" },
+      "large": { "title": "Великий опт" }
+    },
+    "intro": "Lorem ipsum dolor sit amet consectetur. Massa dolor id purus hendrerit tellus quis turpis ridiculus ut. Velit rutrum sed eu lacus vitae sodales proin eleifend morbi. Erat pretium neque molestie vitae massa. Non ultricies dui odio risus. Pellentesque urna diam accumsan dui amet…",
+    "para1": "Lorem ipsum dolor sit amet consectetur. Massa dolor id purus hendrerit tellus quis turpis ridiculus ut. Velit rutrum sed eu lacus vitae sodales proin eleifend morbi. Erat pretium neque molestie vitae massa. Non ultricies dui odio risus. Pellentesque urna diam accumsan dui amet.",
+    "para2": "A rhoncus lectus proin semper semper lectus ornare vestibulum odio. Praesent eu habitasse sodales orci. Auctor congue a mauris leo nibh hendrerit sit risus. At nisl ut aliquet eget massa fringilla eleifend sit. Massa molestie nec nunc risus faucibus in. Aliquet risus consectetur proin sapien a mauris magna. Nulla nec ornare netus commodo ut vitae blandit lectus. Tristique tortor elementum ut dolor tempus eu at. Suspendisse sit viverra risus eget nunc elementum eu rhoncus tellus. Interdum feugiat pretium ultrices urna ultrices sed. Nulla sit mauris hendrerit tortor et quis est quam cras. Aliquam morbi pharetra vel pulvinar sed augue aliquet.",
+    "para3": "Eget arcu cras blandit ut malesuada tortor. Mi gravida elementum et quis scelerisque nulla ut in at. Eget nulla egestas non curabitur commodo vel tortor lacinia ultricies. Aenean sollicitudin dui urna ut bibendum placerat."
+  },
+  "orders": {
+    "title": "Історія замовлень",
+    "discountBadge": "Знижка у розмірі 3%",
+    "orderNumber": "Замовлення № {{id}}, {{date}}",
+    "amount": "Сума",
+    "pieces": "шт.",
+    "shipping": "Доставка",
+    "total": "Разом",
+    "repeatOrder": "повторити замовлення",
+    "saveResult": "зберегти результат",
+    "status": {
+      "delivered": "Доставлено",
+      "inProgress": "В процесі",
+      "cancelled": "Скасовано"
+    }
+  },
+  "ordersDetail": {
+    "loadError": "Не вдалося завантажити замовлення",
+    "notFound": "Замовлення не знайдено",
+    "backToOrders": "Назад до замовлень",
+    "orderTitle": "Замовлення {{number}}",
+    "shippingAddress": "Адреса доставки",
+    "phoneLabel": "Телефон:",
+    "orderItems": "Позиції замовлення",
+    "skuLabel": "SKU: {{sku}}",
+    "quantityLabel": "Кількість: {{quantity}}",
+    "each": "за штуку",
+    "orderSummary": "Підсумок замовлення",
+    "subtotal": "Проміжна сума",
+    "shipping": "Доставка",
+    "tax": "Податок",
+    "discount": "Знижка",
+    "total": "Разом",
+    "orderHistory": "Історія замовлення",
+    "from": "з",
+    "status": {
+      "PENDING": "Очікує",
+      "PAID": "Оплачено",
+      "PROCESSING": "В обробці",
+      "SHIPPED": "Відправлено",
+      "DELIVERED": "Доставлено",
+      "CANCELLED": "Скасовано",
+      "RETURNED": "Повернено",
+      "REFUND_REQUESTED": "Запит на повернення коштів"
+    }
+  },
+  "tracking": {
+    "title": "Інформація про відстеження",
+    "status": "Статус",
+    "carrier": "Перевізник",
+    "trackingNumber": "Номер відстеження",
+    "trackPackage": "Відстежити посилку",
+    "shipped": "Відправлено",
+    "estimatedDelivery": "Очікувана доставка"
+  },
+  "actions": {
+    "unauthorized": "Не авторизовано",
+    "firstNameRequired": "Ім'я є обов'язковим",
+    "invalidPhone": "Недійсний номер телефону"
+  }
+}

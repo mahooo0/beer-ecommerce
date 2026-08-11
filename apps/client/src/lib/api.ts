@@ -29,6 +29,7 @@ interface GetProductsParams {
   status?: string;
   categoryId?: string;
   categoryPath?: string;
+  search?: string;
 }
 
 export interface FilterProductsParams {
@@ -75,7 +76,7 @@ export interface FacetsResponse {
 export const api = {
   products: {
     getAll: (params: GetProductsParams = {}) => {
-      const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status = 'ACTIVE', categoryId, categoryPath } = params;
+      const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', status = 'ACTIVE', categoryId, categoryPath, search } = params;
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
@@ -85,6 +86,7 @@ export const api = {
       });
       if (categoryId) queryParams.set('categoryId', categoryId);
       if (categoryPath) queryParams.set('categoryPath', categoryPath);
+      if (search) queryParams.set('search', search);
       return fetcher<PaginatedResponse<Product>>(`/products?${queryParams.toString()}`);
     },
     getById: (id: string) => fetcher<ApiResponse<Product>>(`/products/${id}`),

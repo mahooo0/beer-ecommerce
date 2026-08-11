@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import type { Product } from '@repo/types';
 import { useCartStore } from '../../stores/cart-store';
 
@@ -30,6 +31,7 @@ export function FrequentlyBoughtTogether({
   products,
   currentProduct,
 }: FrequentlyBoughtTogetherProps) {
+  const { t } = useTranslation('shop');
   const [checkedIds, setCheckedIds] = useState<Set<string>>(
     () => new Set(products.map((p) => p.id)),
   );
@@ -82,7 +84,7 @@ export function FrequentlyBoughtTogether({
 
   return (
     <section className="mt-8 border border-border-secondary rounded-lg p-6">
-      <h2 className="text-xl font-semibold text-primary mb-4">Frequently Bought Together</h2>
+      <h2 className="text-xl font-semibold text-primary mb-4">{t('fbt.title')}</h2>
 
       <div className="flex flex-wrap items-center gap-3 mb-6">
         {/* Current product (always shown, not checkable) */}
@@ -146,7 +148,7 @@ export function FrequentlyBoughtTogether({
                     checked={isChecked}
                     onChange={() => toggleProduct(product.id)}
                     className="absolute top-0.5 right-0.5 w-4 h-4 accent-brand-solid"
-                    aria-label={`Include ${product.name}`}
+                    aria-label={t('fbt.includeAria', { name: product.name })}
                   />
                 </label>
                 <p className="text-xs text-secondary text-center max-w-[80px] line-clamp-2">
@@ -164,12 +166,12 @@ export function FrequentlyBoughtTogether({
           onClick={handleAddAll}
           className="bg-brand-solid hover:bg-brand-solid_hover text-white font-medium py-2 px-5 rounded-lg transition-colors duration-100 ease-linear"
         >
-          Add {totalItems} {totalItems === 1 ? 'item' : 'items'} &mdash; {formatPrice(totalPrice)}
+          {t('fbt.addButton', { count: totalItems, price: formatPrice(totalPrice) })}
         </button>
         <p className="text-sm text-tertiary">
           {checkedProducts.length > 0
-            ? `Total price for ${totalItems} items`
-            : 'Only current item will be added'}
+            ? t('fbt.totalForItems', { count: totalItems })
+            : t('fbt.onlyCurrent')}
         </p>
       </div>
     </section>

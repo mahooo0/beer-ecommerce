@@ -1,0 +1,143 @@
+{
+  "addToCart": {
+    "quantity": "Ilość",
+    "decreaseQuantity": "Zmniejsz ilość",
+    "increaseQuantity": "Zwiększ ilość",
+    "outOfStock": "Brak w magazynie",
+    "added": "Dodano do koszyka",
+    "button": "Dodaj do koszyka"
+  },
+  "bundle": {
+    "included": "Co zawiera zestaw",
+    "noImage": "Brak zdjęcia",
+    "ifSeparately": "Kupując osobno:",
+    "bundlePrice": "Cena zestawu:",
+    "youSave": "Oszczędzasz:"
+  },
+  "compare": {
+    "add": "Dodaj do porównania",
+    "remove": "Usuń z porównania",
+    "label": "Porównaj",
+    "ariaCompareName": "Porównaj {{name}}"
+  },
+  "digitalProduct": {
+    "instantDownload": "Natychmiastowe pobranie po zakupie",
+    "noShipping": "Nie wymaga wysyłki",
+    "fileTypeGeneric": "Plik {{format}}",
+    "maxDownloads_one": "Do {{count}} pobrania",
+    "maxDownloads_few": "Do {{count}} pobrań",
+    "maxDownloads_many": "Do {{count}} pobrań",
+    "maxDownloads_other": "Do {{count}} pobrań",
+    "expiry_one": "Dostęp wygasa po {{count}} dniu",
+    "expiry_few": "Dostęp wygasa po {{count}} dniach",
+    "expiry_many": "Dostęp wygasa po {{count}} dniach",
+    "expiry_other": "Dostęp wygasa po {{count}} dniach",
+    "fileType": {
+      "pdf": "Dokument PDF",
+      "doc": "Dokument Word",
+      "docx": "Dokument Word",
+      "txt": "Plik tekstowy",
+      "zip": "Archiwum ZIP",
+      "rar": "Archiwum RAR",
+      "7z": "Archiwum 7-Zip",
+      "tar": "Archiwum TAR",
+      "gz": "Archiwum GZip",
+      "mp3": "Audio MP3",
+      "wav": "Audio WAV",
+      "flac": "Audio FLAC",
+      "aac": "Audio AAC",
+      "mp4": "Wideo MP4",
+      "mov": "Wideo QuickTime",
+      "avi": "Wideo AVI",
+      "mkv": "Wideo MKV",
+      "jpg": "Obraz JPEG",
+      "jpeg": "Obraz JPEG",
+      "png": "Obraz PNG",
+      "gif": "Obraz GIF",
+      "webp": "Obraz WebP",
+      "svg": "Obraz SVG"
+    }
+  },
+  "fbt": {
+    "title": "Często kupowane razem",
+    "addButton_one": "Dodaj {{count}} produkt — {{price}}",
+    "addButton_few": "Dodaj {{count}} produkty — {{price}}",
+    "addButton_many": "Dodaj {{count}} produktów — {{price}}",
+    "addButton_other": "Dodaj {{count}} produktów — {{price}}",
+    "totalForItems_one": "Łączna cena za {{count}} produkt",
+    "totalForItems_few": "Łączna cena za {{count}} produkty",
+    "totalForItems_many": "Łączna cena za {{count}} produktów",
+    "totalForItems_other": "Łączna cena za {{count}} produktów",
+    "onlyCurrent": "Zostanie dodany tylko bieżący produkt",
+    "includeAria": "Dołącz {{name}}"
+  },
+  "pagination": {
+    "prev": "Wstecz",
+    "next": "Dalej"
+  },
+  "productCard": {
+    "new": "Nowość",
+    "added": "Dodano",
+    "addToCart": "Dodaj do koszyka",
+    "buyNow": "Kup teraz",
+    "redirecting": "Przekierowanie...",
+    "alternateView": "{{name}} - widok alternatywny"
+  },
+  "productGrid": {
+    "empty": "Nie znaleziono produktów",
+    "emptyHint": "Spróbuj zmienić filtry lub sprawdź później."
+  },
+  "gallery": {
+    "imageAlt": "{{name}} - zdjęcie {{index}}",
+    "openFullscreen": "Otwórz pełny ekran",
+    "viewImage": "Zobacz zdjęcie {{index}}",
+    "thumbnailAlt": "{{name}} miniatura {{index}}",
+    "goToImage": "Przejdź do zdjęcia {{index}}"
+  },
+  "specs": {
+    "title": "Specyfikacja"
+  },
+  "related": {
+    "title": "Podobne produkty",
+    "scrollLeft": "Przewiń w lewo",
+    "scrollRight": "Przewiń w prawo"
+  },
+  "reviews": {
+    "title": "Opinie klientów",
+    "count_one": "{{count}} opinia",
+    "count_few": "{{count}} opinie",
+    "count_many": "{{count}} opinii",
+    "count_other": "{{count}} opinii",
+    "starRating_one": "{{count}} gwiazdka",
+    "starRating_few": "{{count}} gwiazdki",
+    "starRating_many": "{{count}} gwiazdek",
+    "starRating_other": "{{count}} gwiazdek",
+    "empty": "Brak opinii. Bądź pierwszym, który oceni ten produkt."
+  },
+  "sort": {
+    "label": "Sortuj",
+    "newest": "Najnowsze",
+    "priceLowHigh": "Cena: od najniższej",
+    "priceHighLow": "Cena: od najwyższej",
+    "nameAsc": "Nazwa: A-Z",
+    "nameDesc": "Nazwa: Z-A"
+  },
+  "stock": {
+    "outOfStock": "Brak w magazynie",
+    "inStock": "Dostępny",
+    "lowStock": "Mało w magazynie ({{count}} szt.)"
+  },
+  "viewToggle": {
+    "grid": "Widok siatki",
+    "list": "Widok listy"
+  },
+  "weighted": {
+    "perUnit": "za {{unit}}",
+    "quantity": "Ilość ({{unit}})",
+    "totalPrice": "Cena łączna:"
+  },
+  "wishlist": {
+    "add": "Dodaj do listy życzeń",
+    "remove": "Usuń z listy życzeń"
+  }
+}

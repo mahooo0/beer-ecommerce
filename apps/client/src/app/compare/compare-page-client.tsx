@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { useCompareStore } from '@/stores/compare-store';
 import { api } from '@/lib/api';
 import type { Product } from '@repo/types';
@@ -85,6 +86,7 @@ function CategoryCompareTable({
   group: CategoryGroup;
   onRemove: (productId: string) => void;
 }) {
+  const { t } = useTranslation('misc');
   const { products, attributes } = group;
 
   // Build display name map from category attributes
@@ -129,7 +131,7 @@ function CategoryCompareTable({
         <thead>
           <tr className="bg-secondary_subtle">
             <th className="sticky left-0 z-10 bg-secondary_subtle min-w-[180px] border-b border-border-secondary p-3 text-left text-xs font-semibold text-tertiary uppercase tracking-wider">
-              Characteristics
+              {t('compare.characteristics')}
             </th>
             {products.map((product) => (
               <td
@@ -148,7 +150,7 @@ function CategoryCompareTable({
                       />
                     ) : (
                       <div className="w-[140px] h-[140px] bg-secondary_subtle rounded-lg flex items-center justify-center text-quaternary text-xs mx-auto">
-                        No image
+                        {t('compare.noImage')}
                       </div>
                     )}
                   </Link>
@@ -165,12 +167,12 @@ function CategoryCompareTable({
                     type="button"
                     onClick={() => onRemove(product.id)}
                     className="flex items-center gap-1 text-xs text-quaternary hover:text-error-primary transition-colors"
-                    aria-label={`Remove ${product.name}`}
+                    aria-label={t('compare.removeAria', { name: product.name })}
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Remove
+                    {t('compare.remove')}
                   </button>
                 </div>
               </td>
@@ -180,41 +182,41 @@ function CategoryCompareTable({
         <tbody>
           {/* Fixed rows */}
           <CompareRow
-            label="Price"
+            label={t('compare.price')}
             values={products.map((p) => formatPrice(p.price))}
           />
           <CompareRow
-            label="Sale Price"
+            label={t('compare.salePrice')}
             values={products.map((p) =>
               p.compareAtPrice ? formatPrice(p.compareAtPrice) : '-',
             )}
           />
           <CompareRow
-            label="Brand"
+            label={t('compare.brand')}
             values={products.map((p) => p.brand?.name ?? '-')}
           />
           <CompareRow
-            label="SKU"
+            label={t('compare.sku')}
             values={products.map((p) => p.sku ?? '-')}
           />
           <CompareRow
-            label="Product Type"
+            label={t('compare.productType')}
             values={products.map((p) =>
               (p.productType ?? '-').toLowerCase().replace(/_/g, ' '),
             )}
           />
           <CompareRow
-            label="Stock"
+            label={t('compare.stock')}
             values={products.map((p) => {
               const stock = totalStock(p);
-              return stock > 0 ? `${stock} in stock` : 'Out of stock';
+              return stock > 0 ? t('compare.inStock', { n: stock }) : t('compare.outOfStock');
             })}
           />
           <CompareRow
-            label="Tags"
+            label={t('compare.tags')}
             values={products.map((p) =>
               p.tags && p.tags.length > 0
-                ? p.tags.map((t) => t.tag.name).join(', ')
+                ? p.tags.map((tag) => tag.tag.name).join(', ')
                 : '-',
             )}
           />
@@ -226,7 +228,7 @@ function CategoryCompareTable({
                 colSpan={products.length + 1}
                 className="bg-secondary_subtle p-2 text-xs font-semibold text-tertiary uppercase tracking-wider border-b border-border-secondary"
               >
-                Specifications
+                {t('compare.specifications')}
               </td>
             </tr>
           )}
@@ -252,6 +254,7 @@ function CategoryCompareTable({
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
 export function ComparePageClient() {
+  const { t } = useTranslation('misc');
   const items = useCompareStore((s) => s.items);
   const removeItem = useCompareStore((s) => s.removeItem);
   const [products, setProducts] = useState<CompareProduct[]>([]);
@@ -352,16 +355,16 @@ export function ComparePageClient() {
           </svg>
         </div>
         <h2 className="text-2xl font-semibold text-primary mb-2">
-          No products selected for comparison
+          {t('compare.empty.title')}
         </h2>
         <p className="text-tertiary mb-6">
-          Browse products and use the compare checkbox to select items
+          {t('compare.empty.subtitle')}
         </p>
         <Link
           href="/products"
           className="inline-block bg-primary-solid text-white px-6 py-3 rounded-lg hover:bg-primary-solid_hover transition-colors"
         >
-          Browse Products
+          {t('compare.empty.browse')}
         </Link>
       </div>
     );
@@ -372,13 +375,13 @@ export function ComparePageClient() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-primary">
-          Compare Products
+          {t('compare.title')}
           <span className="text-quaternary text-lg font-normal ml-2">
             ({products.length})
           </span>
         </h1>
         <Link href="/products" className="text-sm text-tertiary hover:text-secondary underline">
-          Continue Shopping
+          {t('compare.continueShopping')}
         </Link>
       </div>
 
@@ -408,7 +411,7 @@ export function ComparePageClient() {
       {/* Single category note (when only one category) */}
       {categoryGroups.length === 1 && (
         <p className="text-sm text-tertiary mb-4">
-          Category: <span className="font-medium text-secondary">{categoryGroups[0]!.categoryName}</span>
+          {t('compare.categoryLabel')} <span className="font-medium text-secondary">{categoryGroups[0]!.categoryName}</span>
         </p>
       )}
 
@@ -418,10 +421,10 @@ export function ComparePageClient() {
       ) : activeGroup && activeGroup.products.length === 1 ? (
         <div className="rounded-lg border border-border-secondary p-8 text-center">
           <p className="text-tertiary mb-2">
-            Only 1 product in <span className="font-medium">{activeGroup.categoryName}</span>.
+            {t('compare.onlyOne', { category: activeGroup.categoryName })}
           </p>
           <p className="text-sm text-quaternary">
-            Add another product from this category to compare.
+            {t('compare.addAnother')}
           </p>
           {/* Still show the single product */}
           {(() => {
@@ -452,7 +455,7 @@ export function ComparePageClient() {
         </div>
       ) : (
         <div className="rounded-lg border border-border-secondary p-8 text-center text-tertiary">
-          Select a category above to compare products.
+          {t('compare.selectCategory')}
         </div>
       )}
     </div>

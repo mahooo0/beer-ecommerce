@@ -1,11 +1,15 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 interface PriceDropBadgeProps {
   priceAtAdd: number; // cents
   currentPrice: number; // cents
 }
 
 export function PriceDropBadge({ priceAtAdd, currentPrice }: PriceDropBadgeProps) {
+  const { t } = useTranslation('misc');
+
   if (currentPrice >= priceAtAdd) return null;
 
   const savingsCents = priceAtAdd - currentPrice;
@@ -13,7 +17,7 @@ export function PriceDropBadge({ priceAtAdd, currentPrice }: PriceDropBadgeProps
 
   return (
     <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">
-      Price dropped! Save ${savingsDollars}
+      {t('wishlist.priceDropBadge', { amount: savingsDollars })}
     </span>
   );
 }

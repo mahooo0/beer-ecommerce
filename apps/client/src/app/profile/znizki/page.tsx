@@ -3,10 +3,12 @@ import { ProfileSidebar } from "@/components/taranka/profile-sidebar";
 import { ProfileZnizki } from "@/components/taranka/profile-znizki";
 import { ContactForm } from "@/components/taranka/contact-form";
 import { TarankaFooter } from "@/components/taranka/footer";
+import { getServerT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Twoje zniżki | Taranka",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getServerT("profile");
+  return { title: `${t("sidebar.discounts")} | Taranka` };
+}
 
 export default function ZnizkiPage() {
   return (

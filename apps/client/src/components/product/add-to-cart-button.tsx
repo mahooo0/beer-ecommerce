@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCartStore } from '@/stores/cart-store';
 
 interface AddToCartButtonProps {
@@ -26,6 +27,7 @@ export function AddToCartButton({
   productType,
   weight,
 }: AddToCartButtonProps) {
+  const { t } = useTranslation('shop');
   const addItem = useCartStore((state) => state.addItem);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -72,14 +74,14 @@ export function AddToCartButton({
       {/* Quantity selector */}
       {!isWeighted && (
         <div className="flex items-center gap-3">
-          <span className="text-xs font-medium tracking-wider text-neutral-500 uppercase">Quantity</span>
+          <span className="text-xs font-medium tracking-wider text-neutral-500 uppercase">{t('addToCart.quantity')}</span>
           <div className="flex items-center border border-neutral-300">
             <button
               type="button"
               onClick={handleDecrement}
               disabled={quantity <= 1 || isOutOfStock}
               className="px-3 py-2 text-sm text-neutral-600 transition hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              aria-label="Decrease quantity"
+              aria-label={t('addToCart.decreaseQuantity')}
             >
               -
             </button>
@@ -91,14 +93,14 @@ export function AddToCartButton({
               max={maxQuantity}
               disabled={isOutOfStock}
               className="w-12 border-x border-neutral-300 bg-transparent py-2 text-center text-sm focus:outline-none disabled:bg-neutral-50 disabled:text-neutral-300"
-              aria-label="Quantity"
+              aria-label={t('addToCart.quantity')}
             />
             <button
               type="button"
               onClick={handleIncrement}
               disabled={quantity >= maxQuantity || isOutOfStock}
               className="px-3 py-2 text-sm text-neutral-600 transition hover:bg-neutral-50 disabled:opacity-40 disabled:cursor-not-allowed"
-              aria-label="Increase quantity"
+              aria-label={t('addToCart.increaseQuantity')}
             >
               +
             </button>
@@ -119,7 +121,7 @@ export function AddToCartButton({
               : 'bg-neutral-900 text-white hover:bg-neutral-800'
         }`}
       >
-        {isOutOfStock ? 'Out of Stock' : added ? 'Added to Cart' : 'Add to Cart'}
+        {isOutOfStock ? t('addToCart.outOfStock') : added ? t('addToCart.added') : t('addToCart.button')}
       </button>
     </div>
   );

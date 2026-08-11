@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCompareStore } from '../../stores/compare-store';
 
 interface CompareCheckboxProps {
@@ -11,6 +12,7 @@ interface CompareCheckboxProps {
 }
 
 export function CompareCheckbox({ productId, name, imageUrl, slug }: CompareCheckboxProps) {
+  const { t } = useTranslation('shop');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -32,16 +34,16 @@ export function CompareCheckbox({ productId, name, imageUrl, slug }: CompareChec
     <label
       onClick={handleClick}
       className="flex items-center gap-1 bg-primary bg-opacity-80 hover:bg-opacity-100 rounded px-1.5 py-1 shadow-sm cursor-pointer select-none transition-all duration-200"
-      title="Add to compare"
+      title={t('compare.add')}
     >
       <input
         type="checkbox"
         checked={isChecked}
         onChange={handleChange}
         className="w-3 h-3 accent-brand-solid cursor-pointer"
-        aria-label={`Compare ${name}`}
+        aria-label={t('compare.ariaCompareName', { name })}
       />
-      <span className="text-xs text-tertiary font-medium">Compare</span>
+      <span className="text-xs text-tertiary font-medium">{t('compare.label')}</span>
     </label>
   );
 }

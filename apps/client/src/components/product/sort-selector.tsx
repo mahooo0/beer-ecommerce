@@ -1,19 +1,20 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 interface SortOption {
-  label: string;
+  labelKey: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';
 }
 
 const sortOptions: SortOption[] = [
-  { label: 'Newest', sortBy: 'createdAt', sortOrder: 'desc' },
-  { label: 'Price: Low to High', sortBy: 'price', sortOrder: 'asc' },
-  { label: 'Price: High to Low', sortBy: 'price', sortOrder: 'desc' },
-  { label: 'Name: A-Z', sortBy: 'name', sortOrder: 'asc' },
-  { label: 'Name: Z-A', sortBy: 'name', sortOrder: 'desc' },
+  { labelKey: 'sort.newest', sortBy: 'createdAt', sortOrder: 'desc' },
+  { labelKey: 'sort.priceLowHigh', sortBy: 'price', sortOrder: 'asc' },
+  { labelKey: 'sort.priceHighLow', sortBy: 'price', sortOrder: 'desc' },
+  { labelKey: 'sort.nameAsc', sortBy: 'name', sortOrder: 'asc' },
+  { labelKey: 'sort.nameDesc', sortBy: 'name', sortOrder: 'desc' },
 ];
 
 interface SortSelectorProps {
@@ -22,6 +23,7 @@ interface SortSelectorProps {
 }
 
 export function SortSelector({ currentSort = 'createdAt', currentOrder = 'desc' }: SortSelectorProps) {
+  const { t } = useTranslation('shop');
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -41,7 +43,7 @@ export function SortSelector({ currentSort = 'createdAt', currentOrder = 'desc' 
   return (
     <div className="flex items-center gap-3">
       <label htmlFor="sort" className="text-xs font-medium tracking-wider text-neutral-400 uppercase">
-        Sort
+        {t('sort.label')}
       </label>
       <select
         id="sort"
@@ -51,7 +53,7 @@ export function SortSelector({ currentSort = 'createdAt', currentOrder = 'desc' 
       >
         {sortOptions.map((option) => (
           <option key={`${option.sortBy}-${option.sortOrder}`} value={`${option.sortBy}-${option.sortOrder}`}>
-            {option.label}
+            {t(option.labelKey)}
           </option>
         ))}
       </select>

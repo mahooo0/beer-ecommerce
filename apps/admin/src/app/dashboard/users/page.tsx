@@ -3,7 +3,9 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { useAuth } from '@clerk/nextjs';
+import { useAuth, useUser } from '@clerk/nextjs';
+import { hasPermission, PERMISSIONS } from '@repo/types/rbac';
+import { CreateUserButton } from './create-user-button';
 import {
   Table,
   TableHeader,
@@ -49,6 +51,11 @@ export default function UsersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { getToken } = useAuth();
+  const { user } = useUser();
+  const canManageUsers = hasPermission(
+    user?.publicMetadata?.role as string | undefined,
+    PERMISSIONS.USERS_MANAGE
+  );
   const page = Number(searchParams.get('page')) || 1;
 
   const [users, setUsers] = useState<User[]>([]);
@@ -140,6 +147,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Users</h1>
+        {canManageUsers && <CreateUserButton onCreated={fetchUsers} />}
       </div>
 
       {/* Analytics */}

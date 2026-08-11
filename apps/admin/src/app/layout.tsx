@@ -18,6 +18,10 @@ export const metadata: Metadata = {
   description: 'E-commerce admin panel',
 };
 
+// Admin pages read live DB data in server components — render dynamically,
+// don't prerender at build (which has no DATABASE_URL).
+export const dynamic = 'force-dynamic';
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider>

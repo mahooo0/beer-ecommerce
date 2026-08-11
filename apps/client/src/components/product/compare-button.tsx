@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useCompareStore } from '../../stores/compare-store';
 
 interface CompareButtonProps {
@@ -13,6 +14,7 @@ interface CompareButtonProps {
 }
 
 export function CompareButton({ productId, name, imageUrl, slug, size = 'sm', className = '' }: CompareButtonProps) {
+  const { t } = useTranslation('shop');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -31,7 +33,7 @@ export function CompareButton({ productId, name, imageUrl, slug, size = 'sm', cl
   return (
     <button
       onClick={handleClick}
-      aria-label={isCompared ? 'Remove from compare' : 'Add to compare'}
+      aria-label={isCompared ? t('compare.remove') : t('compare.add')}
       className={`flex items-center justify-center rounded-full bg-white/90 p-1.5 shadow-sm backdrop-blur-sm transition hover:bg-white ${className}`}
     >
       <svg

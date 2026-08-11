@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 const MEILISEARCH_HOST = process.env.NEXT_PUBLIC_MEILISEARCH_HOST || 'http://localhost:7700';
@@ -38,6 +39,7 @@ function useDebounce(value: string, delay: number) {
 }
 
 export function SearchBar() {
+  const { t } = useTranslation('misc');
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [allProducts, setAllProducts] = useState<ProductResult[]>([]);
@@ -220,7 +222,7 @@ export function SearchBar() {
       {/* Search icon trigger */}
       <button
         onClick={openSearch}
-        aria-label="Search"
+        aria-label={t('search.trigger')}
         data-tour="search"
         className="flex items-center justify-center text-neutral-600 transition hover:text-neutral-900"
       >
@@ -254,7 +256,7 @@ export function SearchBar() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search products, categories, brands..."
+                  placeholder={t('search.placeholder')}
                   className="flex-1 bg-transparent text-lg text-neutral-900 placeholder:text-neutral-400 focus:outline-none"
                   autoComplete="off"
                 />
@@ -280,7 +282,7 @@ export function SearchBar() {
                 {isLoading && (
                   <div className="flex items-center justify-center py-16">
                     <div className="size-5 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900" />
-                    <span className="ml-3 text-xs tracking-wider text-neutral-500 uppercase">Searching...</span>
+                    <span className="ml-3 text-xs tracking-wider text-neutral-500 uppercase">{t('search.searching')}</span>
                   </div>
                 )}
 
@@ -292,8 +294,8 @@ export function SearchBar() {
                         <path d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                     </div>
-                    <p className="text-sm font-medium text-neutral-900">No results for &ldquo;{query}&rdquo;</p>
-                    <p className="mt-1 text-xs text-neutral-400">Try a different search term or check the spelling</p>
+                    <p className="text-sm font-medium text-neutral-900">{t('search.noResults', { query })}</p>
+                    <p className="mt-1 text-xs text-neutral-400">{t('search.noResultsHint')}</p>
                   </div>
                 )}
 
@@ -304,7 +306,7 @@ export function SearchBar() {
                     {categories.length > 0 && (
                       <div className="border-b border-neutral-100 px-6 py-4">
                         <h3 className="mb-3 text-[10px] font-semibold tracking-[0.2em] text-neutral-400 uppercase">
-                          Categories
+                          {t('search.categories')}
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           {categories.map((cat) => (
@@ -336,7 +338,7 @@ export function SearchBar() {
                               <svg className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" strokeLinejoin="round" />
                               </svg>
-                              Clear filter
+                              {t('search.clearFilter')}
                             </button>
                           )}
                         </div>
@@ -348,7 +350,7 @@ export function SearchBar() {
                       <div className="px-6 py-4">
                         <div className="mb-3 flex items-center justify-between">
                           <h3 className="text-[10px] font-semibold tracking-[0.2em] text-neutral-400 uppercase">
-                            Products
+                            {t('search.products')}
                             {selectedCategory && (
                               <span className="ml-2 text-neutral-300">
                                 ({displayedProducts.length})
@@ -392,7 +394,7 @@ export function SearchBar() {
                                   </span>
                                   {getCategoryName(product) && (
                                     <span className="text-[10px] text-neutral-400">
-                                      in {getCategoryName(product)}
+                                      {t('search.inCategory', { category: getCategoryName(product) })}
                                     </span>
                                   )}
                                 </div>
@@ -409,12 +411,12 @@ export function SearchBar() {
                     {/* No products in selected category */}
                     {selectedCategory && displayedProducts.length === 0 && (
                       <div className="px-6 py-12 text-center">
-                        <p className="text-sm text-neutral-500">No products in this category</p>
+                        <p className="text-sm text-neutral-500">{t('search.noProductsInCategory')}</p>
                         <button
                           onClick={() => setSelectedCategory(null)}
                           className="mt-2 text-xs text-neutral-400 underline transition hover:text-neutral-600"
                         >
-                          Show all results
+                          {t('search.showAll')}
                         </button>
                       </div>
                     )}
@@ -426,7 +428,7 @@ export function SearchBar() {
                           onClick={handleViewAll}
                           className="flex w-full items-center justify-center gap-2 bg-neutral-900 py-3.5 text-xs font-medium tracking-[0.2em] text-white uppercase transition hover:bg-neutral-800"
                         >
-                          View all results
+                          {t('search.viewAll')}
                           {allProducts.length > 8 && (
                             <span className="font-normal text-neutral-400">
                               ({allProducts.length}+)
@@ -445,10 +447,15 @@ export function SearchBar() {
                 {!hasQuery && !isLoading && (
                   <div className="px-6 py-8">
                     <p className="text-[10px] font-semibold tracking-[0.2em] text-neutral-400 uppercase">
-                      Popular searches
+                      {t('search.popularSearches')}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {['New Arrivals', 'Sale', 'Best Sellers', 'Trending'].map((term) => (
+                      {[
+                        t('search.popular.newArrivals'),
+                        t('search.popular.sale'),
+                        t('search.popular.bestSellers'),
+                        t('search.popular.trending'),
+                      ].map((term) => (
                         <button
                           key={term}
                           onClick={() => setQuery(term)}

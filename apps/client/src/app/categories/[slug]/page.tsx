@@ -9,6 +9,7 @@ import { FilterSidebar } from '@/components/filters/filter-sidebar';
 import { FilterDrawer } from '@/components/filters/filter-drawer';
 import { ActiveFilters } from '@/components/filters/active-filters';
 import { api } from '@/lib/api';
+import { getServerT } from '@/lib/i18n/server';
 import type { Category, CategoryAttribute } from '@repo/types';
 import type { FilterContentProps } from '@/components/filters/filter-content';
 
@@ -39,13 +40,14 @@ const EMPTY_FACETS: FacetCountsShape = {
 export async function generateMetadata({ params, searchParams }: CategoryPageProps): Promise<Metadata> {
   const { slug } = await params;
   const query = await searchParams;
+  const t = await getServerT('categories');
 
   try {
     const result = await api.categories.getBySlug(slug);
     const category = result.data;
 
     if (!category) {
-      return { title: 'Category Not Found' };
+      return { title: t('page.categoryNotFound') };
     }
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3002';
@@ -73,13 +75,14 @@ export async function generateMetadata({ params, searchParams }: CategoryPagePro
       },
     };
   } catch (error) {
-    return { title: 'Category Not Found' };
+    return { title: t('page.categoryNotFound') };
   }
 }
 
 export default async function CategoryPage({ params, searchParams }: CategoryPageProps) {
   const { slug } = await params;
   const query = await searchParams;
+  const t = await getServerT('categories');
 
   // Parse filter values from URL query params
   const page = parseInt(query.page || '1', 10);
@@ -192,7 +195,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
 
       {subcategories.length > 0 && (
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Shop by Category</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">{t('page.shopByCategory')}</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {subcategories.map((subcat) => (
               <a
@@ -237,7 +240,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
                 facetCounts={facetCounts}
               />
               <span className="text-sm text-gray-600">
-                {total} product{total !== 1 ? 's' : ''} found
+                {t('page.productsFound', { count: total })}
               </span>
             </div>
             <SortSelector currentSort={sortBy} currentOrder={sortOrder} />

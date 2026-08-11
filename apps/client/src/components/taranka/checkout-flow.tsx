@@ -5,6 +5,7 @@ import { format, isSameDay, set, startOfDay } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { MapPin, Calendar as CalendarIcon, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useCart } from '@/lib/cart-store';
 import { cn } from '@/lib/utils';
 import { LockerMapLoader } from './locker-map-loader';
@@ -25,9 +26,9 @@ import {
 type DeliveryTab = 'kurier' | 'wlasna' | 'poczta';
 
 const steps = [
-  { id: 1, label: 'Wybierz metodę dostawy' },
-  { id: 2, label: 'Dane kontaktowe' },
-  { id: 3, label: 'Metoda płatności' },
+  { id: 1, key: 'delivery' },
+  { id: 2, key: 'contact' },
+  { id: 3, key: 'payment' },
 ];
 
 const payments = [
@@ -112,6 +113,7 @@ export function CheckoutFlow() {
 }
 
 function Stepper({ current }: { current: number }) {
+  const { t } = useTranslation('checkout');
   return (
     <div className="w-[587px] max-w-full mx-auto ">
       <ol className="flex items-center pb-10 ">
@@ -131,7 +133,7 @@ function Stepper({ current }: { current: number }) {
                   {n}
                 </span>
                 <p className="absolute bottom-[-30px] left-1/2 text-nowrap -translate-x-1/2 text-base font-medium text-ink-900">
-                  {active || passed ? steps[n]?.label : ''}
+                  {(active || passed) && steps[n] ? t(`step.${steps[n]!.key}`) : ''}
                 </p>
               </div>
 
@@ -198,25 +200,26 @@ function DeliveryTabs({
   current: DeliveryTab;
   onChange: (t: DeliveryTab) => void;
 }) {
-  const tabs: { id: DeliveryTab; label: string }[] = [
-    { id: 'kurier', label: 'Kurier' },
-    { id: 'wlasna', label: 'Dostawa własna' },
-    { id: 'poczta', label: 'Maszyna pocztowa' },
+  const { t } = useTranslation('checkout');
+  const tabs: { id: DeliveryTab }[] = [
+    { id: 'kurier' },
+    { id: 'wlasna' },
+    { id: 'poczta' },
   ];
   return (
     <div className="flex items-center gap-8 border-b border-cream-300">
-      {tabs.map((t) => {
-        const active = current === t.id;
+      {tabs.map((tab) => {
+        const active = current === tab.id;
         return (
           <button
-            key={t.id}
+            key={tab.id}
             type="button"
-            onClick={() => onChange(t.id)}
+            onClick={() => onChange(tab.id)}
             className={`relative pb-3 font-taranka-display text-base font-extrabold uppercase tracking-wide transition-colors ${
               active ? 'text-ink-900' : 'text-[#9E9B90] hover:text-ink-900'
             }`}
           >
-            {t.label}
+            {t(`tab.${tab.id}`)}
             <span
               className={`absolute inset-x-0 -bottom-px h-0.5 bg-brand-red-500 transition-transform ${
                 active ? 'scale-x-100' : 'scale-x-0'
@@ -230,8 +233,9 @@ function DeliveryTabs({
 }
 
 function CityField() {
+  const { t } = useTranslation('checkout');
   return (
-    <Field label="Miasto">
+    <Field label={t('form.city')}>
       <Select>
         <SelectTrigger className={pillSelect + ' !h-12 !min-h-12'}>
           <SelectValue placeholder="—" />
@@ -263,6 +267,7 @@ function mergeDateAndTime(day: Date, time: string) {
 }
 
 function DateField({ label }: { label: string }) {
+  const { t } = useTranslation('checkout');
   const [value, setValue] = useState<Date>();
   const [open, setOpen] = useState(false);
   const [draftDay, setDraftDay] = useState<Date>();
@@ -316,7 +321,7 @@ function DateField({ label }: { label: string }) {
           <Separator />
           <div className="space-y-3 p-3">
             <div className="space-y-2">
-              <Label className="text-xs font-normal text-ink-900">Godzina</Label>
+              <Label className="text-xs font-normal text-ink-900">{t('form.time')}</Label>
               <Input
                 type="time"
                 value={time}
@@ -332,7 +337,7 @@ function DateField({ label }: { label: string }) {
               disabled={!draftDay}
               onClick={apply}
             >
-              Gotowe
+              {t('button.done')}
             </Button>
           </div>
         </PopoverContent>
@@ -363,41 +368,43 @@ function PrimaryButton({
 }
 
 function KurierForm({ onContinue }: { onContinue: () => void }) {
+  const { t } = useTranslation('checkout');
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <CityField />
-        <Field label="Ulica">
+        <Field label={t('form.street')}>
           <Input className={pillInput} />
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="  flex flex-row gap-2 items-center">
-          <Field label="Dom">
+          <Field label={t('form.house')}>
             <Input className={pillInput} />
           </Field>
-          <Field label="Mieszkanie">
+          <Field label={t('form.apartment')}>
             <Input className={pillInput} />
           </Field>
         </div>
-        <DateField label="Wybierz datę i godzinę" />
+        <DateField label={t('form.dateTime')} />
       </div>
       <div className="pt-2">
-        <PrimaryButton onClick={onContinue}>kontynuować</PrimaryButton>
+        <PrimaryButton onClick={onContinue}>{t('button.continue')}</PrimaryButton>
       </div>
     </div>
   );
 }
 
 function WlasnaForm({ onContinue }: { onContinue: () => void }) {
+  const { t } = useTranslation('checkout');
   return (
     <div className="space-y-4">
       <CityField />
-      <Field label="Numer urzędu pocztowego">
+      <Field label={t('form.postOfficeNumber')}>
         <Input className={pillInput} />
       </Field>
       <div className="pt-2">
-        <PrimaryButton onClick={onContinue}>kontynuować</PrimaryButton>
+        <PrimaryButton onClick={onContinue}>{t('button.continue')}</PrimaryButton>
       </div>
     </div>
   );
@@ -412,6 +419,7 @@ function PocztaForm({
   onSelect: (id: number) => void;
   onContinue: () => void;
 }) {
+  const { t } = useTranslation('checkout');
   return (
     <div>
       <CityField />
@@ -441,7 +449,7 @@ function PocztaForm({
 
       <div className="mt-6">
         <PrimaryButton onClick={onContinue} disabled={selected === null}>
-          kontynuować
+          {t('button.continue')}
         </PrimaryButton>
       </div>
     </div>
@@ -457,30 +465,31 @@ function ContactStep({
   onChange: (c: { name: string; company: string; email: string }) => void;
   onContinue: () => void;
 }) {
+  const { t } = useTranslation('checkout');
   const isValid = contact.name.trim() && contact.email.trim();
   return (
     <div className="w-fit rounded-[20px] bg-white p-6 flex flex-col mx-auto">
       <div className="space-y-4 flex flex-col gap-4 ">
-        <Field label="Imię i nazwisko">
+        <Field label={t('form.fullName')}>
           <Input
-            placeholder="Name"
+            placeholder={t('form.namePlaceholder')}
             value={contact.name}
             onChange={(e) => onChange({ ...contact, name: e.target.value })}
             className={pillInput + ' w-[370px]'}
           />
         </Field>
-        <Field label="Nazwa firmy">
+        <Field label={t('form.companyName')}>
           <Input
-            placeholder="Nazwa firmy"
+            placeholder={t('form.companyPlaceholder')}
             value={contact.company}
             onChange={(e) => onChange({ ...contact, company: e.target.value })}
             className={pillInput + ' w-[370px]'}
           />
         </Field>
-        <Field label="Email">
+        <Field label={t('form.email')}>
           <Input
             type="email"
-            placeholder="Email"
+            placeholder={t('form.emailPlaceholder')}
             value={contact.email}
             onChange={(e) => onChange({ ...contact, email: e.target.value })}
             className={pillInput + ' w-[370px]'}
@@ -489,7 +498,7 @@ function ContactStep({
       </div>
       <div className="mt-6">
         <PrimaryButton onClick={onContinue} disabled={!isValid}>
-          Potwierdzenie
+          {t('button.confirm')}
         </PrimaryButton>
       </div>
     </div>
@@ -505,6 +514,7 @@ function PaymentStep({
   onSelect: (id: string) => void;
   onSubmit: () => void;
 }) {
+  const { t } = useTranslation('checkout');
   return (
     <div>
       <div className="rounded-[20px] bg-white p-6">
@@ -543,7 +553,7 @@ function PaymentStep({
           onClick={onSubmit}
           className="inline-flex h-12 items-center gap-3 rounded-full bg-brand-red-500 px-9 text-base font-medium text-cream-50 shadow-[0_0_0_0_rgba(170,60,55,0.4)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-red-700 hover:shadow-[0_8px_24px_-4px_rgba(170,60,55,0.5)]"
         >
-          Zapłać i złóż zamówienie
+          {t('button.payAndOrder')}
           <Check className="size-4" strokeWidth={2.5} />
         </button>
       </div>

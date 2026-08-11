@@ -1,0 +1,73 @@
+{
+  "sidebar": {
+    "categories": "Категорії",
+    "all": "Усі"
+  },
+  "toolbar": {
+    "showingPrefix": "Показано",
+    "showingOf": "позицій з",
+    "sortLabel": "Сортування:",
+    "sort": {
+      "price": "За ціною",
+      "name": "За назвою",
+      "popular": "За популярністю",
+      "newest": "Новинки"
+    }
+  },
+  "card": {
+    "addToFavorites": "Додати до улюблених",
+    "added": "Додано",
+    "addToCart": "До кошика"
+  },
+  "detail": {
+    "selectImage": "Вибрати фото {{index}}",
+    "inStock": "на складі {{count}} шт.",
+    "outOfStock": "немає на складі",
+    "retailPrice": "роздрібна ціна",
+    "wholesalePrice": "оптова ціна",
+    "decreaseQty": "Зменшити кількість",
+    "increaseQty": "Збільшити кількість",
+    "added": "Додано",
+    "addToCart": "До кошика",
+    "quickOrder": "швидке замовлення",
+    "addToFavorites": "Додати до улюблених",
+    "delivery": "Доставка",
+    "payment": "Оплата"
+  },
+  "description": {
+    "tabDescription": "Опис",
+    "tabIngredients": "Склад",
+    "noDescription": "Немає опису товару.",
+    "ingredients": {
+      "cornFlour": "Кукурудзяне борошно",
+      "sugar": "Цукор",
+      "vegetableOil": "Рослинна олія",
+      "milkFlavor": "Молочний ароматизатор",
+      "salt": "Сіль",
+      "vitamins": "Вітаміни (B1, B6)"
+    }
+  },
+  "row": {
+    "previous": "Попередній",
+    "next": "Наступний"
+  },
+  "page": {
+    "metaTitle": "Каталог | Taranka",
+    "metaDescription": "Каталог товарів Taranka",
+    "allProducts": "Усі товари",
+    "searchResults": "Результати: {{query}}",
+    "emptyTitle": "Немає товарів",
+    "emptyDescription": "Ми не знайшли товарів, що відповідають обраним критеріям.",
+    "pagination": "Пагінація"
+  },
+  "slugPage": {
+    "metaNotFound": "Товар не знайдено | Taranka",
+    "recommended": "Рекомендуємо переглянути",
+    "similar": "Схожі товари"
+  },
+  "productNotFound": {
+    "title": "Товар не знайдено",
+    "description": "Товар, який ви шукаєте, не існує або був видалений.",
+    "browse": "Переглянути товари"
+  }
+}

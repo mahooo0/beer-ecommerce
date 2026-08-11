@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFilters } from '../../hooks/use-filters';
 import { Checkbox } from '../ui/checkbox';
 
@@ -15,12 +16,13 @@ interface AvailabilityFilterProps {
 }
 
 const OPTIONS = [
-  { key: 'in_stock', label: 'In Stock' },
-  { key: 'out_of_stock', label: 'Out of Stock' },
-  { key: 'pre_order', label: 'Pre-Order' },
+  { key: 'in_stock', labelKey: 'availability.inStock' },
+  { key: 'out_of_stock', labelKey: 'availability.outOfStock' },
+  { key: 'pre_order', labelKey: 'availability.preOrder' },
 ] as const;
 
 export function AvailabilityFilter({ facetCounts }: AvailabilityFilterProps) {
+  const { t } = useTranslation('categories');
   const [filters, setFilters] = useFilters();
 
   const toggle = (value: 'in_stock' | 'out_of_stock' | 'pre_order') => {
@@ -33,9 +35,10 @@ export function AvailabilityFilter({ facetCounts }: AvailabilityFilterProps) {
 
   return (
     <div className="space-y-2" data-testid="availability-filter">
-      <h3 className="text-sm font-semibold text-primary">Availability</h3>
+      <h3 className="text-sm font-semibold text-primary">{t('availability.label')}</h3>
       <div className="space-y-1.5">
-        {OPTIONS.map(({ key, label }) => {
+        {OPTIONS.map(({ key, labelKey }) => {
+          const label = t(labelKey);
           const count = facetCounts?.[key];
           const checked = filters.availability.includes(key);
           return (

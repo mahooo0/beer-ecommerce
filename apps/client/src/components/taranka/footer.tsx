@@ -1,23 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Facebook, Instagram, Send, MapPin, Mail, Phone, Youtube } from "lucide-react";
-
-const menuLinks = [
-  { label: "Snaks", href: "#" },
-  { label: "Kiszonki", href: "#" },
-  { label: "WINO", href: "#" },
-  { label: "Słodycze", href: "#" },
-];
-
-const clientLinks = [
-  { label: "Zaloguj się", href: "#" },
-  { label: "Wakaty", href: "#" },
-  { label: "Dostawa i płatność", href: "#" },
-];
-
-const aboutLinks = [
-  { label: "Franczyza", href: "#" },
-  { label: "Kontakty", href: "#" },
-];
+import { useTranslation } from "react-i18next";
 
 const socials = [
   { label: "Facebook", icon: Facebook, href: "#" },
@@ -27,6 +12,26 @@ const socials = [
 ];
 
 export function TarankaFooter() {
+  const { t } = useTranslation("common");
+
+  const menuLinks = [
+    { label: t("footer.menu.snaks"), href: "#" },
+    { label: t("footer.menu.kiszonki"), href: "#" },
+    { label: t("footer.menu.wino"), href: "#" },
+    { label: t("footer.menu.slodycze"), href: "#" },
+  ];
+
+  const clientLinks = [
+    { label: t("footer.clients.login"), href: "#" },
+    { label: t("footer.clients.vacancies"), href: "#" },
+    { label: t("footer.clients.delivery"), href: "#" },
+  ];
+
+  const aboutLinks = [
+    { label: t("footer.about.franchise"), href: "#" },
+    { label: t("footer.about.contacts"), href: "#" },
+  ];
+
   return (
     <footer className="bg-ink-900 font-taranka-body text-cream-50">
       <div className="mx-auto max-w-[1440px] px-[120px] pb-6 pt-10">
@@ -57,12 +62,12 @@ export function TarankaFooter() {
             </div>
           </div>
 
-          <FooterColumn title="Menu" links={menuLinks} />
-          <FooterColumn title="Dla klientów" links={clientLinks} />
-          <FooterColumn title="O nas" links={aboutLinks} />
+          <FooterColumn title={t("footer.menu.title")} links={menuLinks} />
+          <FooterColumn title={t("footer.clients.title")} links={clientLinks} />
+          <FooterColumn title={t("footer.about.title")} links={aboutLinks} />
 
           <div>
-            <h3 className="mb-4 font-taranka-display text-xl font-extrabold uppercase">Kontakty</h3>
+            <h3 className="mb-4 font-taranka-display text-xl font-extrabold uppercase">{t("footer.contacts.title")}</h3>
             <ul className="space-y-3 text-base">
               <ContactRow icon={MapPin}>Piaskowa 92/95, 55-296 Świdnik</ContactRow>
               <ContactRow icon={Mail}>habonnanifri-1232@yopmail.com</ContactRow>
@@ -73,13 +78,13 @@ export function TarankaFooter() {
         </div>
 
         <div className="mt-10 flex items-center justify-between border-t border-cream-50/15 pt-4 text-sm text-cream-50/80">
-          <p>Copyright © 2024 All Rights Reserved</p>
+          <p>{t("footer.copyright")}</p>
           <div className="flex gap-10">
             <Link href="#" className="underline underline-offset-2 transition-colors hover:text-cream-50">
-              Polityka prywatności RODO
+              {t("footer.privacyRodo")}
             </Link>
             <Link href="#" className="underline underline-offset-2 transition-colors hover:text-cream-50">
-              Polityka prywatności
+              {t("footer.privacy")}
             </Link>
           </div>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth, useUser } from '@clerk/nextjs';
 import { useWishlistStore } from '../../stores/wishlist-store';
 import { api } from '@/lib/api';
@@ -13,6 +14,7 @@ interface WishlistButtonProps {
 }
 
 export function WishlistButton({ productId, price, size = 'md', className = '' }: WishlistButtonProps) {
+  const { t } = useTranslation('shop');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -58,7 +60,7 @@ export function WishlistButton({ productId, price, size = 'md', className = '' }
   return (
     <button
       onClick={handleClick}
-      aria-label={isInWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+      aria-label={isInWishlist ? t('wishlist.remove') : t('wishlist.add')}
       className={`flex items-center justify-center rounded-full bg-white/90 p-1.5 shadow-sm backdrop-blur-sm transition hover:bg-white ${className}`}
     >
       <svg

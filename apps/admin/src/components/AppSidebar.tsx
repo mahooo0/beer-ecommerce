@@ -17,6 +17,7 @@ import {
   LogOut,
   BadgeCheck,
   Bell,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Sidebar,
@@ -42,34 +43,68 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useClerk, useUser } from "@clerk/nextjs";
+import { hasPermission, PERMISSIONS, type Permission } from "@repo/types/rbac";
 
-const overviewItems = [
-  { title: "Dashboard", url: "/dashboard", icon: Home },
-  { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
-];
+type NavItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  permission: Permission;
+};
 
-const catalogItems = [
-  { title: "Products", url: "/dashboard/products", icon: Shirt },
-  { title: "Categories", url: "/dashboard/categories", icon: FolderTree },
-  { title: "Collections", url: "/dashboard/collections", icon: Layers },
-  { title: "Brands", url: "/dashboard/brands", icon: BookmarkIcon },
-  { title: "Tags", url: "/dashboard/tags", icon: Tags },
-];
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
 
-const operationsItems = [
-  { title: "Orders", url: "/dashboard/orders", icon: ShoppingBasket },
-  { title: "Shipping", url: "/dashboard/shipping/zones", icon: Truck },
-  { title: "Inventory", url: "/dashboard/inventory", icon: Package },
-];
-
-const settingsItems = [
-  { title: "Users", url: "/dashboard/users", icon: User },
-  { title: "Search", url: "/dashboard/search", icon: Search },
+const navGroups: NavGroup[] = [
+  {
+    label: "Overview",
+    items: [
+      { title: "Dashboard", url: "/dashboard", icon: Home, permission: PERMISSIONS.DASHBOARD },
+      { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3, permission: PERMISSIONS.ANALYTICS },
+    ],
+  },
+  {
+    label: "Catalog",
+    items: [
+      { title: "Products", url: "/dashboard/products", icon: Shirt, permission: PERMISSIONS.PRODUCTS },
+      { title: "Categories", url: "/dashboard/categories", icon: FolderTree, permission: PERMISSIONS.CATEGORIES },
+      { title: "Collections", url: "/dashboard/collections", icon: Layers, permission: PERMISSIONS.COLLECTIONS },
+      { title: "Brands", url: "/dashboard/brands", icon: BookmarkIcon, permission: PERMISSIONS.BRANDS },
+      { title: "Tags", url: "/dashboard/tags", icon: Tags, permission: PERMISSIONS.TAGS },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { title: "Orders", url: "/dashboard/orders", icon: ShoppingBasket, permission: PERMISSIONS.ORDERS },
+      { title: "Shipping", url: "/dashboard/shipping/zones", icon: Truck, permission: PERMISSIONS.SHIPPING },
+      { title: "Inventory", url: "/dashboard/inventory", icon: Package, permission: PERMISSIONS.INVENTORY },
+    ],
+  },
+  {
+    label: "Settings",
+    items: [
+      { title: "Users", url: "/dashboard/users", icon: User, permission: PERMISSIONS.USERS_VIEW },
+      { title: "Search", url: "/dashboard/search", icon: Search, permission: PERMISSIONS.SEARCH },
+    ],
+  },
 ];
 
 const AppSidebar = () => {
   const { signOut } = useClerk();
   const { user } = useUser();
+
+  const role = user?.publicMetadata?.role as string | undefined;
+
+  // Only show nav items the current role has permission for.
+  const visibleGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => hasPermission(role, item.permission)),
+    }))
+    .filter((group) => group.items.length > 0);
 
   const initials = user
     ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() || "A"
@@ -140,74 +175,25 @@ const AppSidebar = () => {
       </SidebarHeader>
       <SidebarSeparator />
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Overview</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {overviewItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Catalog</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {catalogItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Operations</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {operationsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>Settings</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {visibleGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       <SidebarFooter />
     </Sidebar>

@@ -1,0 +1,58 @@
+{
+  "filters": {
+    "title": "Фільтри",
+    "clearAll": "Очистити все",
+    "apply": "Застосувати",
+    "open": "Відкрити фільтри",
+    "close": "Закрити фільтри"
+  },
+  "activeFilters": {
+    "price": "Ціна",
+    "any": "Будь-яка",
+    "brand": "Бренд",
+    "removeFilter": "Видалити фільтр: {{label}}"
+  },
+  "price": {
+    "label": "Діапазон цін",
+    "reset": "Скинути",
+    "minLabel": "Мін ($)",
+    "maxLabel": "Макс ($)",
+    "minAria": "Мінімальна ціна",
+    "maxAria": "Максимальна ціна",
+    "minInputAria": "Поле мінімальної ціни",
+    "maxInputAria": "Поле максимальної ціни"
+  },
+  "brand": {
+    "label": "Бренд",
+    "ariaLabel": "Бренд: {{name}}"
+  },
+  "availability": {
+    "label": "Наявність",
+    "inStock": "В наявності",
+    "outOfStock": "Немає в наявності",
+    "preOrder": "Передзамовлення"
+  },
+  "attribute": {
+    "rangeAria": "Діапазон: {{name}}"
+  },
+  "breadcrumbs": {
+    "home": "Головна",
+    "ariaLabel": "Навігаційний ланцюжок"
+  },
+  "categoryDropdown": {
+    "choose": "Вибрати категорію"
+  },
+  "categoryNav": {
+    "title": "Категорії",
+    "allCategories": "Усі категорії",
+    "allOf": "Усі: {{name}}"
+  },
+  "page": {
+    "categoryNotFound": "Категорію не знайдено",
+    "shopByCategory": "Купуйте за категоріями",
+    "productsFound_one": "Знайдено {{count}} товар",
+    "productsFound_few": "Знайдено {{count}} товари",
+    "productsFound_many": "Знайдено {{count}} товарів",
+    "productsFound_other": "Знайдено {{count}} товару"
+  }
+}

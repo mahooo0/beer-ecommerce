@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { StarRating } from '../ui/star-rating';
 import { WishlistButton } from './wishlist-button';
 import { CompareButton } from './compare-button';
@@ -14,6 +15,7 @@ interface ProductCardListProps {
 }
 
 export function ProductCardList({ product }: ProductCardListProps) {
+  const { t } = useTranslation('shop');
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = React.useState(false);
   const [buyNow, setBuyNow] = React.useState(false);
@@ -96,7 +98,7 @@ export function ProductCardList({ product }: ProductCardListProps) {
           )}
           {isNew && (
             <span className="bg-white px-2 py-1 text-[10px] font-medium tracking-wider text-neutral-900 uppercase ring-1 ring-inset ring-neutral-200">
-              New
+              {t('productCard.new')}
             </span>
           )}
         </div>
@@ -175,14 +177,14 @@ export function ProductCardList({ product }: ProductCardListProps) {
                 : 'bg-neutral-900 text-white hover:bg-neutral-800'
             }`}
           >
-            {added ? 'Added' : 'Add to Cart'}
+            {added ? t('productCard.added') : t('productCard.addToCart')}
           </button>
           <button
             onClick={handleBuyNow}
             disabled={buyNow}
             className="border border-neutral-300 bg-white px-5 py-2 text-xs font-medium tracking-wider text-neutral-900 uppercase transition hover:bg-neutral-50"
           >
-            {buyNow ? 'Redirecting...' : 'Buy Now'}
+            {buyNow ? t('productCard.redirecting') : t('productCard.buyNow')}
           </button>
 
           <div className="ml-auto flex items-center gap-2">

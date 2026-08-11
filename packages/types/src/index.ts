@@ -100,6 +100,12 @@ export type OrderStatus = (typeof OrderStatus)[keyof typeof OrderStatus];
 // USER & AUTH DOMAIN
 // ============================================================================
 
+export const CustomerType = {
+  RETAIL: 'RETAIL',
+  WHOLESALE: 'WHOLESALE',
+} as const;
+export type CustomerType = (typeof CustomerType)[keyof typeof CustomerType];
+
 export interface User {
   id: string;
   clerkId: string;
@@ -107,10 +113,28 @@ export interface User {
   firstName: string;
   lastName: string;
   role: Role;
+  customerType: CustomerType;
+  companyName?: string;
+  taxId?: string;
   avatar?: string;
   phone?: string;
   isActive: boolean;
   lastLoginAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+/**
+ * Phone-number-as-customer-identifier. The normalized number is the unique key
+ * and can carry a discount that is inherited by any account / guest order that
+ * presents the same number. Discount fields are populated in Phase 2.
+ */
+export interface CustomerPhone {
+  id: string;
+  phone: string;
+  discountType?: DiscountType;
+  discountValue?: number;
+  note?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -599,3 +623,9 @@ export interface PaginatedResponse<T> extends ApiResponse<T[]> {
 // ============================================================================
 
 export * from './product-schemas';
+
+// ============================================================================
+// RBAC (roles & permissions)
+// ============================================================================
+
+export * from './rbac';

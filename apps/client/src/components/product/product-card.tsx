@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import type { Product } from '@repo/types';
 import { StarRating } from '../ui/star-rating';
 import { WishlistButton } from './wishlist-button';
@@ -22,6 +23,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { t } = useTranslation('shop');
   const addItem = useCartStore((s) => s.addItem);
   const [added, setAdded] = React.useState(false);
   const [buyNow, setBuyNow] = React.useState(false);
@@ -96,7 +98,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {secondaryImage && (
                 <Image
                   src={secondaryImage}
-                  alt={`${product.name} - alternate view`}
+                  alt={t('productCard.alternateView', { name: product.name })}
                   fill
                   className={`object-cover transition duration-500 ${
                     hovered ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
@@ -123,7 +125,7 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
           {isNew && (
             <span className="bg-white px-2 py-1 text-[10px] font-medium tracking-wider text-neutral-900 uppercase ring-1 ring-inset ring-neutral-200">
-              New
+              {t('productCard.new')}
             </span>
           )}
         </div>
@@ -150,14 +152,14 @@ export function ProductCard({ product }: ProductCardProps) {
                   : 'border border-neutral-900 bg-neutral-900 text-white hover:bg-neutral-800'
               }`}
             >
-              {added ? 'Added' : 'Add to Cart'}
+              {added ? t('productCard.added') : t('productCard.addToCart')}
             </button>
             <button
               onClick={handleBuyNow}
               disabled={buyNow}
               className="flex-1 border border-neutral-300 bg-white py-2 text-xs font-medium tracking-wider text-neutral-900 uppercase transition hover:bg-neutral-50"
             >
-              {buyNow ? 'Redirecting...' : 'Buy Now'}
+              {buyNow ? t('productCard.redirecting') : t('productCard.buyNow')}
             </button>
           </div>
         </div>

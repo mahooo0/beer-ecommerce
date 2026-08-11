@@ -1,19 +1,51 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-const sortOptions = ["Według ceny", "Według nazwy", "Według popularności", "Nowości"];
+const sortOptions: { key: string; value: string }[] = [
+  { key: "price", value: "price-asc" },
+  { key: "name", value: "name-asc" },
+  { key: "popular", value: "popular" },
+  { key: "newest", value: "newest" },
+];
 
-export function CatalogToolbar({ shown, total }: { shown: number; total: number }) {
+const DEFAULT_SORT = { key: "newest", value: "newest" };
+
+export function CatalogToolbar({
+  shown,
+  total,
+  sort = "newest",
+}: {
+  shown: number;
+  total: number;
+  sort?: string;
+}) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState(sortOptions[0]);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const { t } = useTranslation("catalog");
+
+  const selected = sortOptions.find((o) => o.value === sort) ?? DEFAULT_SORT;
+
+  const applySort = (value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "newest") params.delete("sort");
+    else params.set("sort", value);
+    params.delete("page");
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setOpen(false);
+  };
 
   return (
     <div className="flex items-center justify-between font-taranka-body">
       <p className="text-sm text-ink-900">
-        Pokazano <span className="font-medium">{shown}</span> pozycji z{" "}
-        <span className="font-medium">{total}</span>
+        {t("toolbar.showingPrefix")} <span className="font-medium">{shown}</span>{" "}
+        {t("toolbar.showingOf")} <span className="font-medium">{total}</span>
       </p>
 
       <div className="relative">
@@ -22,8 +54,8 @@ export function CatalogToolbar({ shown, total }: { shown: number; total: number 
           onClick={() => setOpen((o) => !o)}
           className="inline-flex h-12 w-[212px] items-center justify-between rounded-full border border-[#B5B2A7] px-5 text-sm text-ink-900 transition-colors hover:border-ink-900"
         >
-          <span className="text-[#9E9B90]">Sort:</span>
-          <span>{selected}</span>
+          <span className="text-[#9E9B90]">{t("toolbar.sortLabel")}</span>
+          <span>{t(`toolbar.sort.${selected.key}`)}</span>
           <ChevronDown
             className={`size-4 transition-transform duration-300 ${open ? "rotate-180" : ""}`}
             strokeWidth={1.75}
@@ -32,18 +64,15 @@ export function CatalogToolbar({ shown, total }: { shown: number; total: number 
         {open && (
           <ul className="absolute right-0 top-full z-20 mt-2 w-[212px] overflow-hidden rounded-2xl border border-[#B5B2A7] bg-white py-1 shadow-lg">
             {sortOptions.map((opt) => (
-              <li key={opt}>
+              <li key={opt.value}>
                 <button
                   type="button"
-                  onClick={() => {
-                    setSelected(opt);
-                    setOpen(false);
-                  }}
+                  onClick={() => applySort(opt.value)}
                   className={`block w-full px-5 py-2 text-left text-sm transition-colors hover:bg-cream-200 ${
-                    opt === selected ? "text-brand-red-500" : "text-ink-900"
+                    opt.value === selected.value ? "text-brand-red-500" : "text-ink-900"
                   }`}
                 >
-                  {opt}
+                  {t(`toolbar.sort.${opt.key}`)}
                 </button>
               </li>
             ))}

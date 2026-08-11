@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Info, FileDown } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -46,7 +47,14 @@ const orders: Order[] = Array.from({ length: 5 }, (_, i) => ({
   shipping: 150,
 }));
 
+const statusKeyMap: Record<Order["status"], string> = {
+  Dostarczone: "delivered",
+  "W trakcie": "inProgress",
+  Anulowane: "cancelled",
+};
+
 export function ProfileOrders() {
+  const { t } = useTranslation("profile");
   const [page, setPage] = useState(1);
   const totalPages = 10;
 
@@ -54,11 +62,11 @@ export function ProfileOrders() {
     <div className="flex-1 rounded-[20px] bg-white p-8 font-taranka-body">
       <div className="flex items-center justify-between gap-6">
         <h1 className="font-taranka-display text-2xl font-extrabold uppercase tracking-wide text-ink-900">
-          Historia zamówień
+          {t("orders.title")}
         </h1>
         <div className="flex items-center gap-2 font-taranka-display text-base text-brand-red-500">
           <Info className="size-4" strokeWidth={1.75} />
-          Rabat w wysokości 3%
+          {t("orders.discountBadge")}
         </div>
       </div>
 
@@ -74,6 +82,7 @@ export function ProfileOrders() {
 }
 
 function OrderAccordion({ order }: { order: Order }) {
+  const { t } = useTranslation("profile");
   const total = order.items.reduce((s, it) => s + it.price * 0 + it.price, 0) * order.items.length + order.shipping;
   const grand = 21150;
 
@@ -87,12 +96,14 @@ function OrderAccordion({ order }: { order: Order }) {
           <span className="h-[51px] w-1 shrink-0 rounded bg-[#188E55]" />
           <div className="flex-1 min-w-0">
             <p className="text-base text-ink-900">
-              Zamówienie nr {order.id}, {order.date}
+              {t("orders.orderNumber", { id: order.id, date: order.date })}
             </p>
-            <p className="mt-1 text-sm text-[#5B5D5D]">{order.status}</p>
+            <p className="mt-1 text-sm text-[#5B5D5D]">
+              {t(`orders.status.${statusKeyMap[order.status]}`)}
+            </p>
           </div>
           <div className="text-right">
-            <p className="text-sm text-[#9E9B90]">Kwota</p>
+            <p className="text-sm text-[#9E9B90]">{t("orders.amount")}</p>
             <p className="mt-1 text-sm font-semibold text-ink-900">{order.amount} EUR</p>
           </div>
           <div className="flex items-center gap-2">
@@ -128,7 +139,7 @@ function OrderAccordion({ order }: { order: Order }) {
                 <p className="text-base text-ink-900">{it.name}</p>
                 <p className="mt-1 text-sm text-[#5B5D5D]">{it.weight}</p>
               </div>
-              <p className="text-base text-ink-900 tabular-nums">{it.qty} szt.</p>
+              <p className="text-base text-ink-900 tabular-nums">{it.qty} {t("orders.pieces")}</p>
               <p className="w-[100px] text-right text-base font-semibold text-ink-900 tabular-nums">
                 {it.price} EUR
               </p>
@@ -138,12 +149,12 @@ function OrderAccordion({ order }: { order: Order }) {
 
         <Separator className="my-4" />
         <div className="flex items-center justify-between px-3">
-          <p className="text-base font-semibold text-ink-900">Wysyłka</p>
+          <p className="text-base font-semibold text-ink-900">{t("orders.shipping")}</p>
           <p className="text-base font-semibold text-ink-900">{order.shipping} EUR</p>
         </div>
         <Separator className="my-4" />
         <div className="flex items-center justify-between px-3">
-          <p className="text-base font-bold text-ink-900">Całkowity</p>
+          <p className="text-base font-bold text-ink-900">{t("orders.total")}</p>
           <p className="text-base font-bold text-ink-900">{grand} EUR</p>
         </div>
 
@@ -152,13 +163,13 @@ function OrderAccordion({ order }: { order: Order }) {
             type="button"
             className="inline-flex h-12 w-[270px] items-center justify-center rounded-full border border-brand-red-500 text-base font-medium text-brand-red-500 transition-all hover:-translate-y-0.5 hover:bg-brand-red-500 hover:text-cream-50 active:translate-y-0"
           >
-            powtórzenie zamówienia
+            {t("orders.repeatOrder")}
           </button>
           <button
             type="button"
             className="inline-flex h-12 w-[261px] items-center justify-center gap-2 rounded-full border border-brand-red-500 text-base font-medium text-brand-red-500 transition-all hover:-translate-y-0.5 hover:bg-brand-red-500 hover:text-cream-50 active:translate-y-0"
           >
-            utrzymywać wynik
+            {t("orders.saveResult")}
             <FileDown className="size-4" strokeWidth={1.75} />
           </button>
         </div>

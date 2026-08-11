@@ -1,0 +1,27 @@
+{
+  "hero": {
+    "eyebrow": "Po raz pierwszy w Warszawie",
+    "title": "piwo specjalne",
+    "subtitle": "Najlepsze piwa ukraińskich i międzynarodowych marek. Tutaj znajdziesz największą listę piw beczkowych.",
+    "learnMore": "Dowiedz się więcej"
+  },
+  "popularProducts": {
+    "heading": "Popularne produkty",
+    "addToFavorites": "Dodaj do ulubionych",
+    "addToCart": "Do koszyka",
+    "added": "Dodano",
+    "allProducts": "Do wszystkich produktów"
+  },
+  "promoBanner": {
+    "line1": "Słodycze",
+    "line2": "“Rodzima Ukraina”",
+    "line3": "Za jedyne 45 zł",
+    "desc1": "Jeden z najpopularniejszych produktów w naszym sklepie.",
+    "desc2": "Idealny na symboliczny prezent.",
+    "learnMore": "Dowiedz się więcej"
+  },
+  "newsSlider": {
+    "heading": "Przydatne wiadomości",
+    "readMore": "więcej"
+  }
+}

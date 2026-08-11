@@ -1,6 +1,7 @@
 "use client";
 
 import { Eye } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
@@ -17,10 +18,11 @@ const baseNews = [
 const news = [...baseNews, ...baseNews];
 
 export function TarankaNewsSlider() {
+  const { t } = useTranslation("home");
   return (
     <section className="overflow-hidden bg-background py-16 font-taranka-body">
       <h2 className="mb-9 pl-[120px] font-taranka-display text-[48px] font-extrabold uppercase leading-none text-ink-900">
-        Przydatne wiadomości
+        {t("newsSlider.heading")}
       </h2>
 
       <Swiper
@@ -63,7 +65,7 @@ export function TarankaNewsSlider() {
               </h3>
 
               <span className="mt-1 inline-block font-taranka-display text-sm font-extrabold uppercase tracking-wide text-brand-red-500 transition-transform duration-300 group-hover:translate-x-1">
-                więcej
+                {t("newsSlider.readMore")}
               </span>
             </article>
           </SwiperSlide>

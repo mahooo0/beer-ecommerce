@@ -1,30 +1,30 @@
+"use client";
+
 import Link from "next/link";
-import {
-  MapPin,
-  ChevronDown,
-  LayoutGrid,
-  Search,
-  Heart,
-} from "lucide-react";
+import { MapPin, LayoutGrid, Search, Heart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { MiniCart } from "./mini-cart";
 import { CartTrigger } from "./cart-trigger";
 import { UserMenu } from "./user-menu";
+import { LanguageSwitcher } from "./language-switcher";
 
 const navLinks = [
-  { label: "Sugestie", href: "#" },
-  { label: "O nas", href: "#" },
-  { label: "Dostawa i płatność", href: "#" },
-  { label: "Franczyza", href: "#" },
-  { label: "Kontakt", href: "#" },
-];
+  { key: "suggestions", href: "#" },
+  { key: "about", href: "#" },
+  { key: "delivery", href: "#" },
+  { key: "franchise", href: "#" },
+  { key: "contact", href: "#" },
+] as const;
 
 export function TarankaHeader() {
+  const { t } = useTranslation();
+
   return (
     <header className="sticky top-0 z-[1000] font-taranka-body shadow-sm backdrop-blur-sm">
       <div className="flex h-14 items-center bg-ink-900 px-9 text-cream-50">
         <div className="flex flex-1 items-center gap-1">
           <MapPin className="size-4" strokeWidth={1.75} />
-          <span className="text-sm font-normal">ul. Sagaidachnego 5, Warszawa</span>
+          <span className="text-sm font-normal">{t("header.address")}</span>
         </div>
 
         <Link href="/" className="flex items-center" aria-label="Taranka">
@@ -39,16 +39,7 @@ export function TarankaHeader() {
         </Link>
 
         <div className="flex flex-1 items-center justify-end">
-          <button
-            type="button"
-            className="group flex items-center gap-1 text-sm font-medium text-cream-50 transition-colors hover:text-brand-red-500"
-          >
-            PL
-            <ChevronDown
-              className="size-4 transition-transform duration-300 group-hover:rotate-180"
-              strokeWidth={1.75}
-            />
-          </button>
+          <LanguageSwitcher />
         </div>
       </div>
 
@@ -61,17 +52,17 @@ export function TarankaHeader() {
             className="size-6 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
             strokeWidth={1.75}
           />
-          Katalog
+          {t("header.catalog")}
         </Link>
 
         <nav className="flex items-center gap-9">
           {navLinks.map((link) => (
             <Link
-              key={link.label}
+              key={link.key}
               href={link.href}
               className="relative text-base font-normal text-ink-900 transition-colors duration-300 hover:text-brand-red-500 after:absolute after:left-0 after:-bottom-1 after:h-0.5 after:w-0 after:bg-brand-red-500 after:transition-all after:duration-300 hover:after:w-full"
             >
-              {link.label}
+              {t(`header.nav.${link.key}`)}
             </Link>
           ))}
         </nav>
@@ -82,7 +73,7 @@ export function TarankaHeader() {
           <div className="flex h-full items-center bg-cream-200 px-5 w-[252px]">
             <input
               type="search"
-              placeholder=""
+              placeholder={t("header.searchPlaceholder")}
               className="h-full flex-1 bg-transparent text-sm text-ink-900 placeholder:text-cream-400 outline-none"
             />
             <Search className="size-5 text-ink-900" strokeWidth={1.75} />
@@ -93,7 +84,7 @@ export function TarankaHeader() {
 
           <button
             type="button"
-            aria-label="Ulubione"
+            aria-label={t("header.favorites")}
             className="group/icon flex h-full w-12 items-center justify-center text-ink-900 transition-colors hover:text-brand-red-500"
           >
             <Heart className="size-5 transition-transform duration-300 group-hover/icon:scale-110" strokeWidth={1.75} />

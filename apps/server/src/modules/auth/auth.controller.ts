@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { Webhook } from 'svix';
-import { getAuth } from '@clerk/express';
+import { getAuth, clerkClient } from '@clerk/express';
 import { authService } from './auth.service.js';
 import { config } from '../../config/index.js';
 import { AppError } from '../../common/middleware/error-handler.js';
@@ -53,8 +53,22 @@ export class AuthController {
           const firstName = userData.first_name || '';
           const lastName = userData.last_name || '';
           const avatar = userData.image_url;
-          const phone = userData.phone_numbers?.[0]?.phone_number;
-          const role = userData.public_metadata?.role;
+
+          // Custom sign-up writes segment/phone/company into unsafe_metadata
+          // (client-writable); it is promoted into public_metadata below.
+          const publicMeta = userData.public_metadata || {};
+          const unsafeMeta = userData.unsafe_metadata || {};
+
+          // Phone is our own captured field, not a verified Clerk factor — read
+          // it from metadata first, fall back to a Clerk phone factor if any.
+          const phone =
+            unsafeMeta.phone ||
+            publicMeta.phone ||
+            userData.phone_numbers?.[0]?.phone_number;
+          const role = publicMeta.role;
+          const customerType = publicMeta.customerType || unsafeMeta.customerType;
+          const companyName = publicMeta.companyName || unsafeMeta.companyName;
+          const taxId = publicMeta.taxId || unsafeMeta.taxId;
 
           if (!email) {
             throw new AppError(400, 'Email is required');
@@ -68,7 +82,27 @@ export class AuthController {
             avatar,
             phone,
             role,
+            customerType,
+            companyName,
+            taxId,
           });
+
+          // Promote the storefront segment into public_metadata so it lands in
+          // the session token. Loop-safe: only runs while public_metadata still
+          // lacks customerType, so the resulting user.updated won't re-promote.
+          if (!publicMeta.customerType && unsafeMeta.customerType) {
+            try {
+              await clerkClient.users.updateUserMetadata(userData.id, {
+                publicMetadata: {
+                  customerType: unsafeMeta.customerType,
+                  ...(companyName ? { companyName } : {}),
+                  ...(taxId ? { taxId } : {}),
+                },
+              });
+            } catch (err) {
+              console.error('Failed to promote customerType to public_metadata:', err);
+            }
+          }
 
           break;
         }
@@ -108,7 +142,8 @@ export class AuthController {
     try {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 20;
-      const result = await authService.getAllUsers(page, limit);
+      const query = (req.query.search as string) || undefined;
+      const result = await authService.getAllUsers(page, limit, query);
       res.json({ success: true, ...result });
     } catch (error) {
       next(error);

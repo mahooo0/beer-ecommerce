@@ -3,7 +3,13 @@
 import { useState } from 'react';
 import { createUser } from './actions';
 
-export function CreateUserForm({ onClose }: { onClose: () => void }) {
+export function CreateUserForm({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated?: () => void;
+}) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -12,6 +18,7 @@ export function CreateUserForm({ onClose }: { onClose: () => void }) {
     setError(null);
     try {
       await createUser(formData);
+      onCreated?.();
       onClose();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to create user');

@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { ProfileSidebar } from "@/components/taranka/profile-sidebar";
 import { ProfileOrders } from "@/components/taranka/profile-orders";
 import { TarankaFooter } from "@/components/taranka/footer";
+import { getServerT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Historia zamówień | Taranka",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getServerT("profile");
+  return { title: `${t("orders.title")} | Taranka` };
+}
 
 export default function OrdersPage() {
   return (

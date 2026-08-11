@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "title": "Taranka — Sklep internetowy",
+    "description": "Polsko-ukraiński sklep internetowy: piwo, ryba, snacks, słodycze."
+  },
+  "header": {
+    "address": "ul. Sagaidachnego 5, Warszawa",
+    "catalog": "Katalog",
+    "searchPlaceholder": "Szukaj...",
+    "favorites": "Ulubione",
+    "nav": {
+      "suggestions": "Sugestie",
+      "about": "O nas",
+      "delivery": "Dostawa i płatność",
+      "franchise": "Franczyza",
+      "contact": "Kontakt"
+    }
+  },
+  "language": {
+    "label": "Język",
+    "pl": "Polski",
+    "uk": "Українська"
+  },
+  "userMenu": {
+    "login": "Zaloguj się",
+    "account": "Konto",
+    "profile": "Profil",
+    "accountManager": "Menedżer konta",
+    "logout": "Wyloguj",
+    "supplier": "Dostawca",
+    "retailCustomer": "Klient detaliczny"
+  },
+  "footer": {
+    "menu": {
+      "title": "Menu",
+      "snaks": "Snaks",
+      "kiszonki": "Kiszonki",
+      "wino": "WINO",
+      "slodycze": "Słodycze"
+    },
+    "clients": {
+      "title": "Dla klientów",
+      "login": "Zaloguj się",
+      "vacancies": "Wakaty",
+      "delivery": "Dostawa i płatność"
+    },
+    "about": {
+      "title": "O nas",
+      "franchise": "Franczyza",
+      "contacts": "Kontakty"
+    },
+    "contacts": {
+      "title": "Kontakty"
+    },
+    "copyright": "Copyright © 2024 All Rights Reserved",
+    "privacyRodo": "Polityka prywatności RODO",
+    "privacy": "Polityka prywatności"
+  },
+  "about": {
+    "heading": "Sklep internetowy Taranka",
+    "paragraph1": "“Witamy w naszym sklepie z ukraińską żywnością w Warszawie i okolicach! Jesteśmy Twoim niezawodnym przewodnikiem po świecie smaku i autentycznej ukraińskiej żywności, sprowadzanej wprost z serca Ukrainy do stolicy Polski.",
+    "paragraph2": "W naszym asortymencie znajdziesz szeroką gamę produktów, które docenią prawdziwi fani kuchni ukraińskiej. Od tradycyjnego barszczu i wareników po ulubione słodycze — oferujemy najświeższe i najsmaczniejsze produkty od najlepszych ukraińskich producentów.",
+    "more": "więcej"
+  },
+  "breadcrumbs": {
+    "ariaLabel": "Ścieżka nawigacji",
+    "home": "Strona główna",
+    "segments": {
+      "products": "Katalog",
+      "cart": "Koszyk",
+      "checkout": "Zamówienie",
+      "success": "Potwierdzenie",
+      "wishlist": "Ulubione",
+      "profile": "Profil",
+      "orders": "Zamówienia",
+      "compare": "Porównanie",
+      "categories": "Kategorie",
+      "search": "Wyszukiwanie",
+      "signIn": "Zaloguj się",
+      "signUp": "Rejestracja",
+      "addresses": "Twoje adresy",
+      "cenniki": "Cenniki",
+      "znizki": "Twoje zniżki"
+    }
+  },
+  "contactForm": {
+    "heading": "Chcesz zadać pytanie?",
+    "namePlaceholder": "Imię",
+    "emailPlaceholder": "Email",
+    "messagePlaceholder": "Twoja wiadomość",
+    "sent": "Wysłano ✓",
+    "submit": "wysyłać"
+  }
+}

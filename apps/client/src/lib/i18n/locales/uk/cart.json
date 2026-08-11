@@ -1,0 +1,36 @@
+{
+  "cartTrigger": {
+    "label": "Кошик"
+  },
+  "cartPage": {
+    "title": "Ваш кошик",
+    "empty": "Ваш кошик порожній.",
+    "goToCatalog": "Перейти до каталогу",
+    "decrease": "Зменшити",
+    "increase": "Збільшити",
+    "removeProduct": "Видалити товар",
+    "orderAmount": "Сума замовлення",
+    "subtotal": "Разом:",
+    "shipping": "Доставка:",
+    "discount": "Ваша знижка:",
+    "total": "Усього:",
+    "placeOrder": "Оформити замовлення"
+  },
+  "miniCart": {
+    "title": "Кошик",
+    "close": "Закрити",
+    "empty": "Кошик порожній. Додайте товари з каталогу.",
+    "removeProduct": "Видалити товар",
+    "decrease": "Зменшити кількість",
+    "increase": "Збільшити кількість",
+    "subtotal": "Разом:",
+    "shipping": "Доставка:",
+    "discount": "Ваша знижка:",
+    "placeOrder": "Оформити замовлення",
+    "continueShopping": "Продовжити покупки",
+    "acceptTerms": "Замовляючи товари, я приймаю умови публічної оферти"
+  },
+  "page": {
+    "metaTitle": "Кошик"
+  }
+}

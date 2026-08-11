@@ -1,109 +1,150 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { User, LogOut, ShoppingBag, UserCircle } from "lucide-react";
+import { User, UserRound, Settings, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Show, useUser, useClerk } from "@clerk/nextjs";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/shadcn/popover";
-import { Separator } from "@/components/shadcn/separator";
-import { useAuth } from "@/lib/auth-store";
-import { useState } from "react";
+
+const menuItem =
+  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-900 transition-colors hover:bg-[#F5F3EC]";
 
 export function UserMenu() {
-  const user = useAuth((s) => s.user);
-  const signOut = useAuth((s) => s.signOut);
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-
-  if (!user) {
-    return (
-      <Link
-        href="/sign-in"
-        aria-label="Zaloguj się"
-        className="group/icon flex h-full w-12 items-center justify-center text-ink-900 transition-colors hover:text-brand-red-500"
-      >
-        <User
-          className="size-5 transition-transform duration-300 group-hover/icon:scale-110"
-          strokeWidth={1.75}
-        />
-      </Link>
-    );
-  }
-
+  const { t } = useTranslation();
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label="Profil"
+    <>
+      <Show when="signed-out">
+        <Link
+          href="/sign-in"
+          aria-label={t("userMenu.login")}
           className="group/icon flex h-full w-12 items-center justify-center text-ink-900 transition-colors hover:text-brand-red-500"
         >
           <User
             className="size-5 transition-transform duration-300 group-hover/icon:scale-110"
             strokeWidth={1.75}
           />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={12}
-        className="w-[260px] rounded-2xl border-0 bg-white p-0 font-taranka-body shadow-[0_20px_50px_-12px_rgba(39,36,34,0.25)]"
-      >
-        <div className="p-4">
-          <p className="font-taranka-display text-base font-extrabold uppercase tracking-wide text-ink-900">
-            {user.name ?? "Konto"}
-          </p>
-          <p className="mt-1 text-sm text-[#9E9B90]">{user.email}</p>
-        </div>
-        <Separator />
-        <nav className="flex flex-col p-2">
-          <MenuLink href="/profile" icon={UserCircle} onClick={() => setOpen(false)}>
-            Profil
-          </MenuLink>
-          <MenuLink href="/orders" icon={ShoppingBag} onClick={() => setOpen(false)}>
-            Zamówienia
-          </MenuLink>
-        </nav>
-        <Separator />
-        <button
-          type="button"
-          onClick={() => {
-            signOut();
-            setOpen(false);
-            router.push("/");
-          }}
-          className="flex w-full items-center gap-3 px-4 py-3 text-left text-sm text-ink-900 transition-colors hover:bg-cream-200 hover:text-brand-red-500"
-        >
-          <LogOut className="size-4" strokeWidth={1.75} />
-          Wyloguj się
-        </button>
-      </PopoverContent>
-    </Popover>
+        </Link>
+      </Show>
+
+      <Show when="signed-in">
+        <SignedInMenu />
+      </Show>
+    </>
   );
 }
 
-function MenuLink({
-  href,
-  icon: Icon,
-  onClick,
-  children,
-}: {
-  href: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  onClick?: () => void;
-  children: React.ReactNode;
-}) {
+function SignedInMenu() {
+  const { t } = useTranslation();
+  const { user } = useUser();
+  const { signOut, openUserProfile } = useClerk();
+  const [open, setOpen] = useState(false);
+
+  const customerType =
+    (user?.publicMetadata?.customerType as string | undefined) ??
+    (user?.unsafeMetadata?.customerType as string | undefined);
+  const isWholesale = customerType === "WHOLESALE";
+
+  const displayName =
+    user?.fullName ||
+    user?.primaryEmailAddress?.emailAddress ||
+    t("userMenu.account");
+  const email = user?.primaryEmailAddress?.emailAddress ?? "";
+
   return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-900 transition-colors hover:bg-cream-200 hover:text-brand-red-500"
-    >
-      <Icon className="size-4" strokeWidth={1.75} />
-      {children}
-    </Link>
+    <div className="flex h-full w-12 items-center justify-center">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            aria-label={t("userMenu.account")}
+            className="flex size-9 items-center justify-center overflow-hidden rounded-full ring-1 ring-cream-300 transition-transform hover:scale-105"
+          >
+            {user?.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.imageUrl} alt="" className="size-full object-cover" />
+            ) : (
+              <User className="size-5 text-ink-900" strokeWidth={1.75} />
+            )}
+          </button>
+        </PopoverTrigger>
+
+        <PopoverContent
+          align="end"
+          className="w-64 rounded-2xl border-cream-300 p-0 font-taranka-body shadow-lg"
+        >
+          {/* header */}
+          <div className="flex items-center gap-3 border-b border-cream-300 p-4">
+            {user?.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.imageUrl}
+                alt=""
+                className="size-10 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex size-10 items-center justify-center rounded-full bg-cream-200">
+                <User className="size-5 text-ink-900" />
+              </span>
+            )}
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-ink-900">
+                {displayName}
+              </p>
+              <span
+                className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${
+                  isWholesale
+                    ? "bg-brand-red-500 text-cream-50"
+                    : "bg-cream-200 text-ink-900"
+                }`}
+              >
+                {isWholesale
+                  ? t("userMenu.supplier")
+                  : t("userMenu.retailCustomer")}
+              </span>
+            </div>
+          </div>
+
+          {/* actions */}
+          <div className="p-2">
+            <Link href="/profile" onClick={() => setOpen(false)} className={menuItem}>
+              <UserRound className="size-4" strokeWidth={1.75} />
+              {t("userMenu.profile")}
+            </Link>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                openUserProfile();
+              }}
+              className={menuItem}
+            >
+              <Settings className="size-4" strokeWidth={1.75} />
+              {t("userMenu.accountManager")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                void signOut({ redirectUrl: "/" });
+              }}
+              className={`${menuItem} text-brand-red-500 hover:bg-brand-red-500/10`}
+            >
+              <LogOut className="size-4" strokeWidth={1.75} />
+              {t("userMenu.logout")}
+            </button>
+          </div>
+          {email && (
+            <p className="truncate border-t border-cream-300 px-4 py-2 text-xs text-ink-900/60">
+              {email}
+            </p>
+          )}
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 }

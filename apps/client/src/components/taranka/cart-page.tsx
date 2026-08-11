@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useCart } from "@/lib/cart-store";
 
 export function TarankaCartPage() {
+  const { t } = useTranslation("cart");
   const items = useCart((s) => s.items);
   const updateQty = useCart((s) => s.updateQty);
   const removeItem = useCart((s) => s.removeItem);
@@ -19,19 +21,19 @@ export function TarankaCartPage() {
   return (
     <div className="font-taranka-body">
       <h1 className="font-taranka-display text-2xl font-extrabold uppercase tracking-wide text-ink-900">
-        Twój koszyk
+        {t("cartPage.title")}
       </h1>
 
       <div className="mt-6 grid grid-cols-[1fr_383px] gap-6">
         <div className="rounded-[20px] bg-white p-6">
           {items.length === 0 ? (
             <div className="py-12 text-center">
-              <p className="text-base text-[#9E9B90]">Twój koszyk jest pusty.</p>
+              <p className="text-base text-[#9E9B90]">{t("cartPage.empty")}</p>
               <Link
                 href="/products"
                 className="mt-4 inline-flex h-12 items-center rounded-full bg-brand-red-500 px-6 text-base font-medium text-cream-50 transition-colors hover:bg-brand-red-700"
               >
-                Przejdź do katalogu
+                {t("cartPage.goToCatalog")}
               </Link>
             </div>
           ) : (
@@ -57,7 +59,7 @@ export function TarankaCartPage() {
                     <button
                       type="button"
                       onClick={() => updateQty(item.id, -1)}
-                      aria-label="Zmniejsz"
+                      aria-label={t("cartPage.decrease")}
                       className="text-ink-900 transition-colors hover:text-brand-red-500"
                     >
                       <Minus className="size-3.5" strokeWidth={1.75} />
@@ -68,7 +70,7 @@ export function TarankaCartPage() {
                     <button
                       type="button"
                       onClick={() => updateQty(item.id, 1)}
-                      aria-label="Zwiększ"
+                      aria-label={t("cartPage.increase")}
                       className="text-ink-900 transition-colors hover:text-brand-red-500"
                     >
                       <Plus className="size-3.5" strokeWidth={1.75} />
@@ -91,7 +93,7 @@ export function TarankaCartPage() {
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
-                    aria-label="Usuń produkt"
+                    aria-label={t("cartPage.removeProduct")}
                     className="text-[#9E9B90] transition-colors hover:text-brand-red-500"
                   >
                     <Trash2 className="size-5" strokeWidth={1.5} />
@@ -104,17 +106,17 @@ export function TarankaCartPage() {
 
         <aside className="h-fit rounded-[20px] bg-white p-6">
           <h2 className="font-taranka-display text-xl font-extrabold uppercase tracking-wide text-ink-900">
-            Kwota zamówienia
+            {t("cartPage.orderAmount")}
           </h2>
 
           <div className="mt-5 space-y-3">
-            <Row label="Razem:" value={fmt(subtotal)} />
-            <Row label="Dostawa:" value={fmt(shipping)} />
-            <Row label="Twój rabat:" value={fmt(discount)} />
+            <Row label={t("cartPage.subtotal")} value={fmt(subtotal)} />
+            <Row label={t("cartPage.shipping")} value={fmt(shipping)} />
+            <Row label={t("cartPage.discount")} value={fmt(discount)} />
           </div>
 
           <div className="mt-6 border-t border-cream-200 pt-4">
-            <Row label="Łącznie:" value={fmt(grand)} bold />
+            <Row label={t("cartPage.total")} value={fmt(grand)} bold />
           </div>
 
           <Link
@@ -125,7 +127,7 @@ export function TarankaCartPage() {
               items.length === 0 ? "pointer-events-none opacity-50" : ""
             }`}
           >
-            Złożyć zamówienie
+            {t("cartPage.placeOrder")}
           </Link>
         </aside>
       </div>

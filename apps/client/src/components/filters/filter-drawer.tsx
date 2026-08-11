@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { FilterContentProps } from './filter-content';
 import { FilterContent } from './filter-content';
 import { FilterButton } from './filter-button';
@@ -33,6 +34,7 @@ function countActiveFilters(filters: {
 }
 
 export function FilterDrawer({ categoryAttributes, facetCounts }: FilterDrawerProps) {
+  const { t } = useTranslation('categories');
   const [filters, setFilters] = useFilters();
   const [open, setOpen] = useState(false);
   const [pendingFilters, setPendingFilters] = useState({ ...DEFAULT_FILTERS });
@@ -102,16 +104,16 @@ export function FilterDrawer({ categoryAttributes, facetCounts }: FilterDrawerPr
             className="fixed inset-y-0 left-0 z-50 w-full sm:max-w-md bg-primary flex flex-col lg:hidden"
             role="dialog"
             aria-modal="true"
-            aria-label="Filters"
+            aria-label={t('filters.title')}
             data-testid="filter-drawer-content"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-border-secondary">
-              <h2 className="text-base font-semibold text-primary">Filters</h2>
+              <h2 className="text-base font-semibold text-primary">{t('filters.title')}</h2>
               <button
                 onClick={handleClose}
                 className="p-1.5 rounded-md text-quaternary hover:text-primary hover:bg-primary_hover focus:outline-none focus-visible:outline-2 focus-visible:outline-focus-ring transition-colors"
-                aria-label="Close filters"
+                aria-label={t('filters.close')}
                 data-testid="close-drawer-button"
               >
                 <svg
@@ -147,14 +149,14 @@ export function FilterDrawer({ categoryAttributes, facetCounts }: FilterDrawerPr
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-secondary bg-primary border border-border-primary rounded-lg hover:bg-primary_hover focus:outline-none focus-visible:outline-2 focus-visible:outline-focus-ring transition-colors"
                 data-testid="clear-all-filters-button"
               >
-                Clear All
+                {t('filters.clearAll')}
               </button>
               <button
                 onClick={handleApply}
                 className="flex-1 px-4 py-2.5 text-sm font-medium text-fg-white bg-brand-solid rounded-lg hover:bg-brand-solid_hover focus:outline-none focus-visible:outline-2 focus-visible:outline-focus-ring transition-colors"
                 data-testid="apply-filters-button"
               >
-                Apply
+                {t('filters.apply')}
               </button>
             </div>
           </div>

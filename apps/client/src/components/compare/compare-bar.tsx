@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { useCompareStore } from '../../stores/compare-store';
 
 export function CompareBar() {
+  const { t } = useTranslation('misc');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -20,7 +22,7 @@ export function CompareBar() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-neutral-200 bg-white shadow-lg">
       <div className="mx-auto flex max-w-container flex-wrap items-center gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <span className="shrink-0 text-xs font-semibold tracking-wider text-neutral-900 uppercase">Compare:</span>
+        <span className="shrink-0 text-xs font-semibold tracking-wider text-neutral-900 uppercase">{t('compare.bar.label')}</span>
 
         <div className="flex flex-1 flex-wrap items-center gap-2">
           {items.map((item) => (
@@ -44,7 +46,7 @@ export function CompareBar() {
               </div>
               <button
                 onClick={() => removeItem(item.productId)}
-                aria-label={`Remove ${item.name} from compare`}
+                aria-label={t('compare.bar.removeAria', { name: item.name })}
                 className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-neutral-900 text-[10px] text-white opacity-0 transition-opacity group-hover/thumb:opacity-100"
               >
                 &times;
@@ -65,18 +67,18 @@ export function CompareBar() {
             onClick={clearItems}
             className="text-xs text-neutral-500 transition hover:text-neutral-900"
           >
-            Clear
+            {t('compare.bar.clear')}
           </button>
           {items.length >= 2 ? (
             <Link
               href="/compare"
               className="bg-neutral-900 px-5 py-2 text-xs font-medium tracking-wider text-white uppercase transition hover:bg-neutral-800"
             >
-              Compare ({items.length})
+              {t('compare.bar.compareCount', { n: items.length })}
             </Link>
           ) : (
             <span className="cursor-not-allowed bg-neutral-100 px-5 py-2 text-xs font-medium tracking-wider text-neutral-400 uppercase">
-              Compare ({items.length})
+              {t('compare.bar.compareCount', { n: items.length })}
             </span>
           )}
         </div>

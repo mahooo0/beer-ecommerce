@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ProductCard } from './product-card';
 import { ProductCardList } from './product-card-list';
 import { ViewToggle, type ViewMode } from './view-toggle';
@@ -11,13 +12,14 @@ interface ProductGridProps {
 }
 
 export function ProductGrid({ products }: ProductGridProps) {
+  const { t } = useTranslation('shop');
   const [view, setView] = useState<ViewMode>('grid');
 
   if (products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
-        <h3 className="text-sm font-medium tracking-wider text-neutral-900 uppercase">No products found</h3>
-        <p className="mt-2 text-sm text-neutral-500">Try adjusting your filters or check back later.</p>
+        <h3 className="text-sm font-medium tracking-wider text-neutral-900 uppercase">{t('productGrid.empty')}</h3>
+        <p className="mt-2 text-sm text-neutral-500">{t('productGrid.emptyHint')}</p>
       </div>
     );
   }

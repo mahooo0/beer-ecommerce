@@ -3,10 +3,13 @@
 import Link from "next/link";
 import { Heart, Check } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useCart } from "@/lib/cart-store";
 
 export interface CatalogProduct {
   id: number | string;
+  /** URL slug used for the product detail link; falls back to `id` when absent. */
+  slug?: string;
   name: string;
   weight: string;
   oldPrice: string;
@@ -19,6 +22,8 @@ const parsePrice = (str: string) => parseFloat(str.replace(/[^\d.,]/g, "").repla
 export function CatalogCard({ product }: { product: CatalogProduct }) {
   const addItem = useCart((s) => s.addItem);
   const [added, setAdded] = useState(false);
+  const { t } = useTranslation("catalog");
+  const href = `/products/${product.slug ?? product.id}`;
 
   const handleAdd = () => {
     addItem({
@@ -36,7 +41,7 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
   return (
     <article className="group flex h-[372px] w-[282px] flex-col rounded-[20px] bg-white px-6 pb-6 pt-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-12px_rgba(39,36,34,0.18)]">
       <Link
-        href={`/products/${product.id}`}
+        href={href}
         className="flex h-[174px] w-full cursor-pointer items-center justify-center overflow-hidden"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -49,7 +54,7 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
 
       <div className="mt-[15px] flex flex-1 flex-col">
         <Link
-          href={`/products/${product.id}`}
+          href={href}
           className="text-base font-semibold leading-tight text-[#443029] transition-colors group-hover:text-brand-red-500"
         >
           {product.name}
@@ -57,14 +62,16 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
         <p className="mt-1 text-sm text-[#443029]">{product.weight}</p>
 
         <div className="mt-1 flex items-baseline gap-4">
-          <span className="text-base text-[#B5B2A7] line-through">{product.oldPrice}</span>
+          {product.oldPrice && (
+            <span className="text-base text-[#B5B2A7] line-through">{product.oldPrice}</span>
+          )}
           <span className="text-xl font-bold text-[#443029]">{product.newPrice}</span>
         </div>
 
         <div className="mt-auto flex items-center gap-4">
           <button
             type="button"
-            aria-label="Dodaj do ulubionych"
+            aria-label={t("card.addToFavorites")}
             className="flex size-12 shrink-0 items-center justify-center rounded-full border border-brand-red-500 text-brand-red-500 transition-all duration-300 hover:scale-110 hover:bg-brand-red-500 hover:text-cream-50 active:scale-95"
           >
             <Heart className="size-6" strokeWidth={1.75} />
@@ -76,10 +83,10 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
           >
             {added ? (
               <>
-                <Check className="size-4" strokeWidth={2.5} /> Dodano
+                <Check className="size-4" strokeWidth={2.5} /> {t("card.added")}
               </>
             ) : (
-              "Do koszyka"
+              t("card.addToCart")
             )}
           </button>
         </div>

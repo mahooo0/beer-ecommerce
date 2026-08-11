@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
+import { getServerT } from "@/lib/i18n/server";
 import { TarankaCartPage } from "@/components/taranka/cart-page";
 import { TarankaAbout } from "@/components/taranka/about";
 import { TarankaFooter } from "@/components/taranka/footer";
 
-export const metadata: Metadata = {
-  title: "Koszyk | Taranka",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getServerT("cart");
+  return {
+    title: `${t("page.metaTitle")} | Taranka`,
+  };
+}
 
 export default function CartPage() {
   return (

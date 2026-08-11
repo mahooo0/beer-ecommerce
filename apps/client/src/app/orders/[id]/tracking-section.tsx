@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import type { Order } from '@repo/types';
 
 interface TrackingSectionProps {
@@ -14,6 +15,8 @@ const carrierTrackingUrls: Record<string, (tn: string) => string> = {
 };
 
 export default function TrackingSection({ order }: TrackingSectionProps) {
+  const { t, i18n } = useTranslation('profile');
+
   if (!order.shipping?.trackingNumber) {
     return null;
   }
@@ -21,8 +24,9 @@ export default function TrackingSection({ order }: TrackingSectionProps) {
   const { carrier, trackingNumber, shippedAt, estimatedDelivery } = order.shipping;
   const trackingUrl = carrier && carrierTrackingUrls[carrier];
 
+  const locale = i18n.language === 'uk' ? 'uk-UA' : 'pl-PL';
   const formatDate = (date: Date | string) => {
-    return new Date(date).toLocaleDateString('en-US', {
+    return new Date(date).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -45,23 +49,23 @@ export default function TrackingSection({ order }: TrackingSectionProps) {
 
   return (
     <div className="border border-border-secondary rounded-lg p-6 bg-primary shadow-sm">
-      <h2 className="text-lg font-semibold mb-4">Tracking Information</h2>
+      <h2 className="text-lg font-semibold mb-4">{t('tracking.title')}</h2>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-tertiary">Status</span>
+          <span className="text-tertiary">{t('tracking.status')}</span>
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusBadgeColor(order.status)}`}>
-            {order.status}
+            {t(`orders.status.${order.status}`, { defaultValue: order.status })}
           </span>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-tertiary">Carrier</span>
+          <span className="text-tertiary">{t('tracking.carrier')}</span>
           <span className="font-medium">{carrier}</span>
         </div>
 
         <div className="flex flex-col gap-1">
-          <span className="text-tertiary">Tracking Number</span>
+          <span className="text-tertiary">{t('tracking.trackingNumber')}</span>
           <span className="font-mono text-sm bg-secondary_subtle px-3 py-2 rounded break-all">
             {trackingNumber}
           </span>
@@ -75,21 +79,21 @@ export default function TrackingSection({ order }: TrackingSectionProps) {
               rel="noopener noreferrer"
               className="inline-block w-full text-center bg-brand-solid text-white py-2 px-4 rounded-md hover:bg-brand-solid_hover transition-colors"
             >
-              Track Package
+              {t('tracking.trackPackage')}
             </a>
           </div>
         )}
 
         {shippedAt && (
           <div className="flex items-center justify-between pt-2 border-t border-border-secondary">
-            <span className="text-tertiary">Shipped</span>
+            <span className="text-tertiary">{t('tracking.shipped')}</span>
             <span className="font-medium">{formatDate(shippedAt)}</span>
           </div>
         )}
 
         {estimatedDelivery && (
           <div className="flex items-center justify-between">
-            <span className="text-tertiary">Estimated Delivery</span>
+            <span className="text-tertiary">{t('tracking.estimatedDelivery')}</span>
             <span className="font-medium">{formatDate(estimatedDelivery)}</span>
           </div>
         )}

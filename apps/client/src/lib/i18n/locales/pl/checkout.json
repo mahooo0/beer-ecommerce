@@ -1,0 +1,57 @@
+{
+  "meta": {
+    "checkoutTitle": "Zamówienie | Taranka",
+    "successTitle": "Dziękujemy! | Taranka"
+  },
+  "step": {
+    "delivery": "Wybierz metodę dostawy",
+    "contact": "Dane kontaktowe",
+    "payment": "Metoda płatności"
+  },
+  "tab": {
+    "kurier": "Kurier",
+    "wlasna": "Dostawa własna",
+    "poczta": "Maszyna pocztowa"
+  },
+  "form": {
+    "city": "Miasto",
+    "street": "Ulica",
+    "house": "Dom",
+    "apartment": "Mieszkanie",
+    "dateTime": "Wybierz datę i godzinę",
+    "time": "Godzina",
+    "postOfficeNumber": "Numer urzędu pocztowego",
+    "fullName": "Imię i nazwisko",
+    "companyName": "Nazwa firmy",
+    "email": "Email",
+    "namePlaceholder": "Imię i nazwisko",
+    "companyPlaceholder": "Nazwa firmy",
+    "emailPlaceholder": "Email"
+  },
+  "button": {
+    "continue": "kontynuować",
+    "confirm": "Potwierdzenie",
+    "done": "Gotowe",
+    "payAndOrder": "Zapłać i złóż zamówienie"
+  },
+  "map": {
+    "loading": "Ładowanie mapy…"
+  },
+  "success": {
+    "title": "Dziękujemy za zamówienie!",
+    "message": "Wysłaliśmy potwierdzenie na podany adres email. Wkrótce skontaktujemy się w sprawie dostawy.",
+    "backToCatalog": "Wróć do katalogu"
+  },
+  "confirmation": {
+    "title": "Zamówienie potwierdzone",
+    "subtitle": "Dziękujemy za zakupy! Twoje zamówienie zostało pomyślnie złożone.",
+    "orderNumber": "Numer zamówienia",
+    "status": "Status",
+    "total": "Razem",
+    "items": "Produkty",
+    "processing": "Twoje zamówienie jest przetwarzane. Status możesz sprawdzić na stronie zamówień.",
+    "viewOrderDetails": "Zobacz szczegóły zamówienia",
+    "viewAllOrders": "Zobacz wszystkie zamówienia",
+    "continueShopping": "Kontynuuj zakupy"
+  }
+}

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import {
   InstantSearch,
   SearchBox,
@@ -35,6 +36,7 @@ interface ProductHit {
 }
 
 function ProductCard({ hit }: { hit: ProductHit }) {
+  const { t } = useTranslation('misc');
   const formattedPrice = `$${(hit.price / 100).toFixed(2)}`;
   const highlightedName = hit._highlightResult?.name?.value || hit.name;
 
@@ -51,7 +53,7 @@ function ProductCard({ hit }: { hit: ProductHit }) {
         />
       ) : (
         <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400">
-          No image
+          {t('search.noImage')}
         </div>
       )}
       <div className="p-4">
@@ -70,6 +72,7 @@ function ProductCard({ hit }: { hit: ProductHit }) {
 }
 
 export function SearchResultsPage() {
+  const { t } = useTranslation('misc');
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
 
@@ -89,7 +92,7 @@ export function SearchResultsPage() {
         {/* Search box */}
         <div className="mb-6">
           <SearchBox
-            placeholder="Search products..."
+            placeholder={t('search.resultsPlaceholder')}
             classNames={{
               root: 'relative',
               form: 'relative',
@@ -110,6 +113,9 @@ export function SearchResultsPage() {
             classNames={{
               root: 'text-sm text-gray-600',
             }}
+            translations={{
+              rootElementText: ({ nbHits }) => t('search.stats', { n: nbHits }),
+            }}
           />
         </div>
 
@@ -121,7 +127,7 @@ export function SearchResultsPage() {
               {/* Brand filter */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Brand
+                  {t('search.filterBrand')}
                 </h3>
                 <RefinementList
                   attribute="brandName"
@@ -141,7 +147,7 @@ export function SearchResultsPage() {
               {/* Category filter */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Category
+                  {t('search.filterCategory')}
                 </h3>
                 <RefinementList
                   attribute="categoryName"
@@ -161,7 +167,7 @@ export function SearchResultsPage() {
               {/* Product Type filter */}
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Product Type
+                  {t('search.filterProductType')}
                 </h3>
                 <RefinementList
                   attribute="productType"

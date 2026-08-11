@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CategoryAttribute } from '@repo/types';
 import { PriceFilter } from './price-filter';
 import { AttributeFilter } from './attribute-filter';
@@ -44,6 +45,7 @@ function Separator() {
 }
 
 function BrandFilter({ brands }: { brands: BrandFacet[] }) {
+  const { t } = useTranslation('categories');
   const [filters, setFilters] = useFilters();
 
   if (brands.length === 0) return null;
@@ -58,7 +60,7 @@ function BrandFilter({ brands }: { brands: BrandFacet[] }) {
 
   return (
     <div className="space-y-2" data-testid="brand-filter">
-      <h3 className="text-sm font-semibold text-primary">Brand</h3>
+      <h3 className="text-sm font-semibold text-primary">{t('brand.label')}</h3>
       <div className="space-y-1.5">
         {brands.map(({ name, count }) => {
           const checked = filters.brands.includes(name);
@@ -71,7 +73,7 @@ function BrandFilter({ brands }: { brands: BrandFacet[] }) {
               <Checkbox
                 isSelected={checked}
                 onChange={() => toggle(name)}
-                aria-label={`Brand: ${name}`}
+                aria-label={t('brand.ariaLabel', { name })}
                 label={<span className="text-secondary">{name}</span>}
               />
               {count !== undefined && (

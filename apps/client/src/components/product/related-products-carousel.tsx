@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Product } from '@repo/types';
 import { ProductCard } from './product-card';
 
@@ -15,6 +16,7 @@ interface RelatedProductsCarouselProps {
 }
 
 export function RelatedProductsCarousel({ products }: RelatedProductsCarouselProps) {
+  const { t } = useTranslation('shop');
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -40,14 +42,14 @@ export function RelatedProductsCarousel({ products }: RelatedProductsCarouselPro
 
   return (
     <section className="mt-12">
-      <h2 className="text-xl font-semibold text-primary mb-4">Related Products</h2>
+      <h2 className="text-xl font-semibold text-primary mb-4">{t('related.title')}</h2>
 
       <div className="relative">
         {/* Left arrow */}
         {canScrollLeft && (
           <button
             onClick={scrollLeft}
-            aria-label="Scroll left"
+            aria-label={t('related.scrollLeft')}
             className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 w-10 h-10 items-center justify-center bg-primary shadow-lg rounded-full border border-border-secondary hover:bg-primary_hover transition-colors"
           >
             <svg className="w-5 h-5 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,7 +79,7 @@ export function RelatedProductsCarousel({ products }: RelatedProductsCarouselPro
         {canScrollRight && products.length > 4 && (
           <button
             onClick={scrollRight}
-            aria-label="Scroll right"
+            aria-label={t('related.scrollRight')}
             className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 w-10 h-10 items-center justify-center bg-primary shadow-lg rounded-full border border-border-secondary hover:bg-primary_hover transition-colors"
           >
             <svg className="w-5 h-5 text-tertiary" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1,4 +1,7 @@
+'use client';
+
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { formatPrice } from '@/lib/utils';
 import type { Product } from '@repo/types';
 
@@ -13,6 +16,7 @@ interface BundleItemsListProps {
 }
 
 export function BundleItemsList({ bundleItems, bundlePrice }: BundleItemsListProps) {
+  const { t } = useTranslation('shop');
   if (!bundleItems || bundleItems.length === 0) {
     return null;
   }
@@ -27,7 +31,7 @@ export function BundleItemsList({ bundleItems, bundlePrice }: BundleItemsListPro
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-800">What&apos;s Included</h3>
+      <h3 className="text-lg font-semibold text-gray-800">{t('bundle.included')}</h3>
 
       <ul className="space-y-3">
         {bundleItems.map((item) => {
@@ -48,7 +52,7 @@ export function BundleItemsList({ bundleItems, bundlePrice }: BundleItemsListPro
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center text-gray-400 text-xs">
-                    No image
+                    {t('bundle.noImage')}
                   </div>
                 )}
               </div>
@@ -70,18 +74,18 @@ export function BundleItemsList({ bundleItems, bundlePrice }: BundleItemsListPro
 
       <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2">
         <div className="flex items-center justify-between text-sm text-gray-500">
-          <span>If bought separately:</span>
+          <span>{t('bundle.ifSeparately')}</span>
           <span className="line-through">{formatPrice(individualTotal)}</span>
         </div>
 
         <div className="flex items-center justify-between font-bold text-gray-900">
-          <span className="text-base">Bundle price:</span>
+          <span className="text-base">{t('bundle.bundlePrice')}</span>
           <span className="text-xl">{formatPrice(bundlePrice)}</span>
         </div>
 
         {savings > 0 && (
           <div className="flex items-center justify-between text-sm font-semibold text-green-700">
-            <span>You save:</span>
+            <span>{t('bundle.youSave')}</span>
             <span>
               {formatPrice(savings)} ({savingsPercent}%)
             </span>

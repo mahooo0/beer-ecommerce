@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { CreateUserForm } from './create-user-form';
 
-export function CreateUserButton() {
+export function CreateUserButton({ onCreated }: { onCreated?: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -14,7 +14,7 @@ export function CreateUserButton() {
       >
         Add User
       </button>
-      {open && <CreateUserForm onClose={() => setOpen(false)} />}
+      {open && <CreateUserForm onClose={() => setOpen(false)} onCreated={onCreated} />}
     </>
   );
 }

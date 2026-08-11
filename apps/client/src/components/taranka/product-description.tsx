@@ -1,48 +1,33 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-const tabs = [
-  {
-    label: "Opis",
-    content: (
-      <div className="space-y-4">
-        <p>
-          Lorem ipsum dolor sit amet consectetur. Massa dolor id purus hendrerit tellus quis turpis
-          ridiculus ut. Velit rutrum sed eu lacus vitae sodales proin eleifend morbi. Erat pretium
-          neque molestie vitae massa. Non ultricies dui odio risus. Pellentesque urna diam accumsan
-          dui amet.
-        </p>
-        <p>
-          A rhoncus lectus proin semper semper lectus ornare vestibulum odio. Praesent eu habitasse
-          sodales orci. Auctor congue a mauris leo nibh hendrerit sit risus. At nisl ut aliquet eget
-          massa fringilla eleifend sit. Massa molestie nec nunc risus faucibus in. Aliquet risus
-          consectetur proin sapien a mauris magna. Nulla nec ornare netus commodo ut vitae blandit
-          lectus. Tristique tortor elementum ut dolor tempus eu at. Suspendisse sit viverra risus
-          eget nunc elementum eu rhoncus tellus. Interdum feugiat pretium ultrices urna ultrices
-          sed. Nulla sit mauris hendrerit tortor et quis est quam cras. Aliquam morbi pharetra vel
-          pulvinar sed augue aliquet…
-        </p>
-      </div>
-    ),
-  },
-  {
-    label: "Skład",
-    content: (
-      <ul className="list-disc space-y-2 pl-5">
-        <li>Mąka kukurydziana</li>
-        <li>Cukier</li>
-        <li>Olej roślinny</li>
-        <li>Aromat mleka</li>
-        <li>Sól</li>
-        <li>Witaminy (B1, B6)</li>
-      </ul>
-    ),
-  },
-];
-
-export function TarankaProductDescription() {
+export function TarankaProductDescription({ description }: { description?: string } = {}) {
   const [active, setActive] = useState(0);
+  const { t } = useTranslation("catalog");
+
+  const skladContent = (
+    <ul className="list-disc space-y-2 pl-5">
+      <li>{t("description.ingredients.cornFlour")}</li>
+      <li>{t("description.ingredients.sugar")}</li>
+      <li>{t("description.ingredients.vegetableOil")}</li>
+      <li>{t("description.ingredients.milkFlavor")}</li>
+      <li>{t("description.ingredients.salt")}</li>
+      <li>{t("description.ingredients.vitamins")}</li>
+    </ul>
+  );
+
+  const opisContent = description ? (
+    <div className="space-y-4 whitespace-pre-line">{description}</div>
+  ) : (
+    <p className="text-[#9E9B90]">{t("description.noDescription")}</p>
+  );
+
+  const tabs = [
+    { label: t("description.tabDescription"), content: opisContent },
+    { label: t("description.tabIngredients"), content: skladContent },
+  ];
 
   return (
     <section className="font-taranka-body">

@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
+
 export type ViewMode = 'grid' | 'list';
 
 interface ViewToggleProps {
@@ -8,6 +10,7 @@ interface ViewToggleProps {
 }
 
 export function ViewToggle({ view, onChange }: ViewToggleProps) {
+  const { t } = useTranslation('shop');
   return (
     <div className="flex items-center border border-neutral-300">
       <button
@@ -18,8 +21,8 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
             ? 'bg-neutral-900 text-white'
             : 'bg-white text-neutral-400 hover:text-neutral-700'
         }`}
-        aria-label="Grid view"
-        title="Grid view"
+        aria-label={t('viewToggle.grid')}
+        title={t('viewToggle.grid')}
       >
         <svg className="size-4" viewBox="0 0 16 16" fill="currentColor">
           <rect x="1" y="1" width="6" height="6" rx="1" />
@@ -36,8 +39,8 @@ export function ViewToggle({ view, onChange }: ViewToggleProps) {
             ? 'bg-neutral-900 text-white'
             : 'bg-white text-neutral-400 hover:text-neutral-700'
         }`}
-        aria-label="List view"
-        title="List view"
+        aria-label={t('viewToggle.list')}
+        title={t('viewToggle.list')}
       >
         <svg className="size-4" viewBox="0 0 16 16" fill="currentColor">
           <rect x="1" y="1" width="14" height="4" rx="1" />

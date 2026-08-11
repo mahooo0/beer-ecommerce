@@ -26,7 +26,9 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
 COPY . .
 RUN pnpm install --frozen-lockfile
 RUN pnpm db:generate
-RUN pnpm build
+# Build only the Next.js apps. server/storage run via tsx at runtime — their
+# `tsc` build currently fails on nodenext/type errors that tsx (dev) tolerates.
+RUN pnpm exec turbo run build --filter=client --filter=admin
 
 EXPOSE 3002 3003 4000 4001
 # Base image — each service overrides `command` in the compose file.

@@ -1,0 +1,143 @@
+{
+  "addToCart": {
+    "quantity": "Кількість",
+    "decreaseQuantity": "Зменшити кількість",
+    "increaseQuantity": "Збільшити кількість",
+    "outOfStock": "Немає в наявності",
+    "added": "Додано до кошика",
+    "button": "Додати до кошика"
+  },
+  "bundle": {
+    "included": "Що входить до набору",
+    "noImage": "Немає зображення",
+    "ifSeparately": "Купуючи окремо:",
+    "bundlePrice": "Ціна набору:",
+    "youSave": "Ви заощаджуєте:"
+  },
+  "compare": {
+    "add": "Додати до порівняння",
+    "remove": "Видалити з порівняння",
+    "label": "Порівняти",
+    "ariaCompareName": "Порівняти {{name}}"
+  },
+  "digitalProduct": {
+    "instantDownload": "Миттєве завантаження після покупки",
+    "noShipping": "Доставка не потрібна",
+    "fileTypeGeneric": "Файл {{format}}",
+    "maxDownloads_one": "До {{count}} завантаження",
+    "maxDownloads_few": "До {{count}} завантажень",
+    "maxDownloads_many": "До {{count}} завантажень",
+    "maxDownloads_other": "До {{count}} завантажень",
+    "expiry_one": "Доступ закінчується через {{count}} день",
+    "expiry_few": "Доступ закінчується через {{count}} дні",
+    "expiry_many": "Доступ закінчується через {{count}} днів",
+    "expiry_other": "Доступ закінчується через {{count}} днів",
+    "fileType": {
+      "pdf": "Документ PDF",
+      "doc": "Документ Word",
+      "docx": "Документ Word",
+      "txt": "Текстовий файл",
+      "zip": "Архів ZIP",
+      "rar": "Архів RAR",
+      "7z": "Архів 7-Zip",
+      "tar": "Архів TAR",
+      "gz": "Архів GZip",
+      "mp3": "Аудіо MP3",
+      "wav": "Аудіо WAV",
+      "flac": "Аудіо FLAC",
+      "aac": "Аудіо AAC",
+      "mp4": "Відео MP4",
+      "mov": "Відео QuickTime",
+      "avi": "Відео AVI",
+      "mkv": "Відео MKV",
+      "jpg": "Зображення JPEG",
+      "jpeg": "Зображення JPEG",
+      "png": "Зображення PNG",
+      "gif": "Зображення GIF",
+      "webp": "Зображення WebP",
+      "svg": "Зображення SVG"
+    }
+  },
+  "fbt": {
+    "title": "Часто купують разом",
+    "addButton_one": "Додати {{count}} товар — {{price}}",
+    "addButton_few": "Додати {{count}} товари — {{price}}",
+    "addButton_many": "Додати {{count}} товарів — {{price}}",
+    "addButton_other": "Додати {{count}} товарів — {{price}}",
+    "totalForItems_one": "Загальна ціна за {{count}} товар",
+    "totalForItems_few": "Загальна ціна за {{count}} товари",
+    "totalForItems_many": "Загальна ціна за {{count}} товарів",
+    "totalForItems_other": "Загальна ціна за {{count}} товарів",
+    "onlyCurrent": "Буде додано лише поточний товар",
+    "includeAria": "Додати {{name}}"
+  },
+  "pagination": {
+    "prev": "Назад",
+    "next": "Далі"
+  },
+  "productCard": {
+    "new": "Новинка",
+    "added": "Додано",
+    "addToCart": "Додати до кошика",
+    "buyNow": "Купити зараз",
+    "redirecting": "Перенаправлення...",
+    "alternateView": "{{name}} - інший вигляд"
+  },
+  "productGrid": {
+    "empty": "Товарів не знайдено",
+    "emptyHint": "Спробуйте змінити фільтри або завітайте пізніше."
+  },
+  "gallery": {
+    "imageAlt": "{{name}} - зображення {{index}}",
+    "openFullscreen": "Відкрити на весь екран",
+    "viewImage": "Переглянути зображення {{index}}",
+    "thumbnailAlt": "{{name}} мініатюра {{index}}",
+    "goToImage": "Перейти до зображення {{index}}"
+  },
+  "specs": {
+    "title": "Характеристики"
+  },
+  "related": {
+    "title": "Схожі товари",
+    "scrollLeft": "Прокрутити ліворуч",
+    "scrollRight": "Прокрутити праворуч"
+  },
+  "reviews": {
+    "title": "Відгуки покупців",
+    "count_one": "{{count}} відгук",
+    "count_few": "{{count}} відгуки",
+    "count_many": "{{count}} відгуків",
+    "count_other": "{{count}} відгуків",
+    "starRating_one": "{{count}} зірка",
+    "starRating_few": "{{count}} зірки",
+    "starRating_many": "{{count}} зірок",
+    "starRating_other": "{{count}} зірок",
+    "empty": "Ще немає відгуків. Станьте першим, хто оцінить цей товар."
+  },
+  "sort": {
+    "label": "Сортувати",
+    "newest": "Найновіші",
+    "priceLowHigh": "Ціна: від низької до високої",
+    "priceHighLow": "Ціна: від високої до низької",
+    "nameAsc": "Назва: А-Я",
+    "nameDesc": "Назва: Я-А"
+  },
+  "stock": {
+    "outOfStock": "Немає в наявності",
+    "inStock": "В наявності",
+    "lowStock": "Закінчується ({{count}} шт.)"
+  },
+  "viewToggle": {
+    "grid": "Вигляд сіткою",
+    "list": "Вигляд списком"
+  },
+  "weighted": {
+    "perUnit": "за {{unit}}",
+    "quantity": "Кількість ({{unit}})",
+    "totalPrice": "Загальна ціна:"
+  },
+  "wishlist": {
+    "add": "Додати до списку бажань",
+    "remove": "Видалити зі списку бажань"
+  }
+}

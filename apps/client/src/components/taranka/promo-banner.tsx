@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { HeroArrowIcon, HeroWavesIcon } from "./icons";
 
 export function TarankaPromoBanner() {
+  const { t } = useTranslation("home");
   return (
     <section
       className="relative h-[400px] w-full overflow-hidden bg-[#2a2622] bg-cover bg-center bg-no-repeat font-taranka-body text-cream-50"
@@ -17,15 +21,15 @@ export function TarankaPromoBanner() {
 
       <div className="relative z-10 mx-auto flex h-full w-fit max-w-[1440px] flex-col pl-[631px] pt-[54px]">
         <h2 className="font-taranka-display text-[48px] font-extrabold uppercase leading-[58px]">
-          <span className="block text-[#E13B3C]">Słodycze</span>
-          <span className="block text-[#E13B3C]">&ldquo;Rodzima Ukraina&rdquo;</span>
-          <span className="block text-cream-50">Za jedyne 45 zł</span>
+          <span className="block text-[#E13B3C]">{t("promoBanner.line1")}</span>
+          <span className="block text-[#E13B3C]">{t("promoBanner.line2")}</span>
+          <span className="block text-cream-50">{t("promoBanner.line3")}</span>
         </h2>
 
         <p className="mt-[10px] text-[20px] font-medium leading-[26px] text-cream-50">
-          Jeden z najpopularniejszych produktów w naszym sklepie.
+          {t("promoBanner.desc1")}
           <br />
-          Idealny na symboliczny prezent.
+          {t("promoBanner.desc2")}
         </p>
 
         <div className="mt-[14px] flex gap-6">
@@ -33,14 +37,14 @@ export function TarankaPromoBanner() {
             href="/products"
             className="group inline-flex h-12 w-[249px] items-center justify-center gap-3 whitespace-nowrap rounded-full bg-brand-red-500 px-6 text-base font-medium text-cream-50 shadow-[0_0_0_0_rgba(170,60,55,0.4)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-red-700 hover:shadow-[0_8px_24px_-4px_rgba(170,60,55,0.5)] active:translate-y-0"
           >
-            Dowiedz się więcej
+            {t("promoBanner.learnMore")}
             <HeroArrowIcon className="h-3 w-[35px] transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
           <Link
             href="/products"
             className="group inline-flex h-12 w-[248px] items-center justify-center gap-3 whitespace-nowrap rounded-full border border-cream-50 px-6 text-base font-medium text-cream-50 transition-all duration-300 hover:-translate-y-0.5 hover:bg-cream-50 hover:text-ink-900 active:translate-y-0"
           >
-            Dowiedz się więcej
+            {t("promoBanner.learnMore")}
             <HeroWavesIcon className="h-[19px] w-[35px] transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </div>

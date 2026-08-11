@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { useWishlistStore } from '@/stores/wishlist-store';
 import { WishlistButton } from '@/components/product/wishlist-button';
 import { api } from '@/lib/api';
@@ -16,6 +17,7 @@ interface WishlistProduct {
 const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 export function WishlistPageClient() {
+  const { t } = useTranslation('misc');
   const storeItems = useWishlistStore((s) => s.items);
   const [mounted, setMounted] = useState(false);
   const [wishlistItems, setWishlistItems] = useState<WishlistProduct[]>([]);
@@ -53,7 +55,7 @@ export function WishlistPageClient() {
   if (!mounted || loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-6">My Wishlist</h1>
+        <h1 className="text-2xl font-bold mb-6">{t('wishlist.title')}</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="rounded-lg border border-border-secondary p-4 animate-pulse">
@@ -86,13 +88,13 @@ export function WishlistPageClient() {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-secondary mb-2">Your wishlist is empty</h2>
-        <p className="text-tertiary mb-6">Save products you love and come back to them later.</p>
+        <h2 className="text-xl font-semibold text-secondary mb-2">{t('wishlist.empty.title')}</h2>
+        <p className="text-tertiary mb-6">{t('wishlist.empty.subtitle')}</p>
         <Link
           href="/products"
           className="inline-block bg-primary-solid text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-solid_hover transition-colors"
         >
-          Browse Products
+          {t('wishlist.empty.browse')}
         </Link>
       </div>
     );
@@ -101,7 +103,7 @@ export function WishlistPageClient() {
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
       <h1 className="text-2xl font-bold mb-6">
-        My Wishlist{' '}
+        {t('wishlist.title')}{' '}
         <span className="text-quaternary text-lg font-normal">({wishlistItems.length})</span>
       </h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -128,7 +130,7 @@ export function WishlistPageClient() {
                     />
                   ) : (
                     <div className="w-full h-48 bg-secondary_subtle flex items-center justify-center">
-                      <span className="text-quaternary text-sm">No image</span>
+                      <span className="text-quaternary text-sm">{t('wishlist.noImage')}</span>
                     </div>
                   )}
                 </Link>
@@ -156,7 +158,7 @@ export function WishlistPageClient() {
                 {/* Price drop indicator */}
                 {item.priceAtAdd > currentPrice && (
                   <p className="text-xs text-utility-success-700 font-medium mb-2">
-                    Price dropped from {formatPrice(item.priceAtAdd)}!
+                    {t('wishlist.priceDropped', { price: formatPrice(item.priceAtAdd) })}
                   </p>
                 )}
               </div>

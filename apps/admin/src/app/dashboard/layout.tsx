@@ -6,8 +6,12 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { AdminChatWidget } from '@/components/ai-assistant/AdminChatWidget';
 import { cookies } from 'next/headers';
 import { ToastContainer } from 'react-toastify';
+import { requireAdminAccess } from '@/lib/auth';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Gate the entire dashboard: non-admins are redirected to /unauthorized.
+  await requireAdminAccess();
+
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true';
 

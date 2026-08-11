@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFilters } from '../../hooks/use-filters';
 
 interface ActiveFilter {
@@ -9,6 +10,7 @@ interface ActiveFilter {
 }
 
 function FilterBadge({ label, onRemove }: ActiveFilter) {
+  const { t } = useTranslation('categories');
   return (
     <span
       className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium bg-brand-primary_alt text-brand-secondary rounded-full transition-colors"
@@ -18,7 +20,7 @@ function FilterBadge({ label, onRemove }: ActiveFilter) {
       <button
         onClick={onRemove}
         className="ml-0.5 text-brand-tertiary hover:text-brand-primary focus:outline-none transition-colors"
-        aria-label={`Remove filter: ${label}`}
+        aria-label={t('activeFilters.removeFilter', { label })}
         data-testid="remove-filter-button"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -31,22 +33,23 @@ function FilterBadge({ label, onRemove }: ActiveFilter) {
 }
 
 export function ActiveFilters() {
+  const { t } = useTranslation('categories');
   const [filters, setFilters] = useFilters();
 
   const activeFilters: ActiveFilter[] = [];
 
   if (filters.minPrice > 0 || (filters.maxPrice > 0 && filters.maxPrice !== 999999)) {
     const minLabel = filters.minPrice > 0 ? `$${(filters.minPrice / 100).toFixed(0)}` : '$0';
-    const maxLabel = filters.maxPrice !== 999999 ? `$${(filters.maxPrice / 100).toFixed(0)}` : 'Any';
+    const maxLabel = filters.maxPrice !== 999999 ? `$${(filters.maxPrice / 100).toFixed(0)}` : t('activeFilters.any');
     activeFilters.push({
-      label: `Price: ${minLabel} – ${maxLabel}`,
+      label: `${t('activeFilters.price')}: ${minLabel} – ${maxLabel}`,
       onRemove: () => setFilters({ minPrice: 0, maxPrice: 999999, page: 1 }),
     });
   }
 
   filters.brands.forEach((brand) => {
     activeFilters.push({
-      label: `Brand: ${brand}`,
+      label: `${t('activeFilters.brand')}: ${brand}`,
       onRemove: () =>
         setFilters({
           brands: filters.brands.filter((b) => b !== brand),
@@ -69,7 +72,7 @@ export function ActiveFilters() {
   });
 
   filters.availability.forEach((avail) => {
-    const label = avail === 'in_stock' ? 'In Stock' : avail === 'out_of_stock' ? 'Out of Stock' : avail === 'pre_order' ? 'Pre-Order' : avail;
+    const label = avail === 'in_stock' ? t('availability.inStock') : avail === 'out_of_stock' ? t('availability.outOfStock') : avail === 'pre_order' ? t('availability.preOrder') : avail;
     activeFilters.push({
       label,
       onRemove: () =>
@@ -103,7 +106,7 @@ export function ActiveFilters() {
         className="text-xs font-medium text-tertiary hover:text-primary underline underline-offset-2 transition-colors"
         data-testid="clear-all-filters"
       >
-        Clear all
+        {t('filters.clearAll')}
       </button>
     </div>
   );

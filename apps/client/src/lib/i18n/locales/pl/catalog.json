@@ -1,0 +1,73 @@
+{
+  "sidebar": {
+    "categories": "Kategorie",
+    "all": "Wszystkie"
+  },
+  "toolbar": {
+    "showingPrefix": "Pokazano",
+    "showingOf": "pozycji z",
+    "sortLabel": "Sort:",
+    "sort": {
+      "price": "Według ceny",
+      "name": "Według nazwy",
+      "popular": "Według popularności",
+      "newest": "Nowości"
+    }
+  },
+  "card": {
+    "addToFavorites": "Dodaj do ulubionych",
+    "added": "Dodano",
+    "addToCart": "Do koszyka"
+  },
+  "detail": {
+    "selectImage": "Wybierz zdjęcie {{index}}",
+    "inStock": "w magazynie {{count}} sztuki",
+    "outOfStock": "brak w magazynie",
+    "retailPrice": "cena detaliczna",
+    "wholesalePrice": "cena hurtowa",
+    "decreaseQty": "Zmniejsz ilość",
+    "increaseQty": "Zwiększ ilość",
+    "added": "Dodano",
+    "addToCart": "Do koszyka",
+    "quickOrder": "szybkie zamówienie",
+    "addToFavorites": "Dodaj do ulubionych",
+    "delivery": "Dostawa",
+    "payment": "Płatność"
+  },
+  "description": {
+    "tabDescription": "Opis",
+    "tabIngredients": "Skład",
+    "noDescription": "Brak opisu produktu.",
+    "ingredients": {
+      "cornFlour": "Mąka kukurydziana",
+      "sugar": "Cukier",
+      "vegetableOil": "Olej roślinny",
+      "milkFlavor": "Aromat mleka",
+      "salt": "Sól",
+      "vitamins": "Witaminy (B1, B6)"
+    }
+  },
+  "row": {
+    "previous": "Poprzedni",
+    "next": "Następny"
+  },
+  "page": {
+    "metaTitle": "Katalog | Taranka",
+    "metaDescription": "Katalog produktów Taranka",
+    "allProducts": "Wszystkie produkty",
+    "searchResults": "Wyniki: {{query}}",
+    "emptyTitle": "Brak produktów",
+    "emptyDescription": "Nie znaleźliśmy produktów spełniających wybrane kryteria.",
+    "pagination": "Paginacja"
+  },
+  "slugPage": {
+    "metaNotFound": "Produkt nie znaleziony | Taranka",
+    "recommended": "Zalecamy zapoznanie się z",
+    "similar": "Podobne produkty"
+  },
+  "productNotFound": {
+    "title": "Produkt nie znaleziony",
+    "description": "Produkt, którego szukasz, nie istnieje lub został usunięty.",
+    "browse": "Przeglądaj produkty"
+  }
+}

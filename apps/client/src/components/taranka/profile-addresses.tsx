@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Address {
   id: number;
@@ -35,6 +36,7 @@ const initial: Address[] = [
 ];
 
 export function ProfileAddresses() {
+  const { t } = useTranslation("profile");
   const [addresses, setAddresses] = useState<Address[]>(initial);
 
   const handleAdd = () => {
@@ -59,7 +61,7 @@ export function ProfileAddresses() {
     <div className="flex-1 rounded-[20px] bg-white p-8 font-taranka-body">
       <div className="flex items-center justify-between">
         <h1 className="font-taranka-display text-2xl font-extrabold uppercase tracking-wide text-ink-900">
-          Twoje adresy
+          {t("addresses.title")}
         </h1>
         <button
           type="button"
@@ -67,7 +69,7 @@ export function ProfileAddresses() {
           className="inline-flex h-12 items-center gap-2 rounded-full border border-brand-red-500 px-6 text-base font-medium text-brand-red-500 transition-all hover:-translate-y-0.5 hover:bg-brand-red-500 hover:text-cream-50 active:translate-y-0"
         >
           <Plus className="size-4" strokeWidth={2} />
-          Dodaj adres
+          {t("addresses.add")}
         </button>
       </div>
 
@@ -87,14 +89,14 @@ export function ProfileAddresses() {
                 type="button"
                 className="text-brand-red-500 underline underline-offset-2 transition-colors hover:text-brand-red-700"
               >
-                Edytuj
+                {t("addresses.edit")}
               </button>
               <button
                 type="button"
                 onClick={() => handleRemove(a.id)}
                 className="text-brand-red-500 underline underline-offset-2 transition-colors hover:text-brand-red-700"
               >
-                Usuń
+                {t("addresses.remove")}
               </button>
             </div>
           </li>

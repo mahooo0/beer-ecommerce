@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import ProductLightbox from './product-lightbox';
 
 interface ProductImageGalleryProps {
@@ -16,6 +17,7 @@ export default function ProductImageGallery({
   images,
   productName,
 }: ProductImageGalleryProps) {
+  const { t } = useTranslation('shop');
   const displayImages = images.length > 0 ? images : [PLACEHOLDER];
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -87,7 +89,7 @@ export default function ProductImageGallery({
         >
           <Image
             src={activeImage}
-            alt={`${productName} - image ${activeIndex + 1}`}
+            alt={t('gallery.imageAlt', { name: productName, index: activeIndex + 1 })}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
@@ -115,7 +117,7 @@ export default function ProductImageGallery({
               e.stopPropagation();
               setIsLightboxOpen(true);
             }}
-            aria-label="Open fullscreen"
+            aria-label={t('gallery.openFullscreen')}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -146,12 +148,12 @@ export default function ProductImageGallery({
                     ? 'border-border-brand'
                     : 'border-transparent hover:border-border-primary'
                 }`}
-                aria-label={`View image ${i + 1}`}
+                aria-label={t('gallery.viewImage', { index: i + 1 })}
               >
                 <div className="relative w-full h-full">
                   <Image
                     src={img}
-                    alt={`${productName} thumbnail ${i + 1}`}
+                    alt={t('gallery.thumbnailAlt', { name: productName, index: i + 1 })}
                     fill
                     className="object-cover"
                     sizes="64px"
@@ -182,7 +184,7 @@ export default function ProductImageGallery({
             >
               <Image
                 src={img}
-                alt={`${productName} - image ${i + 1}`}
+                alt={t('gallery.imageAlt', { name: productName, index: i + 1 })}
                 fill
                 className="object-cover"
                 sizes="100vw"
@@ -203,7 +205,7 @@ export default function ProductImageGallery({
                 className={`w-2 h-2 rounded-full transition-colors ${
                   i === mobileActiveIndex ? 'bg-brand-solid' : 'bg-quaternary'
                 }`}
-                aria-label={`Go to image ${i + 1}`}
+                aria-label={t('gallery.goToImage', { index: i + 1 })}
               />
             ))}
           </div>

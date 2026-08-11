@@ -1,0 +1,83 @@
+{
+  "compare": {
+    "title": "Porównaj produkty",
+    "continueShopping": "Kontynuuj zakupy",
+    "characteristics": "Charakterystyka",
+    "noImage": "Brak zdjęcia",
+    "remove": "Usuń",
+    "removeAria": "Usuń {{name}}",
+    "price": "Cena",
+    "salePrice": "Cena promocyjna",
+    "brand": "Marka",
+    "sku": "SKU",
+    "productType": "Typ produktu",
+    "stock": "Dostępność",
+    "inStock": "{{n}} w magazynie",
+    "outOfStock": "Brak w magazynie",
+    "tags": "Tagi",
+    "specifications": "Specyfikacja",
+    "empty": {
+      "title": "Nie wybrano produktów do porównania",
+      "subtitle": "Przeglądaj produkty i użyj pola porównania, aby wybrać pozycje",
+      "browse": "Przeglądaj produkty"
+    },
+    "categoryLabel": "Kategoria:",
+    "onlyOne": "Tylko 1 produkt w {{category}}.",
+    "addAnother": "Dodaj kolejny produkt z tej kategorii, aby porównać.",
+    "selectCategory": "Wybierz kategorię powyżej, aby porównać produkty.",
+    "bar": {
+      "label": "Porównaj:",
+      "clear": "Wyczyść",
+      "compareCount": "Porównaj ({{n}})",
+      "removeAria": "Usuń {{name}} z porównania"
+    },
+    "badge": {
+      "aria": "Porównanie",
+      "ariaCount": "Porównanie ({{n}} produktów)"
+    }
+  },
+  "wishlist": {
+    "title": "Moja lista życzeń",
+    "empty": {
+      "title": "Twoja lista życzeń jest pusta",
+      "subtitle": "Zapisz produkty, które kochasz, i wróć do nich później.",
+      "browse": "Przeglądaj produkty"
+    },
+    "noImage": "Brak zdjęcia",
+    "priceDropped": "Cena spadła z {{price}}!",
+    "priceDropBadge": "Cena spadła! Oszczędzasz ${{amount}}",
+    "badge": {
+      "aria": "Lista życzeń",
+      "ariaCount": "Lista życzeń ({{n}} produktów)"
+    }
+  },
+  "search": {
+    "title": "Szukaj produktów",
+    "loading": "Ładowanie...",
+    "trigger": "Szukaj",
+    "placeholder": "Szukaj produktów, kategorii, marek...",
+    "searching": "Wyszukiwanie...",
+    "noResults": "Brak wyników dla „{{query}}”",
+    "noResultsHint": "Spróbuj innego wyszukiwanego hasła lub sprawdź pisownię",
+    "categories": "Kategorie",
+    "clearFilter": "Wyczyść filtr",
+    "products": "Produkty",
+    "noProductsInCategory": "Brak produktów w tej kategorii",
+    "showAll": "Pokaż wszystkie wyniki",
+    "viewAll": "Zobacz wszystkie wyniki",
+    "inCategory": "w {{category}}",
+    "popularSearches": "Popularne wyszukiwania",
+    "popular": {
+      "newArrivals": "Nowości",
+      "sale": "Wyprzedaż",
+      "bestSellers": "Bestsellery",
+      "trending": "Na czasie"
+    },
+    "resultsPlaceholder": "Szukaj produktów...",
+    "filterBrand": "Marka",
+    "filterCategory": "Kategoria",
+    "filterProductType": "Typ produktu",
+    "noImage": "Brak zdjęcia",
+    "stats": "{{n}} wyników"
+  }
+}

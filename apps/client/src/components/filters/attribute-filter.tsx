@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useFilters } from '../../hooks/use-filters';
 import { Checkbox } from '../ui/checkbox';
 import type { CategoryAttribute } from '@repo/types';
@@ -22,6 +23,7 @@ function getFacetCount(facetCounts: FacetCount[] | undefined, value: string): nu
 }
 
 export function AttributeFilter({ attribute, facetCounts }: AttributeFilterProps) {
+  const { t } = useTranslation('categories');
   const [filters, setFilters] = useFilters();
 
   const attributeKey = attribute.key;
@@ -117,7 +119,7 @@ export function AttributeFilter({ attribute, facetCounts }: AttributeFilterProps
             background: `linear-gradient(to right, var(--color-brand-600) ${((activeMax - minVal) / (maxVal - minVal)) * 100}%, var(--color-bg-secondary_subtle) ${((activeMax - minVal) / (maxVal - minVal)) * 100}%)`,
           }}
           data-testid={`attribute-range-slider-${attributeKey}`}
-          aria-label={`${attribute.name} range`}
+          aria-label={t('attribute.rangeAria', { name: attribute.name })}
         />
         <div className="flex justify-between text-xs text-tertiary">
           <span>{minVal}{attribute.unit}</span>

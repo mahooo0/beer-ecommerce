@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import type { CategoryWithChildren } from './mega-menu';
 
 interface CategoryNavProps {
@@ -9,6 +10,7 @@ interface CategoryNavProps {
 }
 
 export function CategoryNav({ categories }: CategoryNavProps) {
+  const { t } = useTranslation('categories');
   const [isOpen, setIsOpen] = useState(false);
   const [activeL0, setActiveL0] = useState<string | null>(null);
   const [activeL1, setActiveL1] = useState<string | null>(null);
@@ -113,7 +115,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
           <line x1="3" y1="12" x2="21" y2="12" />
           <line x1="3" y1="18" x2="21" y2="18" />
         </svg>
-        Categories
+        {t('categoryNav.title')}
         <svg
           className={`size-3 text-neutral-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
           viewBox="0 0 24 24"
@@ -138,7 +140,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
           <div className="w-56 shrink-0 border-r border-neutral-100 py-2">
             <div className="px-3 pb-2">
               <span className="text-[10px] font-semibold tracking-[0.2em] text-neutral-400 uppercase">
-                All Categories
+                {t('categoryNav.allCategories')}
               </span>
             </div>
             {categories.map((cat) => {
@@ -190,7 +192,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
                   onClick={handleNavigate}
                   className="text-[10px] font-semibold tracking-[0.2em] text-neutral-400 uppercase hover:text-neutral-600 transition-colors"
                 >
-                  All {activeL0Category.name}
+                  {t('categoryNav.allOf', { name: activeL0Category.name })}
                 </Link>
               </div>
               {activeL0Category.children.map((sub) => {
@@ -240,7 +242,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
                   onClick={handleNavigate}
                   className="text-[10px] font-semibold tracking-[0.2em] text-neutral-400 uppercase hover:text-neutral-600 transition-colors"
                 >
-                  All {activeL1Category.name}
+                  {t('categoryNav.allOf', { name: activeL1Category.name })}
                 </Link>
               </div>
               {activeL1Category.children.map((sub2) => (

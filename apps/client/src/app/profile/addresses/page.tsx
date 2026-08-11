@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import { ProfileSidebar } from "@/components/taranka/profile-sidebar";
 import { ProfileAddresses } from "@/components/taranka/profile-addresses";
 import { TarankaFooter } from "@/components/taranka/footer";
+import { getServerT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Twoje adresy | Taranka",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getServerT("profile");
+  return { title: `${t("addresses.title")} | Taranka` };
+}
 
 export default function AddressesPage() {
   return (

@@ -2,10 +2,14 @@ import type { Metadata } from "next";
 import { CheckoutFlow } from "@/components/taranka/checkout-flow";
 import { TarankaAbout } from "@/components/taranka/about";
 import { TarankaFooter } from "@/components/taranka/footer";
+import { getServerT } from "@/lib/i18n/server";
 
-export const metadata: Metadata = {
-  title: "Zamówienie | Taranka",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getServerT("checkout");
+  return {
+    title: t("meta.checkoutTitle"),
+  };
+}
 
 export default function CheckoutPage() {
   return (

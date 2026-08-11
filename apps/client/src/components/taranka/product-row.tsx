@@ -4,6 +4,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRef } from "react";
+import { useTranslation } from "react-i18next";
 import type { Swiper as SwiperClass } from "swiper";
 import "swiper/css";
 import { CatalogCard, type CatalogProduct } from "./catalog-card";
@@ -16,6 +17,7 @@ export function TarankaProductRow({
   products: CatalogProduct[];
 }) {
   const swiperRef = useRef<SwiperClass | null>(null);
+  const { t } = useTranslation("catalog");
 
   return (
     <section className="font-taranka-body">
@@ -27,7 +29,7 @@ export function TarankaProductRow({
           <button
             type="button"
             onClick={() => swiperRef.current?.slidePrev()}
-            aria-label="Poprzedni"
+            aria-label={t("row.previous")}
             className="flex size-11 items-center justify-center rounded-full border border-ink-900 text-ink-900 transition-all hover:bg-ink-900 hover:text-cream-50 active:scale-95"
           >
             <ChevronLeft className="size-5" strokeWidth={1.75} />
@@ -35,7 +37,7 @@ export function TarankaProductRow({
           <button
             type="button"
             onClick={() => swiperRef.current?.slideNext()}
-            aria-label="Następny"
+            aria-label={t("row.next")}
             className="flex size-11 items-center justify-center rounded-full border border-ink-900 text-ink-900 transition-all hover:bg-ink-900 hover:text-cream-50 active:scale-95"
           >
             <ChevronRight className="size-5" strokeWidth={1.75} />

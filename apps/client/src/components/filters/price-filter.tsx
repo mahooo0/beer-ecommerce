@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDebouncedCallback } from 'use-debounce';
 import { useFilters } from '../../hooks/use-filters';
 
@@ -20,6 +21,7 @@ function displayDollarsToCents(dollars: string): number {
 }
 
 export function PriceFilter({ minPrice, maxPrice }: PriceFilterProps) {
+  const { t } = useTranslation('categories');
   const [filters, setFilters] = useFilters();
 
   const [localMin, setLocalMin] = useState(filters.minPrice || minPrice);
@@ -143,14 +145,14 @@ export function PriceFilter({ minPrice, maxPrice }: PriceFilterProps) {
   return (
     <div className="space-y-4" data-testid="price-filter">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-primary">Price Range</h3>
+        <h3 className="text-sm font-semibold text-primary">{t('price.label')}</h3>
         {hasActiveFilter && (
           <button
             onClick={handleReset}
             className="text-xs font-medium text-brand-secondary hover:text-brand-primary transition-colors"
             data-testid="price-filter-reset"
           >
-            Reset
+            {t('price.reset')}
           </button>
         )}
       </div>
@@ -181,7 +183,7 @@ export function PriceFilter({ minPrice, maxPrice }: PriceFilterProps) {
           ref={minThumbRef}
           role="slider"
           tabIndex={0}
-          aria-label="Minimum price"
+          aria-label={t('price.minAria')}
           aria-valuemin={minPrice / 100}
           aria-valuemax={maxPrice / 100}
           aria-valuenow={localMin / 100}
@@ -215,7 +217,7 @@ export function PriceFilter({ minPrice, maxPrice }: PriceFilterProps) {
           ref={maxThumbRef}
           role="slider"
           tabIndex={0}
-          aria-label="Maximum price"
+          aria-label={t('price.maxAria')}
           aria-valuemin={minPrice / 100}
           aria-valuemax={maxPrice / 100}
           aria-valuenow={localMax / 100}
@@ -248,7 +250,7 @@ export function PriceFilter({ minPrice, maxPrice }: PriceFilterProps) {
       {/* Min/Max input fields */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="text-xs font-medium text-tertiary mb-1 block">Min ($)</label>
+          <label className="text-xs font-medium text-tertiary mb-1 block">{t('price.minLabel')}</label>
           <input
             type="number"
             min={0}
@@ -257,12 +259,12 @@ export function PriceFilter({ minPrice, maxPrice }: PriceFilterProps) {
             onChange={(e) => handleInputChange('min', e.target.value)}
             className="w-full px-3 py-1.5 text-sm text-primary bg-primary border border-border-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand-solid transition-colors"
             data-testid="price-input-min"
-            aria-label="Minimum price input"
+            aria-label={t('price.minInputAria')}
           />
         </div>
         <span className="text-tertiary mt-5 text-sm">—</span>
         <div className="flex-1">
-          <label className="text-xs font-medium text-tertiary mb-1 block">Max ($)</label>
+          <label className="text-xs font-medium text-tertiary mb-1 block">{t('price.maxLabel')}</label>
           <input
             type="number"
             min={parseInt(centsToDisplayDollars(localMin)) + 1}
@@ -270,7 +272,7 @@ export function PriceFilter({ minPrice, maxPrice }: PriceFilterProps) {
             onChange={(e) => handleInputChange('max', e.target.value)}
             className="w-full px-3 py-1.5 text-sm text-primary bg-primary border border-border-primary rounded-md focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand-solid transition-colors"
             data-testid="price-input-max"
-            aria-label="Maximum price input"
+            aria-label={t('price.maxInputAria')}
           />
         </div>
       </div>

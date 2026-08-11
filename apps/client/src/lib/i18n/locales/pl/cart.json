@@ -1,0 +1,36 @@
+{
+  "cartTrigger": {
+    "label": "Koszyk"
+  },
+  "cartPage": {
+    "title": "Twój koszyk",
+    "empty": "Twój koszyk jest pusty.",
+    "goToCatalog": "Przejdź do katalogu",
+    "decrease": "Zmniejsz",
+    "increase": "Zwiększ",
+    "removeProduct": "Usuń produkt",
+    "orderAmount": "Kwota zamówienia",
+    "subtotal": "Razem:",
+    "shipping": "Dostawa:",
+    "discount": "Twój rabat:",
+    "total": "Łącznie:",
+    "placeOrder": "Złożyć zamówienie"
+  },
+  "miniCart": {
+    "title": "Koszyk",
+    "close": "Zamknij",
+    "empty": "Koszyk jest pusty. Dodaj produkty z katalogu.",
+    "removeProduct": "Usuń produkt",
+    "decrease": "Zmniejsz ilość",
+    "increase": "Zwiększ ilość",
+    "subtotal": "Razem:",
+    "shipping": "Dostawa:",
+    "discount": "Twój rabat:",
+    "placeOrder": "Złożyć zamówienie",
+    "continueShopping": "Kontynuować zakupy",
+    "acceptTerms": "Zamawiając towary, akceptuję warunki oferty publicznej"
+  },
+  "page": {
+    "metaTitle": "Koszyk"
+  }
+}

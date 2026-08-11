@@ -1,0 +1,125 @@
+{
+  "sidebar": {
+    "badgeWholesale": "Dostawca",
+    "badgeRetail": "Klient detaliczny",
+    "personalData": "Dane osobowe",
+    "addresses": "Twoje adresy",
+    "cenniki": "Cenniki",
+    "orders": "Historia zamówień",
+    "wishlist": "Ulubione",
+    "discounts": "Twoje zniżki",
+    "logout": "Wylogowanie z konta"
+  },
+  "account": {
+    "saveError": "Nie udało się zapisać.",
+    "yourAccount": "Twoje konto",
+    "wholesaleBadge": "Profil dostawcy",
+    "retailBadge": "Klient detaliczny",
+    "accountManager": "Menedżer konta",
+    "loading": "Ładowanie…",
+    "personalDataTitle": "Dane osobowe",
+    "firstName": "Imię",
+    "lastName": "Nazwisko",
+    "email": "Email",
+    "phone": "Telefon",
+    "phonePlaceholder": "+48 600 000 000",
+    "phoneHint": "Numer jest identyfikatorem klienta i przenosi Twoje zniżki.",
+    "saving": "Zapisywanie…",
+    "saveButton": "Zapisz",
+    "saved": "Zapisano ✓",
+    "accountTypeTitle": "Typ konta",
+    "accountTypeDesc": "Wybierz, czy kupujesz detalicznie, czy hurtowo.",
+    "retailOption": "Klient detaliczny",
+    "wholesaleOption": "Dostawca",
+    "companyName": "Nazwa firmy",
+    "taxId": "NIP (opcjonalnie)"
+  },
+  "addresses": {
+    "title": "Twoje adresy",
+    "add": "Dodaj adres",
+    "edit": "Edytuj",
+    "remove": "Usuń"
+  },
+  "cenniki": {
+    "title": "Cenniki",
+    "searchPlaceholder": "wyszukiwanie daty",
+    "item": "Cennik {{date}}",
+    "previewAria": "Podgląd cennika",
+    "downloadAria": "Pobierz cennik",
+    "empty": "Brak cenników pasujących do wyszukiwania."
+  },
+  "znizki": {
+    "currentDiscount": "Twój rabat wynosi teraz 3%",
+    "howItWorks": "Jak działają zniżki?",
+    "tierDesc": "dla miesięcznych zakupów na kwotę {{amount}} PLN lub wyższą",
+    "tiers": {
+      "small": { "title": "Mała Hurtownia" },
+      "medium": { "title": "Średni Hurt" },
+      "large": { "title": "Duży Hurt" }
+    },
+    "intro": "Lorem ipsum dolor sit amet consectetur. Massa dolor id purus hendrerit tellus quis turpis ridiculus ut. Velit rutrum sed eu lacus vitae sodales proin eleifend morbi. Erat pretium neque molestie vitae massa. Non ultricies dui odio risus. Pellentesque urna diam accumsan dui amet…",
+    "para1": "Lorem ipsum dolor sit amet consectetur. Massa dolor id purus hendrerit tellus quis turpis ridiculus ut. Velit rutrum sed eu lacus vitae sodales proin eleifend morbi. Erat pretium neque molestie vitae massa. Non ultricies dui odio risus. Pellentesque urna diam accumsan dui amet.",
+    "para2": "A rhoncus lectus proin semper semper lectus ornare vestibulum odio. Praesent eu habitasse sodales orci. Auctor congue a mauris leo nibh hendrerit sit risus. At nisl ut aliquet eget massa fringilla eleifend sit. Massa molestie nec nunc risus faucibus in. Aliquet risus consectetur proin sapien a mauris magna. Nulla nec ornare netus commodo ut vitae blandit lectus. Tristique tortor elementum ut dolor tempus eu at. Suspendisse sit viverra risus eget nunc elementum eu rhoncus tellus. Interdum feugiat pretium ultrices urna ultrices sed. Nulla sit mauris hendrerit tortor et quis est quam cras. Aliquam morbi pharetra vel pulvinar sed augue aliquet.",
+    "para3": "Eget arcu cras blandit ut malesuada tortor. Mi gravida elementum et quis scelerisque nulla ut in at. Eget nulla egestas non curabitur commodo vel tortor lacinia ultricies. Aenean sollicitudin dui urna ut bibendum placerat."
+  },
+  "orders": {
+    "title": "Historia zamówień",
+    "discountBadge": "Rabat w wysokości 3%",
+    "orderNumber": "Zamówienie nr {{id}}, {{date}}",
+    "amount": "Kwota",
+    "pieces": "szt.",
+    "shipping": "Wysyłka",
+    "total": "Całkowity",
+    "repeatOrder": "powtórzenie zamówienia",
+    "saveResult": "utrzymywać wynik",
+    "status": {
+      "delivered": "Dostarczone",
+      "inProgress": "W trakcie",
+      "cancelled": "Anulowane"
+    }
+  },
+  "ordersDetail": {
+    "loadError": "Nie udało się załadować zamówienia",
+    "notFound": "Nie znaleziono zamówienia",
+    "backToOrders": "Powrót do zamówień",
+    "orderTitle": "Zamówienie {{number}}",
+    "shippingAddress": "Adres dostawy",
+    "phoneLabel": "Telefon:",
+    "orderItems": "Pozycje zamówienia",
+    "skuLabel": "SKU: {{sku}}",
+    "quantityLabel": "Ilość: {{quantity}}",
+    "each": "za sztukę",
+    "orderSummary": "Podsumowanie zamówienia",
+    "subtotal": "Suma częściowa",
+    "shipping": "Dostawa",
+    "tax": "Podatek",
+    "discount": "Rabat",
+    "total": "Razem",
+    "orderHistory": "Historia zamówienia",
+    "from": "z",
+    "status": {
+      "PENDING": "Oczekujące",
+      "PAID": "Opłacone",
+      "PROCESSING": "W realizacji",
+      "SHIPPED": "Wysłane",
+      "DELIVERED": "Dostarczone",
+      "CANCELLED": "Anulowane",
+      "RETURNED": "Zwrócone",
+      "REFUND_REQUESTED": "Prośba o zwrot"
+    }
+  },
+  "tracking": {
+    "title": "Informacje o przesyłce",
+    "status": "Status",
+    "carrier": "Przewoźnik",
+    "trackingNumber": "Numer przesyłki",
+    "trackPackage": "Śledź przesyłkę",
+    "shipped": "Wysłano",
+    "estimatedDelivery": "Przewidywana dostawa"
+  },
+  "actions": {
+    "unauthorized": "Brak autoryzacji",
+    "firstNameRequired": "Imię jest wymagane",
+    "invalidPhone": "Nieprawidłowy numer telefonu"
+  }
+}

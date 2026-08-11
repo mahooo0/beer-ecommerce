@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ProductSpecsTableProps {
   attributes: Record<string, unknown>;
@@ -12,6 +15,7 @@ function humanizeKey(key: string): string {
 }
 
 export function ProductSpecsTable({ attributes, categoryAttributes }: ProductSpecsTableProps) {
+  const { t } = useTranslation('shop');
   const rows = Object.entries(attributes).filter(
     ([, value]) => value !== null && value !== undefined && value !== '',
   );
@@ -22,7 +26,7 @@ export function ProductSpecsTable({ attributes, categoryAttributes }: ProductSpe
 
   return (
     <section className="mt-8">
-      <h2 className="text-xl font-semibold text-primary mb-4">Specifications</h2>
+      <h2 className="text-xl font-semibold text-primary mb-4">{t('specs.title')}</h2>
       <table className="w-full border-collapse">
         <tbody>
           {rows.map(([key, value], index) => {

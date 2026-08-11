@@ -11,9 +11,11 @@ import {
 import { Button } from "@/components/shadcn/button";
 import { Separator } from "@/components/shadcn/separator";
 import { Checkbox } from "@/components/shadcn/checkbox";
+import { useTranslation } from "react-i18next";
 import { useCart } from "@/lib/cart-store";
 
 export function MiniCart({ trigger }: { trigger: ReactNode }) {
+  const { t } = useTranslation("cart");
   const [open, setOpen] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const items = useCart((s) => s.items);
@@ -41,13 +43,13 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
               <ShoppingCart className="size-5" strokeWidth={1.75} />
             </span>
             <h2 className="font-taranka-display text-xl font-extrabold uppercase tracking-wide text-ink-900">
-              Koszyk
+              {t("miniCart.title")}
             </h2>
           </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            aria-label="Zamknij"
+            aria-label={t("miniCart.close")}
             className="text-ink-900 transition-colors hover:text-brand-red-500"
           >
             <X className="size-5" strokeWidth={1.75} />
@@ -58,7 +60,7 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
 
         {items.length === 0 ? (
           <div className="px-9 py-12 text-center text-base text-[#9E9B90]">
-            Koszyk jest pusty. Dodaj produkty z katalogu.
+            {t("miniCart.empty")}
           </div>
         ) : (
           <div className="max-h-[428px] overflow-y-auto px-9">
@@ -83,7 +85,7 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
                   <button
                     type="button"
                     onClick={() => removeItem(item.id)}
-                    aria-label="Usuń produkt"
+                    aria-label={t("miniCart.removeProduct")}
                     className="text-[#9E9B90] transition-colors hover:text-brand-red-500"
                   >
                     <Trash2 className="size-5" strokeWidth={1.5} />
@@ -94,7 +96,7 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
                       <button
                         type="button"
                         onClick={() => updateQty(item.id, -1)}
-                        aria-label="Zmniejsz ilość"
+                        aria-label={t("miniCart.decrease")}
                         className="text-ink-900 transition-colors hover:text-brand-red-500"
                       >
                         <Minus className="size-3.5" strokeWidth={1.75} />
@@ -105,7 +107,7 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
                       <button
                         type="button"
                         onClick={() => updateQty(item.id, 1)}
-                        aria-label="Zwiększ ilość"
+                        aria-label={t("miniCart.increase")}
                         className="text-ink-900 transition-colors hover:text-brand-red-500"
                       >
                         <Plus className="size-3.5" strokeWidth={1.75} />
@@ -130,9 +132,9 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
         <Separator className="bg-cream-300" />
 
         <div className="px-9 pt-5 pb-4">
-          <SummaryRow label="Razem:" value={fmt(total)} />
-          <SummaryRow label="Dostawa:" value={fmt(shipping)} />
-          <SummaryRow label="Twój rabat:" value={fmt(discount)} />
+          <SummaryRow label={t("miniCart.subtotal")} value={fmt(total)} />
+          <SummaryRow label={t("miniCart.shipping")} value={fmt(shipping)} />
+          <SummaryRow label={t("miniCart.discount")} value={fmt(discount)} />
         </div>
 
         <div className="flex items-center gap-6 px-9 pb-4">
@@ -141,7 +143,7 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
             disabled={items.length === 0}
             className="h-12 w-[218px] rounded-full bg-brand-red-500 text-base font-medium text-cream-50 shadow-[0_0_0_0_rgba(170,60,55,0.4)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-red-700 hover:shadow-[0_8px_24px_-4px_rgba(170,60,55,0.5)] disabled:pointer-events-none disabled:opacity-50"
           >
-            <Link href="/cart">Złożyć zamówienie</Link>
+            <Link href="/cart">{t("miniCart.placeOrder")}</Link>
           </Button>
           <Button
             asChild
@@ -149,7 +151,7 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
             className="h-12 px-0 text-base font-medium text-ink-900 hover:text-brand-red-500"
           >
             <Link href="/products" onClick={() => setOpen(false)}>
-              Kontynuować zakupy
+              {t("miniCart.continueShopping")}
             </Link>
           </Button>
         </div>
@@ -165,7 +167,7 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
             htmlFor="mini-cart-accept"
             className="cursor-pointer text-sm text-ink-900"
           >
-            Zamawiając towary, akceptuję warunki oferty publicznej
+            {t("miniCart.acceptTerms")}
           </label>
         </div>
       </PopoverContent>

@@ -1,0 +1,58 @@
+{
+  "filters": {
+    "title": "Filtry",
+    "clearAll": "Wyczyść wszystko",
+    "apply": "Zastosuj",
+    "open": "Otwórz filtry",
+    "close": "Zamknij filtry"
+  },
+  "activeFilters": {
+    "price": "Cena",
+    "any": "Dowolna",
+    "brand": "Marka",
+    "removeFilter": "Usuń filtr: {{label}}"
+  },
+  "price": {
+    "label": "Zakres cen",
+    "reset": "Resetuj",
+    "minLabel": "Min ($)",
+    "maxLabel": "Maks ($)",
+    "minAria": "Cena minimalna",
+    "maxAria": "Cena maksymalna",
+    "minInputAria": "Pole ceny minimalnej",
+    "maxInputAria": "Pole ceny maksymalnej"
+  },
+  "brand": {
+    "label": "Marka",
+    "ariaLabel": "Marka: {{name}}"
+  },
+  "availability": {
+    "label": "Dostępność",
+    "inStock": "Dostępne",
+    "outOfStock": "Niedostępne",
+    "preOrder": "Przedsprzedaż"
+  },
+  "attribute": {
+    "rangeAria": "Zakres: {{name}}"
+  },
+  "breadcrumbs": {
+    "home": "Strona główna",
+    "ariaLabel": "Ścieżka nawigacji"
+  },
+  "categoryDropdown": {
+    "choose": "Wybierz kategorię"
+  },
+  "categoryNav": {
+    "title": "Kategorie",
+    "allCategories": "Wszystkie kategorie",
+    "allOf": "Wszystkie: {{name}}"
+  },
+  "page": {
+    "categoryNotFound": "Nie znaleziono kategorii",
+    "shopByCategory": "Kupuj według kategorii",
+    "productsFound_one": "Znaleziono {{count}} produkt",
+    "productsFound_few": "Znaleziono {{count}} produkty",
+    "productsFound_many": "Znaleziono {{count}} produktów",
+    "productsFound_other": "Znaleziono {{count}} produktu"
+  }
+}

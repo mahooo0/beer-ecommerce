@@ -1,4 +1,7 @@
+'use client';
+
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { StarRating } from '../ui/star-rating';
 
 interface Review {
@@ -26,6 +29,7 @@ export function ReviewsPlaceholder({
   reviewCount = 0,
   reviews = [],
 }: ReviewsPlaceholderProps) {
+  const { t } = useTranslation('shop');
   // Calculate rating distribution
   const distribution: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   for (const review of reviews) {
@@ -40,7 +44,7 @@ export function ReviewsPlaceholder({
 
   return (
     <section className="mt-8 border-t border-border-secondary pt-8">
-      <h2 className="text-xl font-semibold text-primary mb-6">Customer Reviews</h2>
+      <h2 className="text-xl font-semibold text-primary mb-6">{t('reviews.title')}</h2>
 
       {/* Average rating summary */}
       <div className="flex flex-col sm:flex-row gap-8 mb-8">
@@ -50,7 +54,7 @@ export function ReviewsPlaceholder({
             <StarRating rating={averageRating} size="md" />
           </div>
           <span className="mt-1 text-sm text-tertiary">
-            {reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}
+            {t('reviews.count', { count: reviewCount })}
           </span>
         </div>
 
@@ -61,7 +65,7 @@ export function ReviewsPlaceholder({
             const widthPercent = reviews.length > 0 ? (count / maxCount) * 100 : 0;
             return (
               <div key={star} className="flex items-center gap-3">
-                <span className="text-sm text-tertiary w-12 shrink-0">{star} stars</span>
+                <span className="text-sm text-tertiary w-12 shrink-0">{t('reviews.starRating', { count: star })}</span>
                 <div className="flex-1 bg-secondary_subtle rounded-full h-2">
                   <div
                     className="bg-utility-warning-500 h-2 rounded-full transition-all duration-300"
@@ -96,7 +100,7 @@ export function ReviewsPlaceholder({
         </div>
       ) : (
         <p className="text-tertiary text-center py-6">
-          No reviews yet. Be the first to review this product.
+          {t('reviews.empty')}
         </p>
       )}
     </section>

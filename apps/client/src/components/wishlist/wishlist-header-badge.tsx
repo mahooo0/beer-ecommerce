@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import { useWishlistStore } from '@/stores/wishlist-store';
 import { useWishlistSync } from '@/hooks/use-wishlist-sync';
 
 export function WishlistHeaderBadge() {
+  const { t } = useTranslation('misc');
   const [mounted, setMounted] = useState(false);
   const totalItems = useWishlistStore((s) => s.totalItems);
 
@@ -20,7 +22,7 @@ export function WishlistHeaderBadge() {
   return (
     <Link
       href="/wishlist"
-      aria-label={`Wishlist${count > 0 ? ` (${count} items)` : ''}`}
+      aria-label={count > 0 ? t('wishlist.badge.ariaCount', { n: count }) : t('wishlist.badge.aria')}
       className="relative flex items-center text-neutral-600 transition hover:text-neutral-900"
     >
       <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
