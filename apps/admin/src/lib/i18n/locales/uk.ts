@@ -5,6 +5,8 @@ export const uk: Resources = {
   nav: {
     blog: "Блог",
     leads: "Заявки",
+    blogPosts: "Пости",
+    blogCategories: "Категорії",
     overview: "Огляд",
     catalog: "Каталог",
     allProducts: "Усі товари",
@@ -415,6 +417,18 @@ export const uk: Resources = {
     status: { published: "Опубліковано", draft: "Чернетка" },
     actions: { edit: "Редагувати", delete: "Видалити", deleteConfirm: "Видалити цей пост?" },
     errors: { deleteFailed: "Не вдалося видалити пост" },
+  },
+  blogCategories: {
+    title: "Категорії блогу",
+    add: "Нова категорія",
+    empty: "Категорій ще немає.",
+    saved: "Категорію збережено",
+    analytics: { title: "Категорії", total: "Усього" },
+    columns: { title: "Назва", slug: "Slug", actions: "Дії" },
+    sheet: { createTitle: "Нова категорія", editTitle: "Редагувати категорію", description: "Назва PL/UK та slug URL." },
+    form: { titlePl: "Назва (PL)", titleUk: "Назва (UK)", slug: "Slug", cancel: "Скасувати", saving: "Збереження…", create: "Створити", update: "Зберегти" },
+    actions: { edit: "Редагувати", delete: "Видалити", deleteConfirm: "Видалити цю категорію?" },
+    errors: { titleRequired: "Назва (PL) обов'язкова", saveFailed: "Не вдалося зберегти категорію", deleteFailed: "Не вдалося видалити категорію" },
   },
   promoBanners: {
     title: "Промо-банери",

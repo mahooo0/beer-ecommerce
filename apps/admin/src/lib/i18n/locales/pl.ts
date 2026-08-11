@@ -5,6 +5,8 @@ export const pl: Resources = {
   nav: {
     blog: "Blog",
     leads: "Zgłoszenia",
+    blogPosts: "Wpisy",
+    blogCategories: "Kategorie",
     overview: "Przegląd",
     catalog: "Katalog",
     allProducts: "Wszystkie produkty",
@@ -415,6 +417,18 @@ export const pl: Resources = {
     status: { published: "Opublikowany", draft: "Szkic" },
     actions: { edit: "Edytuj", delete: "Usuń", deleteConfirm: "Usunąć ten wpis?" },
     errors: { deleteFailed: "Nie udało się usunąć wpisu" },
+  },
+  blogCategories: {
+    title: "Kategorie bloga",
+    add: "Nowa kategoria",
+    empty: "Brak kategorii.",
+    saved: "Zapisano kategorię",
+    analytics: { title: "Kategorie", total: "Wszystkie" },
+    columns: { title: "Tytuł", slug: "Slug", actions: "Akcje" },
+    sheet: { createTitle: "Nowa kategoria", editTitle: "Edytuj kategorię", description: "Tytuł w PL/UK oraz slug URL." },
+    form: { titlePl: "Tytuł (PL)", titleUk: "Tytuł (UK)", slug: "Slug", cancel: "Anuluj", saving: "Zapisywanie…", create: "Utwórz", update: "Zapisz" },
+    actions: { edit: "Edytuj", delete: "Usuń", deleteConfirm: "Usunąć tę kategorię?" },
+    errors: { titleRequired: "Tytuł (PL) jest wymagany", saveFailed: "Nie udało się zapisać kategorii", deleteFailed: "Nie udało się usunąć kategorii" },
   },
   promoBanners: {
     title: "Banery promo",

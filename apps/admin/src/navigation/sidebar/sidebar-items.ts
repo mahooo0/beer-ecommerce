@@ -93,6 +93,10 @@ export const sidebarItems: NavGroup[] = [
         title: "nav.blog",
         url: "/dashboard/blog",
         icon: Newspaper,
+        subItems: [
+          { title: "nav.blogPosts", url: "/dashboard/blog", icon: Newspaper },
+          { title: "nav.blogCategories", url: "/dashboard/blog/categories", icon: FolderTree },
+        ],
       },
       {
         title: "nav.leads",

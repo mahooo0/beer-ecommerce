@@ -3,6 +3,8 @@ export const en = {
   nav: {
     blog: "Blog",
     leads: "Leads",
+    blogPosts: "Posts",
+    blogCategories: "Categories",
     overview: "Overview",
     catalog: "Catalog",
     allProducts: "All Products",
@@ -413,6 +415,18 @@ export const en = {
     status: { published: "Published", draft: "Draft" },
     actions: { edit: "Edit", delete: "Delete", deleteConfirm: "Delete this post?" },
     errors: { deleteFailed: "Failed to delete post" },
+  },
+  blogCategories: {
+    title: "Blog Categories",
+    add: "New Category",
+    empty: "No categories yet.",
+    saved: "Category saved",
+    analytics: { title: "Categories", total: "Total" },
+    columns: { title: "Title", slug: "Slug", actions: "Actions" },
+    sheet: { createTitle: "New Category", editTitle: "Edit Category", description: "Title in PL/UK and a URL slug." },
+    form: { titlePl: "Title (PL)", titleUk: "Title (UK)", slug: "Slug", cancel: "Cancel", saving: "Saving…", create: "Create", update: "Update" },
+    actions: { edit: "Edit", delete: "Delete", deleteConfirm: "Delete this category?" },
+    errors: { titleRequired: "Title (PL) is required", saveFailed: "Failed to save category", deleteFailed: "Failed to delete category" },
   },
   promoBanners: {
     title: "Promo Banners",
