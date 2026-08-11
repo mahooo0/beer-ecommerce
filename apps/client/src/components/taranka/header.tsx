@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, LayoutGrid, Heart } from "lucide-react";
+import { MapPin, LayoutGrid } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MiniCart } from "./mini-cart";
 import { CartTrigger } from "./cart-trigger";
 import { UserMenu } from "./user-menu";
 import { LanguageSwitcher } from "./language-switcher";
 import { HeaderSearch } from "./header-search";
+import { WishlistHeaderBadge } from "@/components/wishlist/wishlist-header-badge";
 
 const navLinks = [
   { key: "suggestions", href: "#" },
@@ -76,13 +77,7 @@ export function TarankaHeader() {
           <UserMenu />
           <div className="h-full w-px bg-cream-300" />
 
-          <button
-            type="button"
-            aria-label={t("header.favorites")}
-            className="group/icon flex h-full w-12 items-center justify-center text-ink-900 transition-colors hover:text-brand-red-500"
-          >
-            <Heart className="size-5 transition-transform duration-300 group-hover/icon:scale-110" strokeWidth={1.75} />
-          </button>
+          <WishlistHeaderBadge />
           <div className="h-full w-px bg-cream-300" />
 
           <MiniCart trigger={<CartTrigger />} />

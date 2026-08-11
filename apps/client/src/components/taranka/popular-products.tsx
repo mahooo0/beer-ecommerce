@@ -3,10 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { Heart, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { HeroArrowIcon } from "./icons";
 import { useCart } from "@/lib/cart-store";
 import type { CatalogProduct } from "./catalog-card";
+import { TarankaFavoriteButton } from "./favorite-button";
 
 const fallbackProducts: CatalogProduct[] = Array.from({ length: 8 }, (_, i) => ({
   id: i,
@@ -70,13 +71,10 @@ function PopularProductCard({ product: p }: { product: CatalogProduct }) {
         </div>
 
         <div className="mt-auto flex items-center gap-6">
-          <button
-            type="button"
-            aria-label={t("popularProducts.addToFavorites")}
-            className="flex size-12 items-center justify-center rounded-full border border-brand-red-500 text-brand-red-500 transition-all duration-300 hover:scale-110 hover:bg-brand-red-500 hover:text-cream-50 active:scale-95"
-          >
-            <Heart className="size-6 transition-all duration-300" strokeWidth={1.75} />
-          </button>
+          <TarankaFavoriteButton
+            productId={String(p.id)}
+            priceCents={p.basePriceCents ?? Math.round(parsePrice(p.newPrice) * 100)}
+          />
           <button
             type="button"
             onClick={handleAdd}

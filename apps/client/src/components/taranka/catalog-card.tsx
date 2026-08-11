@@ -1,14 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Check } from "lucide-react";
-import { useEffect, useState, type MouseEvent } from "react";
+import { Check } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useUser, useAuth } from "@clerk/nextjs";
+import { useUser } from "@clerk/nextjs";
 import { sortedWholesaleTiers, type WholesaleTier } from "@repo/types";
 import { useCart } from "@/lib/cart-store";
-import { useWishlistStore } from "@/stores/wishlist-store";
-import { api } from "@/lib/api";
+import { TarankaFavoriteButton } from "./favorite-button";
 
 export interface CatalogProduct {
   id: number | string;
@@ -34,49 +33,13 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
   const addItem = useCart((s) => s.addItem);
   const [added, setAdded] = useState(false);
   const { t } = useTranslation("catalog");
-  const { user, isSignedIn } = useUser();
-  const { getToken } = useAuth();
+  const { user } = useUser();
   const href = `/products/${product.slug ?? product.id}`;
 
-  // ---- Favorites (localStorage-backed, works for guests and signed-in users) ----
+  // Favorites are localStorage-backed (works for guests and signed-in users);
+  // the shared button owns all the toggle/server-sync logic.
   const productId = String(product.id);
   const favPriceCents = product.basePriceCents ?? Math.round(parsePrice(product.newPrice) * 100);
-  const items = useWishlistStore((s) => s.items);
-  const toggleFavorite = useWishlistStore((s) => s.toggleItem);
-  const addFavorite = useWishlistStore((s) => s.addItem);
-  const removeFavorite = useWishlistStore((s) => s.removeItem);
-  // Guard against SSR/client hydration mismatch: the persisted store is only
-  // known on the client, so render "not favorited" until mounted.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-  const isFavorite = mounted && items.some((i) => i.productId === productId);
-
-  const handleToggleFavorite = async (e: MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const wasFavorite = items.some((i) => i.productId === productId);
-    toggleFavorite(productId, favPriceCents); // localStorage is the source of truth
-
-    // Signed-in users additionally get server-side persistence; on failure we
-    // roll the local change back so the two never drift apart.
-    if (!isSignedIn) return;
-    try {
-      const token = await getToken();
-      if (!token) return;
-      if (wasFavorite) {
-        await api.wishlist.removeItem(productId, token);
-      } else {
-        await api.wishlist.addItem(productId, favPriceCents, token);
-      }
-    } catch {
-      if (wasFavorite) {
-        addFavorite({ productId, priceAtAdd: favPriceCents });
-      } else {
-        removeFavorite(productId);
-      }
-    }
-  };
 
   const outOfStock = product.inStock === false;
   const isWholesale =
@@ -153,21 +116,7 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
         )}
 
         <div className="mt-auto flex items-center gap-4">
-          <button
-            type="button"
-            onClick={handleToggleFavorite}
-            aria-pressed={isFavorite}
-            aria-label={isFavorite ? t("card.removeFromFavorites") : t("card.addToFavorites")}
-            className={`flex size-12 shrink-0 items-center justify-center rounded-full border border-brand-red-500 transition-all duration-300 hover:scale-110 hover:bg-brand-red-500 hover:text-cream-50 active:scale-95 ${
-              isFavorite ? "bg-brand-red-500 text-cream-50" : "text-brand-red-500"
-            }`}
-          >
-            <Heart
-              className="size-6"
-              strokeWidth={1.75}
-              fill={isFavorite ? "currentColor" : "none"}
-            />
-          </button>
+          <TarankaFavoriteButton productId={productId} priceCents={favPriceCents} />
           <button
             type="button"
             onClick={handleAdd}
