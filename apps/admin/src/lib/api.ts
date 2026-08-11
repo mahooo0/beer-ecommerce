@@ -9,6 +9,7 @@ import type {
   Category,
   CategoryAttribute,
   Brand,
+  PromoBanner,
   Tag,
   Collection,
   Attribute,
@@ -474,6 +475,18 @@ export const api = {
     create: (data: Partial<Brand>, token?: string) => fetcher<ApiResponse<Brand>>('/brands', { method: 'POST', body: JSON.stringify(data), token }),
     update: (id: string, data: Partial<Brand>, token?: string) => fetcher<ApiResponse<Brand>>(`/brands/${id}`, { method: 'PUT', body: JSON.stringify(data), token }),
     delete: (id: string, token?: string) => fetcher<ApiResponse<void>>(`/brands/${id}`, { method: 'DELETE', token }),
+  },
+  promoBanners: {
+    getAll: (params?: { token?: string }) =>
+      fetcher<ApiResponse<PromoBanner[]>>('/promo-banners', { token: params?.token }),
+    getById: (id: string, token?: string) =>
+      fetcher<ApiResponse<PromoBanner>>(`/promo-banners/${id}`, { token }),
+    create: (data: Record<string, unknown>, token?: string) =>
+      fetcher<ApiResponse<PromoBanner>>('/promo-banners', { method: 'POST', body: JSON.stringify(data), token }),
+    update: (id: string, data: Record<string, unknown>, token?: string) =>
+      fetcher<ApiResponse<PromoBanner>>(`/promo-banners/${id}`, { method: 'PUT', body: JSON.stringify(data), token }),
+    delete: (id: string, token?: string) =>
+      fetcher<ApiResponse<void>>(`/promo-banners/${id}`, { method: 'DELETE', token }),
   },
   tags: {
     getAll: (params?: { type?: string; token?: string } | string) => {

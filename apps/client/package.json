@@ -46,6 +46,7 @@
     "tailwindcss-react-aria-components": "^2.0.1",
     "use-debounce": "^10.1.0",
     "yet-another-react-lightbox": "^3.29.1",
+    "zod": "^3.25.0",
     "zustand": "^5.0.0"
   },
   "devDependencies": {

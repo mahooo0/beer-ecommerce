@@ -4,6 +4,24 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 
 import type { Post } from '../../../payload-types'
 
+/**
+ * Notify the decoupled storefront to revalidate its cached blog pages.
+ * Fire-and-forget: never block or fail the CMS write. Only called for published
+ * (or previously-published) docs so autosaved drafts don't touch public pages.
+ */
+function notifyStorefront(slug?: string | null): void {
+  const base = process.env.STOREFRONT_URL
+  const secret = process.env.REVALIDATE_SECRET
+  if (!base || !secret) return
+  void fetch(`${base}/api/revalidate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ secret, slug }),
+  }).catch(() => {
+    /* best-effort */
+  })
+}
+
 export const revalidatePost: CollectionAfterChangeHook<Post> = ({
   doc,
   previousDoc,
@@ -28,6 +46,11 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = ({
       revalidatePath(oldPath)
       revalidateTag('posts-sitemap', 'max')
     }
+
+    // Storefront: revalidate when the post is (or just stopped being) published.
+    if (doc._status === 'published' || previousDoc?._status === 'published') {
+      notifyStorefront(doc.slug)
+    }
   }
   return doc
 }
@@ -38,6 +61,8 @@ export const revalidateDelete: CollectionAfterDeleteHook<Post> = ({ doc, req: { 
 
     revalidatePath(path)
     revalidateTag('posts-sitemap', 'max')
+
+    notifyStorefront(doc?.slug)
   }
 
   return doc

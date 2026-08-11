@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useFilters } from "@/hooks/use-filters";
 
 const sortOptions: { key: string; value: string }[] = [
   { key: "price", value: "price-asc" },
@@ -24,20 +24,16 @@ export function CatalogToolbar({
   sort?: string;
 }) {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const { t } = useTranslation("catalog");
+  const [, setFilters] = useFilters();
 
+  // Read the active sort from the SSR-provided prop (no hydration flicker);
+  // write changes through nuqs so the server re-fetches (shallow:false). The
+  // 'newest' default is cleared from the URL by nuqs' clearOnDefault.
   const selected = sortOptions.find((o) => o.value === sort) ?? DEFAULT_SORT;
 
   const applySort = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value === "newest") params.delete("sort");
-    else params.set("sort", value);
-    params.delete("page");
-    const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setFilters({ sort: value, page: 1 });
     setOpen(false);
   };
 

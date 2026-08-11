@@ -252,6 +252,7 @@ model Product {
   weightedMeta    WeightedMeta?
   bundleItems     BundleItem[] @relation("BundleProduct")
   includedInBundles BundleItem[] @relation("BundledProduct")
+  promoBanners    PromoBanner[] // marketing blocks linking to this product
 
   // Timestamps
   createdAt       DateTime @default(now())
@@ -333,6 +334,7 @@ model Category {
   attributes      CategoryAttribute[] // legacy flat attributes (retired once new UI ships)
   attributeDefs   Attribute[]         // normalized attribute definitions (4fr-style)
   filters         CategoryFilter[]    // manual category filters
+  promoBanners    PromoBanner[]       // marketing blocks linking to this category
 
   // SEO
   metaTitle       String?
@@ -728,6 +730,36 @@ model Brand {
   updatedAt       DateTime  @updatedAt
 
   @@map("brands")
+}
+
+// Editable marketing block (e.g. the homepage "promo" section). Admin uploads an
+// image + bilingual text and links it to a product or a category (or a raw href).
+// Text fields are localized JSON `{ "pl": "...", "uk": "..." }` because the
+// storefront is bilingual while product/category names in the DB are single-language.
+model PromoBanner {
+  id          String    @id @default(cuid())
+  title       Json      @default("{}") // localized heading { pl, uk } (\n allowed for multi-line)
+  subtitle    Json      @default("{}") // localized body text { pl, uk }
+  ctaLabel    Json      @default("{}") // localized CTA button label { pl, uk }
+  image       String    // uploaded image URL (MinIO)
+
+  // CTA target: a real FK to a product or category, or a raw href fallback.
+  productId   String?
+  product     Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  href        String?   // custom link, used when neither product nor category is set
+
+  isActive    Boolean   @default(true)
+  position    Int       @default(0) // sort order; the storefront shows the active one with lowest position
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isActive, position])
+  @@index([productId])
+  @@index([categoryId])
+  @@map("promo_banners")
 }
 
 enum TagType {

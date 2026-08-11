@@ -1,22 +1,44 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import type { CategoryAttribute } from "@repo/types";
 import { useFilters } from "@/hooks/use-filters";
+
+interface FacetCount {
+  value: string;
+  count: number;
+}
 
 interface CatalogFiltersProps {
   priceRange: { min: number; max: number };
   brands: Array<{ id: string; name: string; count: number }>;
+  /** Attribute definitions for the currently selected category. Changes with the category. */
+  categoryAttributes?: CategoryAttribute[];
+  /** Facet counts per attribute key, e.g. { flavour: [{ value: "salty", count: 3 }] }. */
+  attributeFacets?: Record<string, FacetCount[]>;
 }
 
 const toZl = (cents: number) => Math.round(cents / 100);
 
+function facetCountFor(facets: FacetCount[] | undefined, value: string): number | undefined {
+  return facets?.find((f) => f.value === value)?.count;
+}
+
 /**
- * Taranka-styled catalog filter panel (Polish, zł). Deliberately minimal —
- * price range + brands — and NO in/out-of-stock filter (out-of-stock products
- * are greyed and sorted last on the cards instead). Writes the same URL filter
- * params as the rest of the catalog via `useFilters` (nuqs, shallow:false).
+ * Taranka-styled catalog filter panel (Polish, zł): price range + brands +
+ * per-category attributes. The attribute section is driven by the selected
+ * category's `CategoryAttribute[]`, so it changes whenever the category changes.
+ * All state is written to the URL via `useFilters` (nuqs, shallow:false) using
+ * the shared `attributes` encoding `key:value`, matching the base filter stack.
  */
-export function CatalogFilters({ priceRange, brands }: CatalogFiltersProps) {
+export function CatalogFilters({
+  priceRange,
+  brands,
+  categoryAttributes = [],
+  attributeFacets = {},
+}: CatalogFiltersProps) {
+  const { t } = useTranslation("catalog");
   const [filters, setFilters] = useFilters();
 
   const [min, setMin] = useState("");
@@ -37,16 +59,31 @@ export function CatalogFilters({ priceRange, brands }: CatalogFiltersProps) {
 
   const toggleBrand = (id: string) => {
     const current = filters.brands;
-    const updated = current.includes(id)
-      ? current.filter((b) => b !== id)
-      : [...current, id];
+    const updated = current.includes(id) ? current.filter((b) => b !== id) : [...current, id];
     setFilters({ brands: updated, page: 1 });
   };
+
+  const toggleAttribute = (key: string, value: string) => {
+    const filterValue = `${key}:${value}`;
+    const current = filters.attributes;
+    const updated = current.includes(filterValue)
+      ? current.filter((a) => a !== filterValue)
+      : [...current, filterValue];
+    setFilters({ attributes: updated, page: 1 });
+  };
+
+  const isAttributeActive = (key: string, value: string) =>
+    filters.attributes.includes(`${key}:${value}`);
+
+  const filterableAttributes = categoryAttributes
+    .filter((attr) => attr.isFilterable && attr.values.length > 0)
+    .sort((a, b) => a.position - b.position);
 
   const hasActive =
     filters.minPrice > 0 ||
     (filters.maxPrice > 0 && filters.maxPrice !== 999999) ||
-    filters.brands.length > 0;
+    filters.brands.length > 0 ||
+    filters.attributes.length > 0;
 
   const clearAll = () =>
     setFilters({
@@ -64,21 +101,21 @@ export function CatalogFilters({ priceRange, brands }: CatalogFiltersProps) {
   return (
     <div className="w-[282px] rounded-2xl bg-[#E2DFD4] p-6 font-taranka-body">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-ink-900">Filtry</h3>
+        <h3 className="text-base font-semibold text-ink-900">{t("filters.title")}</h3>
         {hasActive && (
           <button
             type="button"
             onClick={clearAll}
             className="text-xs font-medium text-brand-red-500 hover:underline"
           >
-            Wyczyść
+            {t("filters.clear")}
           </button>
         )}
       </div>
 
       {/* Cena */}
       <div className="mt-5">
-        <p className="text-sm font-semibold text-ink-900">Cena, zł</p>
+        <p className="text-sm font-semibold text-ink-900">{t("filters.price")}</p>
         <div className="mt-2 flex items-center gap-2">
           <input
             type="number"
@@ -88,7 +125,7 @@ export function CatalogFilters({ priceRange, brands }: CatalogFiltersProps) {
             onChange={(e) => setMin(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyPrice()}
             placeholder={String(toZl(priceRange.min))}
-            aria-label="Cena od"
+            aria-label={t("filters.priceFrom")}
             className={inputCls}
           />
           <span className="text-[#9E9B90]">—</span>
@@ -100,7 +137,7 @@ export function CatalogFilters({ priceRange, brands }: CatalogFiltersProps) {
             onChange={(e) => setMax(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyPrice()}
             placeholder={String(toZl(priceRange.max))}
-            aria-label="Cena do"
+            aria-label={t("filters.priceTo")}
             className={inputCls}
           />
         </div>
@@ -109,14 +146,14 @@ export function CatalogFilters({ priceRange, brands }: CatalogFiltersProps) {
           onClick={applyPrice}
           className="mt-3 w-full rounded-full bg-brand-red-500 py-2 text-sm font-medium text-cream-50 transition-colors hover:bg-brand-red-700"
         >
-          Zastosuj
+          {t("filters.apply")}
         </button>
       </div>
 
       {/* Marka (renders only when brand data exists) */}
       {brands.length > 0 && (
         <div className="mt-6">
-          <p className="text-sm font-semibold text-ink-900">Marka</p>
+          <p className="text-sm font-semibold text-ink-900">{t("filters.brand")}</p>
           <ul className="mt-2 space-y-2">
             {brands.map((b) => (
               <li key={b.id}>
@@ -137,6 +174,48 @@ export function CatalogFilters({ priceRange, brands }: CatalogFiltersProps) {
           </ul>
         </div>
       )}
+
+      {/* Per-category attributes — the set changes with the selected category. */}
+      {filterableAttributes.map((attr) => {
+        // BOOLEAN attributes are a single "key:true" toggle; everything else is
+        // a checkbox list over the attribute's discrete values.
+        const options =
+          attr.type === "BOOLEAN" ? [{ label: attr.name, value: "true" }] : null;
+        const facets = attributeFacets[attr.key];
+
+        return (
+          <div className="mt-6" key={attr.id} data-testid={`catalog-attribute-${attr.key}`}>
+            <p className="text-sm font-semibold text-ink-900">
+              {attr.name}
+              {attr.unit ? ` (${attr.unit})` : ""}
+            </p>
+            <ul className="mt-2 space-y-2">
+              {(options ?? attr.values.map((v) => ({ label: v, value: v }))).map((opt) => {
+                const count = facetCountFor(facets, opt.value);
+                return (
+                  <li key={opt.value}>
+                    <label className="flex cursor-pointer items-center justify-between text-sm text-ink-900">
+                      <span className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={isAttributeActive(attr.key, opt.value)}
+                          onChange={() => toggleAttribute(attr.key, opt.value)}
+                          className="size-4 accent-brand-red-500"
+                        />
+                        {opt.label}
+                        {attr.type !== "BOOLEAN" && attr.unit ? ` ${attr.unit}` : ""}
+                      </span>
+                      {count !== undefined && (
+                        <span className="text-xs text-[#9E9B90]">{count}</span>
+                      )}
+                    </label>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        );
+      })}
     </div>
   );
 }

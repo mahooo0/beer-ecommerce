@@ -442,6 +442,40 @@ export interface Brand {
   updatedAt: Date;
 }
 
+/** Bilingual text stored as JSON on content that is shown in both pl and uk. */
+export interface LocalizedText {
+  pl?: string;
+  uk?: string;
+}
+
+/** Minimal product/category shape a promo banner links to (as returned by the API). */
+export interface PromoBannerTarget {
+  id: string;
+  slug: string;
+  name: string;
+}
+
+/**
+ * Editable marketing block (e.g. the homepage promo). Text fields are bilingual;
+ * the CTA points to a linked product or category (or a raw `href` fallback).
+ */
+export interface PromoBanner {
+  id: string;
+  title: LocalizedText;
+  subtitle: LocalizedText;
+  ctaLabel: LocalizedText;
+  image: string;
+  productId?: string | null;
+  product?: PromoBannerTarget | null;
+  categoryId?: string | null;
+  category?: PromoBannerTarget | null;
+  href?: string | null;
+  isActive: boolean;
+  position: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export const TagType = {
   PRODUCT: 'PRODUCT',
   COLLECTION: 'COLLECTION',

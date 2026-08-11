@@ -15,7 +15,11 @@ export const Users: CollectionConfig = {
     defaultColumns: ['name', 'email'],
     useAsTitle: 'name',
   },
-  auth: true,
+  // API-key auth lets the decoupled storefront read drafts server-side
+  // (Authorization: users API-Key <key>) — cookies can't cross subdomains.
+  auth: {
+    useAPIKey: true,
+  },
   fields: [
     {
       name: 'name',

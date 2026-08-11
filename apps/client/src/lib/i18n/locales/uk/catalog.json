@@ -16,9 +16,19 @@
   },
   "card": {
     "addToFavorites": "Додати до улюблених",
+    "removeFromFavorites": "Видалити з улюблених",
     "added": "Додано",
     "addToCart": "До кошика",
     "outOfStock": "Немає в наявності"
+  },
+  "filters": {
+    "title": "Фільтри",
+    "clear": "Очистити",
+    "price": "Ціна, zł",
+    "priceFrom": "Ціна від",
+    "priceTo": "Ціна до",
+    "apply": "Застосувати",
+    "brand": "Бренд"
   },
   "detail": {
     "selectImage": "Вибрати фото {{index}}",

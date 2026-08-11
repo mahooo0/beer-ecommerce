@@ -1,4 +1,4 @@
-import type { ApiResponse, PaginatedResponse, Product, Order, Category, Collection, Brand, CartItem } from '@repo/types';
+import type { ApiResponse, PaginatedResponse, Product, Order, Category, Collection, Brand, CartItem, PromoBanner } from '@repo/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -177,6 +177,10 @@ export const api = {
   brands: {
     getAll: () => fetcher<ApiResponse<Brand[]>>('/brands'),
     getBySlug: (slug: string) => fetcher<ApiResponse<Brand>>(`/brands/slug/${slug}`),
+  },
+  promoBanners: {
+    // Public: active marketing banners, lowest position first.
+    getActive: () => fetcher<ApiResponse<PromoBanner[]>>('/promo-banners/active'),
   },
   wishlist: {
     get: (token: string) =>

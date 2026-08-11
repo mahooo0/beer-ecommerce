@@ -10,6 +10,7 @@ import { toCatalogProducts } from '@/lib/product-mapper';
 import type { CatalogProduct } from '@/components/taranka/catalog-card';
 import { getLatestPostsSafe, postImageURL, formatBlogDate } from '@/lib/blog-api';
 import type { NewsSlide } from '@/components/taranka/news-slider';
+import type { PromoBanner } from '@repo/types';
 
 // Always fetch fresh catalog data on the server.
 export const dynamic = 'force-dynamic';
@@ -41,11 +42,22 @@ async function getPopularProducts(): Promise<CatalogProduct[]> {
   }
 }
 
+/** Active homepage promo banner (lowest position); null falls back to the built-in block. */
+async function getPromoBanner(): Promise<PromoBanner | null> {
+  try {
+    const result = await api.promoBanners.getActive();
+    return result.data?.[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function HomePage() {
-  const [categories, popular, posts] = await Promise.all([
+  const [categories, popular, posts, promoBanner] = await Promise.all([
     getCategorySlides(),
     getPopularProducts(),
     getLatestPostsSafe('pl', 8),
+    getPromoBanner(),
   ]);
 
   // Feed the existing news slider with the latest blog posts (pl). Falls back to
@@ -63,7 +75,7 @@ export default async function HomePage() {
       <TarankaHero />
       <TarankaCategorySlider categories={categories} />
       <TarankaPopularProducts products={popular} />
-      <TarankaPromoBanner />
+      <TarankaPromoBanner banner={promoBanner} />
       <TarankaNewsSlider items={newsItems} />
       <TarankaAbout />
       <TarankaFooter />

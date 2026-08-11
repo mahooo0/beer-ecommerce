@@ -1,4 +1,4 @@
-export { prisma, PrismaClient } from './prisma';
+export { prisma, PrismaClient, Prisma } from './prisma';
 export { OrderModel, CartModel, connectMongoDB, mongoose } from './mongoose';
 export type {
   IOrder,

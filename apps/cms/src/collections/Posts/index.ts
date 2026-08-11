@@ -57,12 +57,18 @@ export const Posts: CollectionConfig<'posts'> = {
           req,
         }),
     },
-    preview: (data, { req }) =>
-      generatePreviewPath({
-        slug: data?.slug as string,
-        collection: 'posts',
-        req,
-      }),
+    // "Preview" button opens the decoupled storefront's draft-preview entrypoint.
+    // (livePreview below still targets the CMS frontend.)
+    preview: (data) => {
+      const slug = data?.slug as string | undefined
+      if (!slug) return null
+      const base = process.env.STOREFRONT_URL || 'https://dev.taranka.online'
+      const params = new URLSearchParams({
+        path: `/pl/blog/${encodeURIComponent(slug)}`,
+        previewSecret: process.env.PREVIEW_SECRET || '',
+      })
+      return `${base}/next/preview?${params.toString()}`
+    },
     useAsTitle: 'title',
   },
   fields: [

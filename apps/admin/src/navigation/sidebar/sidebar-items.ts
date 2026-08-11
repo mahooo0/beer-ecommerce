@@ -19,6 +19,7 @@ import {
   Lock,
   type LucideIcon,
   Mail,
+  Megaphone,
   MessageSquare,
   Newspaper,
   Package,
@@ -79,6 +80,7 @@ export const sidebarItems: NavGroup[] = [
           { title: "nav.categories", url: "/dashboard/categories", icon: FolderTree },
           { title: "nav.collections", url: "/dashboard/collections", icon: Layers },
           { title: "nav.brands", url: "/dashboard/brands", icon: Award },
+          { title: "nav.promoBanners", url: "/dashboard/promo-banners", icon: Megaphone },
         ],
       },
       {

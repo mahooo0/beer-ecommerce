@@ -16,9 +16,19 @@
   },
   "card": {
     "addToFavorites": "Dodaj do ulubionych",
+    "removeFromFavorites": "Usuń z ulubionych",
     "added": "Dodano",
     "addToCart": "Do koszyka",
     "outOfStock": "Brak w magazynie"
+  },
+  "filters": {
+    "title": "Filtry",
+    "clear": "Wyczyść",
+    "price": "Cena, zł",
+    "priceFrom": "Cena od",
+    "priceTo": "Cena do",
+    "apply": "Zastosuj",
+    "brand": "Marka"
   },
   "detail": {
     "selectImage": "Wybierz zdjęcie {{index}}",

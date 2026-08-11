@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
@@ -17,12 +16,12 @@ export interface NewsSlide {
 
 // Fallback used only when no posts are passed (CMS empty or unreachable).
 const baseNews: NewsSlide[] = [
-  { image: "/news/image0.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
-  { image: "/news/image1.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
-  { image: "/news/image2.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
-  { image: "/news/image3.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
-  { image: "/news/image4.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
-  { image: "/news/image5.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
+  { image: "/news/image0.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa" },
+  { image: "/news/image1.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa" },
+  { image: "/news/image2.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa" },
+  { image: "/news/image3.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa" },
+  { image: "/news/image4.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa" },
+  { image: "/news/image5.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa" },
 ];
 
 export function TarankaNewsSlider({ items }: { items?: NewsSlide[] }) {
@@ -65,14 +64,9 @@ export function TarankaNewsSlider({ items }: { items?: NewsSlide[] }) {
                 />
               </div>
 
-              <div className="mt-5 flex items-center gap-4 text-xs text-[#443029]">
+              <div className="mt-5 flex items-center gap-3 text-xs text-[#443029]">
                 <span>{item.date}</span>
-                {item.meta ? (
-                  <span className="inline-flex items-center gap-1">
-                    <Eye className="size-4" strokeWidth={1.75} />
-                    {item.meta}
-                  </span>
-                ) : null}
+                {item.meta ? <span className="rounded-full bg-black/5 px-2.5 py-0.5">{item.meta}</span> : null}
               </div>
 
               <h3 className="mt-2 text-[20px] font-semibold leading-tight text-[#443029] transition-colors group-hover:text-brand-red-500">

@@ -29,9 +29,16 @@ const baseCategories: CategorySlide[] = [
 
 export function TarankaCategorySlider({ categories: input }: { categories?: CategorySlide[] } = {}) {
   const source = input && input.length > 0 ? input : baseCategories;
-  // Duplicate so loop mode has enough slides (Swiper needs slidesPerView * 2 minimum)
+  // Swiper's loop mode "starves" (leaves a blank / drops a card mid-swipe) when
+  // there aren't comfortably more slides than fit on screen. With 282px cards
+  // ~4-5 are visible on a wide viewport, so replicate the source in WHOLE passes
+  // up to a healthy buffer — never a partial slice, which itself caused an uneven
+  // last group. The visual is a marquee, so repeated cards are expected.
+  const MIN_SLIDES = 12;
   const categories =
-    source.length >= 6 ? source : [...source, ...source, ...source].slice(0, Math.max(6, source.length));
+    source.length >= MIN_SLIDES
+      ? source
+      : Array.from({ length: Math.ceil(MIN_SLIDES / source.length) }).flatMap(() => source);
 
   return (
     <section className="overflow-hidden bg-background py-12">
@@ -40,6 +47,13 @@ export function TarankaCategorySlider({ categories: input }: { categories?: Cate
         slidesPerView="auto"
         spaceBetween={24}
         loop
+        // Render extra clones so a fast autoplay wrap never exposes a gap.
+        loopAdditionalSlides={source.length}
+        // Recalculate on image load / hydration layout shifts — this is what
+        // fixes the "one card missing until you interact with it" symptom.
+        observer
+        observeParents
+        watchSlidesProgress
         speed={800}
         autoplay={{
           delay: 2500,

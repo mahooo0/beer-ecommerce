@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { CatalogSidebar, type SidebarCategory } from "@/components/taranka/catalog-sidebar";
 import { CatalogToolbar } from "@/components/taranka/catalog-toolbar";
 import { CatalogCard, type CatalogProduct } from "@/components/taranka/catalog-card";
 import { CatalogFilters } from "@/components/taranka/catalog-filters";
+import { CatalogPagination } from "@/components/taranka/catalog-pagination";
 import { TarankaAbout } from "@/components/taranka/about";
 import { TarankaFooter } from "@/components/taranka/footer";
 import { api } from "@/lib/api";
 import { toCatalogProducts } from "@/lib/product-mapper";
 import { getServerT } from "@/lib/i18n/server";
-import type { Category, Product } from "@repo/types";
+import type { Category, CategoryAttribute, Product } from "@repo/types";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,7 @@ function resolveSort(sort?: string): { sortBy: string; sortOrder: "asc" | "desc"
 
 const EMPTY_FACETS = {
   brands: [] as Array<{ id: string; name: string; count: number }>,
+  attributes: {} as Record<string, Array<{ value: string; count: number }>>,
   priceRange: { min: 0, max: 999999 },
 };
 
@@ -80,6 +81,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     }
   }
 
+  // Per-category attribute definitions — the filter panel's attribute section is
+  // built from these, so it changes whenever a different category is selected.
+  // The API returns `attributes` on the category (not yet in the shared type).
+  const categoryAttributes: CategoryAttribute[] =
+    (activeCategory as (Category & { attributes?: CategoryAttribute[] }) | null)?.attributes ?? [];
+
   const filterParams = {
     categoryPath: activeCategory?.path,
     search: query.search,
@@ -118,10 +125,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     if (facetsRes.data) {
       const raw = facetsRes.data as {
         brands?: Array<{ id: string; name: string; count: number }>;
+        attributes?: Record<string, Array<{ value: string; count: number }>>;
         priceRange?: { min: number; max: number };
       };
       facetCounts = {
         brands: (raw.brands || []).map((b) => ({ id: b.id, name: b.name || b.id, count: b.count })),
+        attributes: raw.attributes || {},
         priceRange: raw.priceRange || { min: 0, max: 999999 },
       };
     }
@@ -129,27 +138,9 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     products = [];
   }
 
-  const buildPageHref = (p: number) => {
-    const params = new URLSearchParams();
-    for (const [k, v] of Object.entries(query)) {
-      if (v && k !== "page") params.set(k, v);
-    }
-    if (p > 1) params.set("page", String(p));
-    const qs = params.toString();
-    return qs ? `/products?${qs}` : "/products";
-  };
-
   const heading =
     activeCategory?.name ||
     (query.search ? t("page.searchResults", { query: query.search }) : t("page.allProducts"));
-
-  // Cap the visible page links so an un-narrowed catalog doesn't render 100+ buttons.
-  const MAX_PAGE_LINKS = 8;
-  const pageStart = Math.max(1, Math.min(page - 3, totalPages - MAX_PAGE_LINKS + 1));
-  const pageNumbers = Array.from(
-    { length: Math.min(MAX_PAGE_LINKS, totalPages) },
-    (_, i) => pageStart + i,
-  ).filter((p) => p >= 1 && p <= totalPages);
 
   return (
     <>
@@ -157,7 +148,12 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         <div className="flex gap-6">
           <div className="hidden shrink-0 space-y-6 lg:block">
             <CatalogSidebar categories={sidebarCategories} activeSlug={query.category} />
-            <CatalogFilters priceRange={facetCounts.priceRange} brands={facetCounts.brands} />
+            <CatalogFilters
+              priceRange={facetCounts.priceRange}
+              brands={facetCounts.brands}
+              categoryAttributes={categoryAttributes}
+              attributeFacets={facetCounts.attributes}
+            />
           </div>
 
           <div className="flex-1">
@@ -180,23 +176,11 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
               </div>
             )}
 
-            {totalPages > 1 && (
-              <nav className="mt-12 flex items-center justify-center gap-2" aria-label={t("page.pagination")}>
-                {pageNumbers.map((p) => (
-                  <Link
-                    key={p}
-                    href={buildPageHref(p)}
-                    className={`flex h-10 min-w-10 items-center justify-center rounded-full px-3 text-sm font-medium transition-colors ${
-                      p === page
-                        ? "bg-brand-red-500 text-cream-50"
-                        : "bg-[#E2DFD4] text-ink-900 hover:bg-[#cfccbf]"
-                    }`}
-                  >
-                    {p}
-                  </Link>
-                ))}
-              </nav>
-            )}
+            <CatalogPagination
+              currentPage={page}
+              totalPages={totalPages}
+              ariaLabel={t("page.pagination")}
+            />
           </div>
         </div>
       </div>
