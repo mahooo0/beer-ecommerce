@@ -48,7 +48,8 @@ export function LanguageSwitcher() {
 
       <PopoverContent
         align="end"
-        className="w-44 rounded-2xl border-cream-300 p-1.5 font-taranka-body shadow-lg"
+        sideOffset={8}
+        className="z-[1100] w-44 rounded-2xl border-cream-300 bg-background p-1.5 font-taranka-body shadow-lg"
       >
         {languages.map((lng) => (
           <button
