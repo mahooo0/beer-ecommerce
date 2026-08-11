@@ -24,12 +24,13 @@ export function TarankaFooter() {
   const clientLinks = [
     { label: t("footer.clients.login"), href: "#" },
     { label: t("footer.clients.vacancies"), href: "#" },
-    { label: t("footer.clients.delivery"), href: "#" },
+    { label: t("footer.clients.delivery"), href: "/delivery" },
   ];
 
   const aboutLinks = [
-    { label: t("footer.about.franchise"), href: "#" },
-    { label: t("footer.about.contacts"), href: "#" },
+    { label: t("footer.about.aboutUs"), href: "/about" },
+    { label: t("footer.about.franchise"), href: "/franchise" },
+    { label: t("footer.about.contacts"), href: "/contacts" },
   ];
 
   return (

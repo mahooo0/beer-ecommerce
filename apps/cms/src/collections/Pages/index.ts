@@ -59,6 +59,8 @@ export const Pages: CollectionConfig<'pages'> = {
       name: 'title',
       type: 'text',
       required: true,
+      // Bilingual storefront (PL + UK). Title differs per locale.
+      localized: true,
     },
     {
       type: 'tabs',
@@ -74,6 +76,8 @@ export const Pages: CollectionConfig<'pages'> = {
               type: 'blocks',
               blocks: [CallToAction, Content, MediaBlock, Archive, FormBlock],
               required: true,
+              // The whole page content (all blocks) is authored per-locale.
+              localized: true,
               admin: {
                 initCollapsed: true,
               },
@@ -84,6 +88,7 @@ export const Pages: CollectionConfig<'pages'> = {
         {
           name: 'meta',
           label: 'SEO',
+          localized: true,
           fields: [
             OverviewField({
               titlePath: 'meta.title',
