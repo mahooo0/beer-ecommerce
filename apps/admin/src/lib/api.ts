@@ -73,6 +73,36 @@ export interface ProductCompletenessStats {
   fields: number; // number of scored fields (COMPLETENESS_FIELDS = 6)
 }
 
+/** Payload CMS list envelope (blog/content), returned verbatim by /api/blog/:collection. */
+export interface PayloadList<T> {
+  docs: T[];
+  totalDocs: number;
+  totalPages: number;
+  page: number;
+  limit: number;
+  hasNextPage?: boolean;
+  hasPrevPage?: boolean;
+}
+
+/** Payload create/update envelope. */
+export interface PayloadMutation<T> {
+  doc: T;
+  message?: string;
+}
+
+/** Query params accepted by the blog proxy (Payload query language, passed through). */
+export type BlogQuery = Record<string, string | number | boolean | undefined>;
+
+function blogQs(query?: BlogQuery): string {
+  if (!query) return '';
+  const qp = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) {
+    if (v !== undefined && v !== null) qp.set(k, String(v));
+  }
+  const s = qp.toString();
+  return s ? `?${s}` : '';
+}
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 const STORAGE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:4001';
 
@@ -487,6 +517,34 @@ export const api = {
       fetcher<ApiResponse<PromoBanner>>(`/promo-banners/${id}`, { method: 'PUT', body: JSON.stringify(data), token }),
     delete: (id: string, token?: string) =>
       fetcher<ApiResponse<void>>(`/promo-banners/${id}`, { method: 'DELETE', token }),
+  },
+  // ==========================================================================
+  // Blog / content (Payload CMS) via the server proxy at /api/blog/:collection.
+  // Responses are Payload's native shape. All calls are admin-only (Clerk token).
+  // Collections: posts | categories | media | forms | form-submissions.
+  // ==========================================================================
+  blog: {
+    list: <T = Record<string, unknown>>(collection: string, query?: BlogQuery, token?: string) =>
+      fetcher<PayloadList<T>>(`/blog/${collection}${blogQs(query)}`, { token }),
+    get: <T = Record<string, unknown>>(collection: string, id: string | number, query?: BlogQuery, token?: string) =>
+      fetcher<T>(`/blog/${collection}/${id}${blogQs(query)}`, { token }),
+    create: <T = Record<string, unknown>>(collection: string, data: unknown, query?: BlogQuery, token?: string) =>
+      fetcher<PayloadMutation<T>>(`/blog/${collection}${blogQs(query)}`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    update: <T = Record<string, unknown>>(collection: string, id: string | number, data: unknown, query?: BlogQuery, token?: string) =>
+      fetcher<PayloadMutation<T>>(`/blog/${collection}/${id}${blogQs(query)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+        token,
+      }),
+    remove: (collection: string, id: string | number, query?: BlogQuery, token?: string) =>
+      fetcher<{ message?: string }>(`/blog/${collection}/${id}${blogQs(query)}`, {
+        method: 'DELETE',
+        token,
+      }),
   },
   tags: {
     getAll: (params?: { type?: string; token?: string } | string) => {
