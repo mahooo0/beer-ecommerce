@@ -4,6 +4,7 @@ import type { Resources } from "./en";
 export const uk: Resources = {
   nav: {
     blog: "Блог",
+    leads: "Заявки",
     overview: "Огляд",
     catalog: "Каталог",
     allProducts: "Усі товари",
@@ -396,6 +397,13 @@ export const uk: Resources = {
       "saveFailed": "Не вдалося зберегти колекцію",
       "deleteFailed": "Не вдалося видалити колекцію"
     }
+  },
+  leads: {
+    title: "Заявки",
+    empty: "Заявок ще немає.",
+    searchPlaceholder: "Пошук у заявках…",
+    analytics: { title: "Заявки з форм", total: "Усього", forms: "Форми" },
+    columns: { date: "Дата", form: "Форма", data: "Надіслані дані" },
   },
   blog: {
     title: "Блог",

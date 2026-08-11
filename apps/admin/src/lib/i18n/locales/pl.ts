@@ -4,6 +4,7 @@ import type { Resources } from "./en";
 export const pl: Resources = {
   nav: {
     blog: "Blog",
+    leads: "Zgłoszenia",
     overview: "Przegląd",
     catalog: "Katalog",
     allProducts: "Wszystkie produkty",
@@ -396,6 +397,13 @@ export const pl: Resources = {
       "saveFailed": "Nie udało się zapisać kolekcji",
       "deleteFailed": "Nie udało się usunąć kolekcji"
     }
+  },
+  leads: {
+    title: "Zgłoszenia",
+    empty: "Brak zgłoszeń.",
+    searchPlaceholder: "Szukaj w zgłoszeniach…",
+    analytics: { title: "Zgłoszenia z formularzy", total: "Wszystkie", forms: "Formularze" },
+    columns: { date: "Data", form: "Formularz", data: "Przesłane dane" },
   },
   blog: {
     title: "Blog",

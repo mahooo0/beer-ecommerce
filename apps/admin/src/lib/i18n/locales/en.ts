@@ -2,6 +2,7 @@
 export const en = {
   nav: {
     blog: "Blog",
+    leads: "Leads",
     overview: "Overview",
     catalog: "Catalog",
     allProducts: "All Products",
@@ -394,6 +395,13 @@ export const en = {
       "saveFailed": "Failed to save collection",
       "deleteFailed": "Failed to delete collection"
     }
+  },
+  leads: {
+    title: "Leads",
+    empty: "No submissions yet.",
+    searchPlaceholder: "Search submissions…",
+    analytics: { title: "Form Submissions", total: "Total", forms: "Forms" },
+    columns: { date: "Date", form: "Form", data: "Submitted data" },
   },
   blog: {
     title: "Blog",
