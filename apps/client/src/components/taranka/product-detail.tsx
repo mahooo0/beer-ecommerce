@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Heart, Minus, Plus, CheckCircle2, Truck, CreditCard, Check } from "lucide-react";
+import { Minus, Plus, CheckCircle2, Truck, CreditCard, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "@clerk/nextjs";
 import { resolveWholesaleUnitPrice, sortedWholesaleTiers, type WholesaleTier } from "@repo/types";
 import { useCart } from "@/lib/cart-store";
+import { TarankaFavoriteButton } from "./favorite-button";
 
 export interface ProductDetailData {
   id: string;
@@ -231,13 +232,11 @@ export function TarankaProductDetail({ product }: { product: ProductDetailData }
               {t("detail.quickOrder")}
             </button>
 
-            <button
-              type="button"
-              aria-label={t("detail.addToFavorites")}
-              className="flex size-12 shrink-0 items-center justify-center rounded-full border border-brand-red-500 text-brand-red-500 transition-all duration-300 hover:scale-110 hover:bg-brand-red-500 hover:text-cream-50 active:scale-95"
-            >
-              <Heart className="size-5" strokeWidth={1.75} />
-            </button>
+            <TarankaFavoriteButton
+              productId={product.id}
+              priceCents={product.basePriceCents}
+              iconClassName="size-5"
+            />
           </div>
 
           <div className="mt-12 grid grid-cols-2 gap-x-12">
