@@ -141,11 +141,12 @@ function SidebarMenuButton({
 
   return (
     <BaseSidebarMenuButton
-      // Sit above the sliding highlight, drop the built-in hover background, and
-      // read against the primary fill via its matching foreground token. Only
+      // Sit above the sliding highlight and drop the built-in hover background.
+      // Only invert the label to the primary foreground in dark mode; on the
+      // light theme the text stays its normal dark colour on hover. Applied only
       // when there's a menu highlight to sit on — outside one (e.g. the
-      // collapsed-rail dropdown) keep the base hover styling.
-      className={cn(ctx && "relative z-10 hover:bg-transparent hover:text-sidebar-primary-foreground", className)}
+      // collapsed-rail dropdown) the base hover styling is kept.
+      className={cn(ctx && "relative z-10 hover:bg-transparent dark:hover:text-sidebar-primary-foreground", className)}
       onMouseEnter={(e) => {
         ctx?.moveTo(e.currentTarget);
         onMouseEnter?.(e);
@@ -179,11 +180,12 @@ function SidebarMenuSubButton({
 
   return (
     <BaseSidebarMenuSubButton
-      // Same as SidebarMenuButton: only take over the hover styling when this
-      // sub-button lives inside an animated menu (not in the rail dropdown).
+      // Same as SidebarMenuButton: only take over the hover styling inside an
+      // animated menu (not the rail dropdown), and only invert text/icon to the
+      // primary foreground in dark mode — light theme keeps them dark.
       className={cn(
         ctx &&
-          "relative z-10 hover:bg-transparent hover:text-sidebar-primary-foreground hover:[&>svg]:text-sidebar-primary-foreground",
+          "relative z-10 hover:bg-transparent dark:hover:text-sidebar-primary-foreground dark:hover:[&>svg]:text-sidebar-primary-foreground",
         className,
       )}
       onMouseEnter={(e) => {
