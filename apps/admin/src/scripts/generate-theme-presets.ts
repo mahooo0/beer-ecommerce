@@ -63,7 +63,21 @@ const presets = files.map((file) => {
     console.warn(`⚠️ Missing --primary for ${file} (light or dark). Check CSS syntax.`);
   }
 
-  return { label, value, primary };
+  // Gradient presets additionally define `--sidebar-primary-gradient`; it's
+  // optional, so a missing value just yields an empty string (solid preset).
+  const lightGradientMatch = content.match(
+    /:root\[data-theme-preset="[^"]*"\][\s\S]*?--sidebar-primary-gradient:\s*([^;]+);/,
+  );
+  const darkGradientMatch = content.match(
+    /\.dark:root\[data-theme-preset="[^"]*"\][\s\S]*?--sidebar-primary-gradient:\s*([^;]+);/,
+  );
+
+  const gradient = {
+    light: lightGradientMatch?.[1]?.trim() ?? "",
+    dark: darkGradientMatch?.[1]?.trim() ?? "",
+  };
+
+  return { label, value, primary, gradient };
 });
 
 const globalStylesPath = path.resolve(__dirname, "../app/globals.css");
@@ -88,7 +102,7 @@ const defaultPrimary = {
   dark: defaultDarkPrimaryMatch?.[1]?.trim() ?? "",
 };
 
-presets.unshift({ label: "Default", value: "default", primary: defaultPrimary });
+presets.unshift({ label: "Default", value: "default", primary: defaultPrimary, gradient: { light: "", dark: "" } });
 
 const generatedBlock = `// --- generated:themePresets:start ---
 
