@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface InventoryAlert {
@@ -23,14 +24,15 @@ interface LowStockAlertsProps {
 }
 
 export function LowStockAlerts({ alerts, loading }: LowStockAlertsProps) {
+  const { t } = useTranslation();
   const top5 = alerts.slice(0, 5);
 
   return (
     <div className="rounded-lg border bg-card p-4">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium">Low Stock Alerts</h2>
+        <h2 className="text-lg font-medium">{t('overview.lowStock.title')}</h2>
         <Link href="/dashboard/inventory" className="text-sm text-primary hover:underline">
-          View All
+          {t('overview.lowStock.viewAll')}
         </Link>
       </div>
       {loading ? (
@@ -40,7 +42,7 @@ export function LowStockAlerts({ alerts, loading }: LowStockAlertsProps) {
           ))}
         </div>
       ) : top5.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">No low stock alerts</div>
+        <div className="text-center py-8 text-muted-foreground">{t('overview.lowStock.empty')}</div>
       ) : (
         <div className="space-y-3">
           {top5.map((alert) => {
@@ -53,13 +55,16 @@ export function LowStockAlerts({ alerts, loading }: LowStockAlertsProps) {
                     {alert.productName || alert.sku}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {alert.available} available · Threshold: {alert.lowStockThreshold}
+                    {t('overview.lowStock.availableThreshold', {
+                      available: alert.available,
+                      threshold: alert.lowStockThreshold,
+                    })}
                   </p>
                 </div>
                 <span
                   className={`text-xs font-semibold px-2 py-0.5 rounded ${isOut ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'}`}
                 >
-                  {isOut ? 'Out' : 'Low'}
+                  {isOut ? t('overview.lowStock.out') : t('overview.lowStock.low')}
                 </span>
               </div>
             );

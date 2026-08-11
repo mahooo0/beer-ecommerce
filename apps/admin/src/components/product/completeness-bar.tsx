@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -38,6 +39,7 @@ export function CompletenessBar({
   className?: string;
   showPercent?: boolean;
 }) {
+  const { t } = useTranslation();
   const { percent, missing } = data;
   const filledSegments = Math.round((percent / 100) * SEGMENTS);
   const { fill, empty, text } = tierColors(percent);
@@ -66,9 +68,9 @@ export function CompletenessBar({
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-[260px]">
         <div className="space-y-1.5">
-          <div className="font-medium">Заповнено {percent}%</div>
+          <div className="font-medium">{t('productForm.completeness.filled', { percent })}</div>
           {missing.length === 0 ? (
-            <div className="text-[11px] opacity-80">Усі поля заповнені</div>
+            <div className="text-[11px] opacity-80">{t('productForm.completeness.allFilled')}</div>
           ) : (
             <ul className="text-[11px] space-y-0.5 list-disc pl-3 opacity-90">
               {missing.map((f) => (

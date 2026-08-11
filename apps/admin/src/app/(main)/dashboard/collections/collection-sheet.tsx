@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import CollectionForm from './collection-form';
 import type { Collection } from '@repo/types';
@@ -12,6 +13,7 @@ interface CollectionSheetProps {
 }
 
 export function CollectionSheet({ open, onOpenChange, collection, onSuccess }: CollectionSheetProps) {
+  const { t } = useTranslation();
   const handleSuccess = () => {
     onOpenChange(false);
     onSuccess();
@@ -21,9 +23,9 @@ export function CollectionSheet({ open, onOpenChange, collection, onSuccess }: C
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{collection ? 'Edit Collection' : 'Create Collection'}</SheetTitle>
+          <SheetTitle>{collection ? t('collections.sheet.editTitle') : t('collections.sheet.createTitle')}</SheetTitle>
           <SheetDescription>
-            {collection ? 'Update the collection details below.' : 'Fill in the details to create a new collection.'}
+            {collection ? t('collections.sheet.editDescription') : t('collections.sheet.createDescription')}
           </SheetDescription>
         </SheetHeader>
         <div className="px-4">

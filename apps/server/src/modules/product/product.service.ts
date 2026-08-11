@@ -2,7 +2,7 @@ import { prisma, OrderModel } from '@repo/db';
 import { eventBus } from '../../common/events/event-bus.js';
 import { AppError } from '../../common/middleware/error-handler.js';
 import { generateUniqueSlug } from '../../utils/slug.utils.js';
-import type { ProductFormData, ProductUpdateData } from '@repo/types/product-schemas';
+import type { ProductFormData, ProductUpdateData, WholesaleTier } from '@repo/types/product-schemas';
 import { productSchema } from '@repo/types/product-schemas';
 import type { ProductStatus } from '@repo/types';
 import Papa from 'papaparse';
@@ -17,6 +17,25 @@ function ceilPrice(value: number | string): number {
   const n = typeof value === 'string' ? parseFloat(value) : Number(value);
   if (!Number.isFinite(n)) return 0;
   return Math.ceil(Number(n.toFixed(2)));
+}
+
+/**
+ * Sanitize wholesale quantity tiers before persisting: drop invalid rows, ceil
+ * prices, dedupe by minQty (last wins), sort ascending. Stored as JSON on
+ * Product.wholesaleTiers. `price` is the total for `minQty` units.
+ */
+function normalizeWholesaleTiers(tiers?: WholesaleTier[] | null): WholesaleTier[] {
+  if (!tiers?.length) return [];
+  const byMinQty = new Map<number, number>();
+  for (const t of tiers) {
+    const minQty = Math.floor(Number(t?.minQty));
+    const price = ceilPrice(Number(t?.price));
+    if (!Number.isFinite(minQty) || minQty <= 0 || price <= 0) continue;
+    byMinQty.set(minQty, price);
+  }
+  return [...byMinQty.entries()]
+    .map(([minQty, price]) => ({ minQty, price }))
+    .sort((a, b) => a.minQty - b.minQty);
 }
 
 /**
@@ -45,6 +64,7 @@ async function generateUniqueSku(): Promise<string> {
 interface FilterOptions {
   minPrice?: number;
   maxPrice?: number;
+  search?: string;
   brands?: string;
   attributes?: string;
   attributeValues?: string;
@@ -172,7 +192,9 @@ export class ProductService {
             select: { variants: true },
           },
         },
-        orderBy: { [sortBy]: sortOrder },
+        // Out-of-stock (manual isAvailable=false) always sinks to the end,
+        // then the user-chosen sort applies within each group.
+        orderBy: [{ isAvailable: 'desc' }, { [sortBy]: sortOrder }],
       }),
       prisma.product.count({ where }),
     ]);
@@ -323,6 +345,7 @@ export class ProductService {
       composition: data.composition,
       searchKeywords: data.searchKeywords ?? [],
       attributes: data.attributes || {},
+      wholesaleTiers: normalizeWholesaleTiers(data.wholesaleTiers),
       trackQuantity: data.trackQuantity ?? false,
       quantity: data.quantity ?? 0,
       isAvailable: data.isAvailable ?? true,
@@ -414,6 +437,9 @@ export class ProductService {
       ...(data.composition !== undefined && { composition: data.composition }),
       ...(data.searchKeywords !== undefined && { searchKeywords: data.searchKeywords }),
       ...(data.attributes !== undefined && { attributes: data.attributes }),
+      ...(data.wholesaleTiers !== undefined && {
+        wholesaleTiers: normalizeWholesaleTiers(data.wholesaleTiers),
+      }),
       ...(data.trackQuantity !== undefined && { trackQuantity: data.trackQuantity }),
       ...(data.quantity !== undefined && { quantity: data.quantity }),
       ...(data.isAvailable !== undefined && { isAvailable: data.isAvailable }),
@@ -553,6 +579,7 @@ export class ProductService {
     const {
       minPrice,
       maxPrice,
+      search,
       brands,
       attributes,
       attributeValues,
@@ -583,6 +610,11 @@ export class ProductService {
     // Category path filter (startsWith for materialized path)
     if (categoryPath) {
       where.category = { path: { startsWith: categoryPath } };
+    }
+
+    // Free-text name search.
+    if (search && search.trim()) {
+      where.name = { contains: search.trim(), mode: 'insensitive' };
     }
 
     // Price range filter
@@ -637,26 +669,26 @@ export class ProductService {
       }
     }
 
-    // Availability filter (variant-stock based; legacy).
+    // Availability filter — taranka stock model: manual `isAvailable` flag plus,
+    // when quantity is tracked, a positive count. (No product variants here.)
     if (availability) {
       const statuses = availability.split(',').map((s) => s.trim()).filter(Boolean);
+      const inStockClause = {
+        isAvailable: true,
+        OR: [{ trackQuantity: false }, { quantity: { gt: 0 } }],
+      };
+      const outOfStockClause = {
+        OR: [
+          { isAvailable: false },
+          { AND: [{ trackQuantity: true }, { quantity: { lte: 0 } }] },
+        ],
+      };
       const orClauses: any[] = [];
-      if (statuses.includes('in_stock')) {
-        orClauses.push({ variants: { some: { stock: { gt: 0 } } } });
-      }
-      if (statuses.includes('out_of_stock')) {
-        orClauses.push({ variants: { every: { stock: { equals: 0 } } }, allowPreorder: false });
-      }
-      if (statuses.includes('pre_order')) {
-        orClauses.push({
-          AND: [
-            { allowPreorder: true },
-            { variants: { every: { stock: { equals: 0 } } } },
-          ],
-        });
-      }
+      if (statuses.includes('in_stock')) orClauses.push(inStockClause);
+      if (statuses.includes('out_of_stock')) orClauses.push(outOfStockClause);
+      if (statuses.includes('pre_order')) orClauses.push({ allowPreorder: true });
       if (orClauses.length > 0) {
-        where.OR = orClauses;
+        andClauses.push({ OR: orClauses });
       }
     }
 
@@ -724,7 +756,8 @@ export class ProductService {
         take: limit,
         where,
         include,
-        orderBy: { [sortBy]: sortOrder },
+        // Out-of-stock sinks to the end, then the user-chosen sort applies.
+        orderBy: [{ isAvailable: 'desc' }, { [sortBy]: sortOrder }],
       }),
       prisma.product.count({ where }),
     ]);
@@ -840,11 +873,15 @@ export class ProductService {
       }))
       .sort((a, b) => b.count - a.count);
 
-    // Availability counts
+    // Availability counts — taranka stock model (isAvailable flag + tracked quantity).
     const [inStockCount, outOfStockCount, preOrderCount] = await Promise.all([
-      prisma.product.count({ where: { ...baseWhere, variants: { some: { stock: { gt: 0 } } } } }),
-      prisma.product.count({ where: { ...baseWhere, variants: { every: { stock: { equals: 0 } } }, allowPreorder: false } }),
-      prisma.product.count({ where: { ...baseWhere, variants: { every: { stock: { equals: 0 } } }, allowPreorder: true } }),
+      prisma.product.count({
+        where: { ...baseWhere, isAvailable: true, OR: [{ trackQuantity: false }, { quantity: { gt: 0 } }] },
+      }),
+      prisma.product.count({
+        where: { ...baseWhere, OR: [{ isAvailable: false }, { AND: [{ trackQuantity: true }, { quantity: { lte: 0 } }] }] },
+      }),
+      prisma.product.count({ where: { ...baseWhere, allowPreorder: true } }),
     ]);
 
     const availabilityFacets = [

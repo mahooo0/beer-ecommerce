@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
@@ -9,9 +10,11 @@ import type { Product } from '@repo/types';
 interface ProductSelectorProps {
   collectionId: string;
   products: Product[];
+  collectionName?: string;
 }
 
-export default function ProductSelector({ collectionId, products }: ProductSelectorProps) {
+export default function ProductSelector({ collectionId, products, collectionName }: ProductSelectorProps) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,7 +39,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
 
       const token = await getToken();
       if (!token) {
-        throw new Error('Not authenticated');
+        throw new Error(t('collections.errors.notAuth'));
       }
 
       await api.collections.addProduct(collectionId, productId, token);
@@ -45,7 +48,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
       setSearchQuery('');
       setShowResults(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add product');
+      setError(err instanceof Error ? err.message : t('collections.products.addFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -58,14 +61,14 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
 
       const token = await getToken();
       if (!token) {
-        throw new Error('Not authenticated');
+        throw new Error(t('collections.errors.notAuth'));
       }
 
       await api.collections.removeProduct(collectionId, productId, token);
 
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove product');
+      setError(err instanceof Error ? err.message : t('collections.products.removeFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -73,6 +76,10 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
 
   return (
     <div className="space-y-6">
+      <h2 className="text-xl font-semibold text-foreground">
+        {t('collections.products.manageTitle', { name: collectionName ?? '' })}
+      </h2>
+
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
           {error}
@@ -81,9 +88,9 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
 
       {/* Current products in collection */}
       <div>
-        <h3 className="text-lg font-medium mb-3">Current Products</h3>
+        <h3 className="text-lg font-medium mb-3">{t('collections.products.current')}</h3>
         {currentProducts.length === 0 ? (
-          <p className="text-gray-500 text-sm">No products in this collection yet.</p>
+          <p className="text-gray-500 text-sm">{t('collections.products.empty')}</p>
         ) : (
           <div className="space-y-2">
             {currentProducts.map((product) => (
@@ -101,7 +108,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
                   )}
                   <div>
                     <p className="font-medium text-sm">{product.name}</p>
-                    <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                    <p className="text-xs text-gray-500">{t('collections.products.sku', { sku: product.sku })}</p>
                   </div>
                 </div>
                 <button
@@ -109,7 +116,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
                   disabled={isLoading}
                   className="px-3 py-1 text-sm text-red-600 hover:text-red-800 disabled:opacity-50"
                 >
-                  Remove
+                  {t('collections.products.remove')}
                 </button>
               </div>
             ))}
@@ -119,7 +126,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
 
       {/* Add products section */}
       <div>
-        <h3 className="text-lg font-medium mb-3">Add Products</h3>
+        <h3 className="text-lg font-medium mb-3">{t('collections.products.add')}</h3>
         <div className="relative">
           <input
             type="text"
@@ -129,7 +136,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
               setShowResults(e.target.value.length > 0);
             }}
             onFocus={() => setShowResults(searchQuery.length > 0)}
-            placeholder="Search products by name or SKU..."
+            placeholder={t('collections.products.searchPlaceholder')}
             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
 
@@ -151,7 +158,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
                     )}
                     <div>
                       <p className="font-medium text-sm">{product.name}</p>
-                      <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                      <p className="text-xs text-gray-500">{t('collections.products.sku', { sku: product.sku })}</p>
                     </div>
                   </div>
                   <button
@@ -159,7 +166,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
                     disabled={isLoading}
                     className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                   >
-                    Add
+                    {t('collections.products.addButton')}
                   </button>
                 </div>
               ))}
@@ -168,7 +175,7 @@ export default function ProductSelector({ collectionId, products }: ProductSelec
 
           {showResults && searchQuery && filteredProducts.length === 0 && (
             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg p-3">
-              <p className="text-sm text-gray-500">No products found</p>
+              <p className="text-sm text-gray-500">{t('collections.products.noResults')}</p>
             </div>
           )}
         </div>

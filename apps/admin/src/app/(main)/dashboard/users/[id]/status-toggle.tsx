@@ -1,7 +1,11 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useTranslation } from 'react-i18next';
 import { toggleUserStatus } from '../actions';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 type StatusToggleProps = {
   userId: string;
@@ -9,64 +13,69 @@ type StatusToggleProps = {
   isBanned: boolean;
 };
 
-export function StatusToggle({ userId, isActive, isBanned }: StatusToggleProps) {
+export function StatusToggle({ userId, isActive }: StatusToggleProps) {
+  const { t } = useTranslation();
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleToggle = async () => {
+  const handleToggle = () => {
     setMessage(null);
 
     startTransition(async () => {
       try {
-        // If user is currently active, we want to ban them
+        // If the user is currently active, toggling bans (disables) them.
         await toggleUserStatus(userId, isActive);
         setMessage({
           type: 'success',
-          text: isActive ? 'User account disabled' : 'User account enabled',
+          text: isActive ? t('users.toasts.accountDisabled') : t('users.toasts.accountEnabled'),
         });
-      } catch (error) {
-        setMessage({ type: 'error', text: 'Failed to update account status' });
+      } catch {
+        setMessage({ type: 'error', text: t('users.toasts.statusUpdateFailed') });
       }
     });
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-900">Account Status</p>
-          <p className="text-sm text-gray-500">
-            Current status:{' '}
-            <span className={isActive ? 'text-green-600' : 'text-red-600'}>
-              {isActive ? 'Active' : 'Disabled'}
-            </span>
-          </p>
-        </div>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-medium text-foreground">{t('users.statusToggle.title')}</p>
+        <Badge
+          variant="secondary"
+          className={
+            isActive
+              ? 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
+              : 'bg-destructive/10 text-destructive'
+          }
+        >
+          {isActive ? t('users.status.active') : t('users.status.disabled')}
+        </Badge>
       </div>
 
       {message && (
-        <div
-          className={`rounded-md p-3 text-sm ${
+        <p
+          className={cn(
+            'text-sm',
             message.type === 'success'
-              ? 'bg-green-50 text-green-800'
-              : 'bg-red-50 text-red-800'
-          }`}
+              ? 'text-green-600 dark:text-green-500'
+              : 'text-destructive',
+          )}
         >
           {message.text}
-        </div>
+        </p>
       )}
 
-      <button
+      <Button
         onClick={handleToggle}
         disabled={isPending}
-        className={`rounded-md px-4 py-2 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400 ${
-          isActive
-            ? 'bg-red-600 hover:bg-red-700 focus:ring-red-500'
-            : 'bg-green-600 hover:bg-green-700 focus:ring-green-500'
-        }`}
+        variant={isActive ? 'destructive' : 'default'}
+        className="w-full"
       >
-        {isPending ? 'Processing...' : isActive ? 'Disable Account' : 'Enable Account'}
-      </button>
+        {isPending
+          ? t('users.statusToggle.processing')
+          : isActive
+            ? t('users.statusToggle.disable')
+            : t('users.statusToggle.enable')}
+      </Button>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDashboardData } from '@/hooks/use-dashboard-data';
 import {
   getDefaultDateRange,
@@ -17,6 +18,7 @@ import { TopProducts } from '@/components/dashboard/top-products';
 import { DateRangeFilter } from '@/components/dashboard/date-range-filter';
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
   const [dateRange, setDateRange] = useState(getDefaultDateRange);
   const { stats, recentOrders, timeseriesOrders, inventoryAlerts, customerCount, loading } =
     useDashboardData(dateRange);
@@ -29,7 +31,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <h1 className="text-2xl font-bold">{t('overview.title')}</h1>
         <DateRangeFilter value={dateRange} onChange={setDateRange} />
       </div>
 

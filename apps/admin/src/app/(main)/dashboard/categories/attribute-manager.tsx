@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { CategoryAttribute, AttributeType } from '@repo/types';
@@ -9,17 +10,20 @@ import { useAuth } from '@clerk/nextjs';
 import { api } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
-const attributeFormSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  key: z.string().regex(/^[a-z_][a-z0-9_]*$/, 'Key must start with a letter and contain only lowercase letters, numbers, and underscores'),
-  type: z.enum(['SELECT', 'RANGE', 'BOOLEAN', 'TEXT']),
-  values: z.string().optional(), // Comma-separated or newline-separated
-  unit: z.string().optional(),
-  isFilterable: z.boolean(),
-  isRequired: z.boolean(),
-});
+const buildAttributeFormSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(1, t('categoryPage.attributes.errors.nameRequired')),
+    key: z
+      .string()
+      .regex(/^[a-z_][a-z0-9_]*$/, t('categoryPage.attributes.errors.keyInvalid')),
+    type: z.enum(['SELECT', 'RANGE', 'BOOLEAN', 'TEXT']),
+    values: z.string().optional(), // Comma-separated or newline-separated
+    unit: z.string().optional(),
+    isFilterable: z.boolean(),
+    isRequired: z.boolean(),
+  });
 
-type AttributeFormData = z.infer<typeof attributeFormSchema>;
+type AttributeFormData = z.infer<ReturnType<typeof buildAttributeFormSchema>>;
 
 interface AttributeManagerProps {
   categoryId: string;
@@ -30,6 +34,7 @@ export default function AttributeManager({
   categoryId,
   attributes,
 }: AttributeManagerProps) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +42,8 @@ export default function AttributeManager({
   const [showForm, setShowForm] = useState(false);
   const [editingAttribute, setEditingAttribute] = useState<CategoryAttribute | null>(null);
   const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
+
+  const attributeFormSchema = useMemo(() => buildAttributeFormSchema(t), [t]);
 
   const {
     register,
@@ -110,7 +117,7 @@ export default function AttributeManager({
     try {
       const token = await getToken();
       if (!token) {
-        setError('Not authenticated');
+        setError(t('categoryPage.toasts.notAuthenticated'));
         return;
       }
 
@@ -141,14 +148,14 @@ export default function AttributeManager({
       router.refresh();
       handleCancelForm();
     } catch (err: any) {
-      setError(err.message || 'Failed to save attribute');
+      setError(err.message || t('categoryPage.attributes.toasts.saveFailed'));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (attributeId: string) => {
-    if (!confirm('Are you sure you want to delete this attribute?')) {
+    if (!confirm(t('categoryPage.attributes.confirm.delete'))) {
       return;
     }
 
@@ -156,14 +163,14 @@ export default function AttributeManager({
     try {
       const token = await getToken();
       if (!token) {
-        alert('Not authenticated');
+        alert(t('categoryPage.toasts.notAuthenticated'));
         return;
       }
 
       await api.categories.deleteAttribute(attributeId, token);
       router.refresh();
     } catch (err: any) {
-      alert(err.message || 'Failed to delete attribute');
+      alert(err.message || t('categoryPage.attributes.toasts.deleteFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -182,22 +189,22 @@ export default function AttributeManager({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                  Name
+                  {t('categoryPage.attributes.table.columns.name')}
                 </th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                  Key
+                  {t('categoryPage.attributes.table.columns.key')}
                 </th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                  Type
+                  {t('categoryPage.attributes.table.columns.type')}
                 </th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                  Values
+                  {t('categoryPage.attributes.table.columns.values')}
                 </th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                  Filterable
+                  {t('categoryPage.attributes.table.columns.filterable')}
                 </th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
+                  {t('categoryPage.attributes.table.columns.actions')}
                 </th>
               </tr>
             </thead>
@@ -216,9 +223,9 @@ export default function AttributeManager({
                   </td>
                   <td className="px-4 py-2 text-sm">
                     {attr.isFilterable ? (
-                      <span className="text-green-600">Yes</span>
+                      <span className="text-green-600">{t('categoryPage.attributes.yes')}</span>
                     ) : (
-                      <span className="text-gray-400">No</span>
+                      <span className="text-gray-400">{t('categoryPage.attributes.no')}</span>
                     )}
                   </td>
                   <td className="px-4 py-2 text-sm space-x-2">
@@ -226,14 +233,14 @@ export default function AttributeManager({
                       onClick={() => handleEdit(attr)}
                       className="text-blue-600 hover:underline"
                     >
-                      Edit
+                      {t('categoryPage.actions.edit')}
                     </button>
                     <button
                       onClick={() => handleDelete(attr.id)}
                       className="text-red-600 hover:underline"
                       disabled={isLoading}
                     >
-                      Delete
+                      {t('categoryPage.actions.delete')}
                     </button>
                   </td>
                 </tr>
@@ -242,7 +249,7 @@ export default function AttributeManager({
           </table>
         </div>
       ) : (
-        <p className="text-sm text-gray-500">No attributes defined yet.</p>
+        <p className="text-sm text-gray-500">{t('categoryPage.attributes.empty')}</p>
       )}
 
       {/* Add Attribute button */}
@@ -251,7 +258,7 @@ export default function AttributeManager({
           onClick={() => setShowForm(true)}
           className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
         >
-          Add Attribute
+          {t('categoryPage.attributes.add')}
         </button>
       )}
 
@@ -259,7 +266,9 @@ export default function AttributeManager({
       {showForm && (
         <form onSubmit={handleSubmit(onSubmit)} className="border p-4 rounded bg-gray-50 space-y-3">
           <h3 className="font-semibold text-lg mb-2">
-            {editingAttribute ? 'Edit Attribute' : 'Add Attribute'}
+            {editingAttribute
+              ? t('categoryPage.attributes.form.editTitle')
+              : t('categoryPage.attributes.form.addTitle')}
           </h3>
 
           {error && (
@@ -272,13 +281,13 @@ export default function AttributeManager({
             {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Name *
+                {t('categoryPage.attributes.form.name')} *
               </label>
               <input
                 {...register('name')}
                 id="name"
                 type="text"
-                placeholder="Screen Size"
+                placeholder={t('categoryPage.attributes.form.namePlaceholder')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               {errors.name && (
@@ -289,13 +298,13 @@ export default function AttributeManager({
             {/* Key */}
             <div>
               <label htmlFor="key" className="block text-sm font-medium text-gray-700 mb-1">
-                Key *
+                {t('categoryPage.attributes.form.key')} *
               </label>
               <input
                 {...register('key')}
                 id="key"
                 type="text"
-                placeholder="screen_size"
+                placeholder={t('categoryPage.attributes.form.keyPlaceholder')}
                 onChange={(e) => {
                   setKeyManuallyEdited(true);
                   register('key').onChange(e);
@@ -310,17 +319,17 @@ export default function AttributeManager({
             {/* Type */}
             <div>
               <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                Type *
+                {t('categoryPage.attributes.form.type')} *
               </label>
               <select
                 {...register('type')}
                 id="type"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="SELECT">Select (dropdown)</option>
-                <option value="RANGE">Range (min-max)</option>
-                <option value="BOOLEAN">Boolean (yes/no)</option>
-                <option value="TEXT">Text (free input)</option>
+                <option value="SELECT">{t('categoryPage.attributes.types.select')}</option>
+                <option value="RANGE">{t('categoryPage.attributes.types.range')}</option>
+                <option value="BOOLEAN">{t('categoryPage.attributes.types.boolean')}</option>
+                <option value="TEXT">{t('categoryPage.attributes.types.text')}</option>
               </select>
               {errors.type && (
                 <p className="text-xs text-red-600 mt-1">{String(errors.type.message)}</p>
@@ -331,13 +340,13 @@ export default function AttributeManager({
             {showUnitField && (
               <div>
                 <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
-                  Unit
+                  {t('categoryPage.attributes.form.unit')}
                 </label>
                 <input
                   {...register('unit')}
                   id="unit"
                   type="text"
-                  placeholder="inch, GB, etc."
+                  placeholder={t('categoryPage.attributes.form.unitPlaceholder')}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
                 {errors.unit && (
@@ -351,7 +360,7 @@ export default function AttributeManager({
           {showValuesField && (
             <div>
               <label htmlFor="values" className="block text-sm font-medium text-gray-700 mb-1">
-                Values (one per line)
+                {t('categoryPage.attributes.form.values')}
               </label>
               <textarea
                 {...register('values')}
@@ -374,7 +383,7 @@ export default function AttributeManager({
                 type="checkbox"
                 className="rounded"
               />
-              <span className="text-sm text-gray-700">Filterable</span>
+              <span className="text-sm text-gray-700">{t('categoryPage.attributes.form.filterable')}</span>
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -382,7 +391,7 @@ export default function AttributeManager({
                 type="checkbox"
                 className="rounded"
               />
-              <span className="text-sm text-gray-700">Required</span>
+              <span className="text-sm text-gray-700">{t('categoryPage.attributes.form.required')}</span>
             </label>
           </div>
 
@@ -393,7 +402,11 @@ export default function AttributeManager({
               disabled={isLoading}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {isLoading ? 'Saving...' : editingAttribute ? 'Update' : 'Add'}
+              {isLoading
+                ? t('categoryPage.attributes.form.saving')
+                : editingAttribute
+                  ? t('categoryPage.attributes.form.update')
+                  : t('categoryPage.attributes.form.add')}
             </button>
             <button
               type="button"
@@ -401,7 +414,7 @@ export default function AttributeManager({
               disabled={isLoading}
               className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
             >
-              Cancel
+              {t('categoryPage.attributes.form.cancel')}
             </button>
           </div>
         </form>

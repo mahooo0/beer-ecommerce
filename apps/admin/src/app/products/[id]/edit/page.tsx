@@ -54,6 +54,7 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
       attributeId: av.attributeId,
       attributeValueId: av.attributeValueId,
     })),
+    wholesaleTiers: (product as any).wholesaleTiers ?? [],
   };
 
   return (

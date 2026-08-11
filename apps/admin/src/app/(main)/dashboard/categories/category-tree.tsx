@@ -6,6 +6,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Tree, NodeModel } from '@minoru/react-dnd-treeview';
 import type { Category } from '@repo/types';
 import { useAuth } from '@clerk/nextjs';
+import { useTranslation } from 'react-i18next';
 import { Pencil, SlidersHorizontal, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -19,6 +20,7 @@ interface CategoryTreeProps {
 }
 
 export default function CategoryTree({ categories, onEditCategory }: CategoryTreeProps) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -52,7 +54,7 @@ export default function CategoryTree({ categories, onEditCategory }: CategoryTre
     try {
       const token = await getToken();
       if (!token) {
-        showError('Not authenticated');
+        showError(t('categoryPage.toasts.notAuthenticated'));
         return;
       }
 
@@ -69,7 +71,7 @@ export default function CategoryTree({ categories, onEditCategory }: CategoryTre
       // Refresh to get updated tree
       router.refresh();
     } catch (error: any) {
-      showError(error.message || 'Failed to move category');
+      showError(error.message || t('categoryPage.toasts.moveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -80,14 +82,14 @@ export default function CategoryTree({ categories, onEditCategory }: CategoryTre
     try {
       const token = await getToken();
       if (!token) {
-        showError('Not authenticated');
+        showError(t('categoryPage.toasts.notAuthenticated'));
         return;
       }
 
       await api.categories.delete(categoryId, token);
       router.refresh();
     } catch (error: any) {
-      showError(error.message || 'Failed to delete category');
+      showError(error.message || t('categoryPage.toasts.deleteFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +100,7 @@ export default function CategoryTree({ categories, onEditCategory }: CategoryTre
     <div className="relative">
       {isLoading && (
         <div className="absolute inset-0 bg-card/50 flex items-center justify-center z-10">
-          <div className="text-sm text-muted-foreground">Processing...</div>
+          <div className="text-sm text-muted-foreground">{t('categoryPage.tree.processing')}</div>
         </div>
       )}
 
@@ -138,9 +140,9 @@ export default function CategoryTree({ categories, onEditCategory }: CategoryTre
 
               {/* Action buttons */}
               <DataTableRowActions actions={[
-                { label: 'Edit', ...(onEditCategory ? { onClick: () => onEditCategory(category) } : { href: `/dashboard/categories/${node.id}` }), icon: <Pencil className="h-4 w-4" /> },
-                { label: 'Attributes & Filters', href: `/dashboard/categories/${node.id}`, icon: <SlidersHorizontal className="h-4 w-4" /> },
-                { label: 'Delete', onClick: () => handleDelete(String(node.id)), variant: 'destructive', icon: <Trash2 className="h-4 w-4" />, confirm: 'Are you sure you want to delete this category?' },
+                { label: t('categoryPage.actions.edit'), ...(onEditCategory ? { onClick: () => onEditCategory(category) } : { href: `/dashboard/categories/${node.id}` }), icon: <Pencil className="h-4 w-4" /> },
+                { label: t('categoryPage.actions.attributesAndFilters'), href: `/dashboard/categories/${node.id}`, icon: <SlidersHorizontal className="h-4 w-4" /> },
+                { label: t('categoryPage.actions.delete'), onClick: () => handleDelete(String(node.id)), variant: 'destructive', icon: <Trash2 className="h-4 w-4" />, confirm: t('categoryPage.confirm.deleteGeneric') },
               ]} />
             </div>
           );

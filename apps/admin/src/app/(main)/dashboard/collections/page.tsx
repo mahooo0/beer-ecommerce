@@ -51,12 +51,10 @@ export default async function CollectionsPage(props: PageProps) {
       return (
         <div className="space-y-6">
           <div className="p-4 bg-card rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 text-foreground">
-              Manage Products in &quot;{selectedCollection.name}&quot;
-            </h2>
             <ProductSelector
               collectionId={selectedCollection.id}
               products={products}
+              collectionName={selectedCollection.name}
             />
           </div>
         </div>

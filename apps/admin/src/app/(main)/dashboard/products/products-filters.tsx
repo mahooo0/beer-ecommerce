@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@clerk/nextjs';
+import { useTranslation } from 'react-i18next';
 import { X, Filter } from 'lucide-react';
 import { api } from '@/lib/api';
 import CategoryPicker from '@/components/CategoryPicker';
@@ -40,26 +41,31 @@ interface ProductsFiltersProps {
   categoryOptions?: { value: string; label: string }[];
 }
 
-const STATUS_OPTIONS = [
-  { value: 'DRAFT', label: 'Чернетка' },
-  { value: 'ACTIVE', label: 'Активний' },
-  { value: 'ARCHIVED', label: 'Архів' },
+const getStatusOptions = (t: (key: string) => string) => [
+  { value: 'DRAFT', label: t('products.status.DRAFT') },
+  { value: 'ACTIVE', label: t('products.status.ACTIVE') },
+  { value: 'ARCHIVED', label: t('products.status.ARCHIVED') },
 ];
 
-const AVAILABILITY_OPTIONS = [
-  { value: 'in', label: 'В наявності' },
-  { value: 'out', label: 'Немає' },
+const getAvailabilityOptions = (t: (key: string) => string) => [
+  { value: 'in', label: t('products.availability.inStock') },
+  { value: 'out', label: t('products.availability.outOfStock') },
 ];
 
-const COMPLETENESS_OPTIONS = [
-  { value: 'complete', label: 'Заповнені (100%)' },
-  { value: 'incomplete', label: 'Не заповнені' },
+const getCompletenessOptions = (t: (key: string) => string) => [
+  { value: 'complete', label: t('products.filters.completenessComplete') },
+  { value: 'incomplete', label: t('products.filters.completenessIncomplete') },
 ];
 
 export function ProductsFilters({ initialValues }: ProductsFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { getToken } = useAuth();
+  const { t } = useTranslation();
+
+  const STATUS_OPTIONS = useMemo(() => getStatusOptions(t), [t]);
+  const AVAILABILITY_OPTIONS = useMemo(() => getAvailabilityOptions(t), [t]);
+  const COMPLETENESS_OPTIONS = useMemo(() => getCompletenessOptions(t), [t]);
 
   const categoryId = initialValues.categoryId || '';
   const status = initialValues.status || '';
@@ -162,7 +168,7 @@ export function ProductsFilters({ initialValues }: ProductsFiltersProps) {
     <div className="rounded-lg border bg-card p-4 space-y-5">
       <div className="flex items-center gap-2">
         <Filter className="h-4 w-4" />
-        <span className="text-sm font-semibold">Фільтри</span>
+        <span className="text-sm font-semibold">{t('products.filters.title')}</span>
         {activeCount > 0 && (
           <Badge variant="secondary" className="rounded-full px-2 text-xs">
             {activeCount}
@@ -176,7 +182,7 @@ export function ProductsFilters({ initialValues }: ProductsFiltersProps) {
             className="ml-auto h-7 text-xs text-muted-foreground"
           >
             <X className="h-3 w-3 mr-1" />
-            Очистити
+            {t('products.filters.clear')}
           </Button>
         )}
       </div>
@@ -184,29 +190,29 @@ export function ProductsFilters({ initialValues }: ProductsFiltersProps) {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Category */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Категорія</Label>
+          <Label className="text-xs text-muted-foreground">{t('products.filters.category')}</Label>
           <CategoryPicker
             value={categoryId || null}
             onChange={(id) =>
               // Changing category invalidates the attribute-value selection.
               pushParams({ categoryId: id ?? undefined, attributeValues: undefined })
             }
-            placeholder="Усі категорії"
+            placeholder={t('products.filters.allCategories')}
           />
         </div>
 
         {/* Status */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Статус</Label>
+          <Label className="text-xs text-muted-foreground">{t('products.filters.status')}</Label>
           <Select
             value={status || '_all_'}
             onValueChange={(v) => pushParams({ status: v === '_all_' ? undefined : v })}
           >
             <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Усі статуси" />
+              <SelectValue placeholder={t('products.filters.allStatuses')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="_all_">Усі статуси</SelectItem>
+              <SelectItem value="_all_">{t('products.filters.allStatuses')}</SelectItem>
               {STATUS_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -218,16 +224,16 @@ export function ProductsFilters({ initialValues }: ProductsFiltersProps) {
 
         {/* Availability */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Наявність</Label>
+          <Label className="text-xs text-muted-foreground">{t('products.filters.availability')}</Label>
           <Select
             value={isAvailable || '_all_'}
             onValueChange={(v) => pushParams({ isAvailable: v === '_all_' ? undefined : v })}
           >
             <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Будь-яка" />
+              <SelectValue placeholder={t('products.filters.anyAvailability')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="_all_">Будь-яка</SelectItem>
+              <SelectItem value="_all_">{t('products.filters.anyAvailability')}</SelectItem>
               {AVAILABILITY_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -239,16 +245,16 @@ export function ProductsFilters({ initialValues }: ProductsFiltersProps) {
 
         {/* Completeness */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Заповнення</Label>
+          <Label className="text-xs text-muted-foreground">{t('products.filters.completeness')}</Label>
           <Select
             value={completeness || '_all_'}
             onValueChange={(v) => pushParams({ completeness: v === '_all_' ? undefined : v })}
           >
             <SelectTrigger className="h-9 w-full">
-              <SelectValue placeholder="Усі" />
+              <SelectValue placeholder={t('products.filters.allCompleteness')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="_all_">Усі</SelectItem>
+              <SelectItem value="_all_">{t('products.filters.allCompleteness')}</SelectItem>
               {COMPLETENESS_OPTIONS.map((o) => (
                 <SelectItem key={o.value} value={o.value}>
                   {o.label}
@@ -260,12 +266,12 @@ export function ProductsFilters({ initialValues }: ProductsFiltersProps) {
 
         {/* Price range */}
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">Ціна (₴)</Label>
+          <Label className="text-xs text-muted-foreground">{t('products.filters.price')}</Label>
           <div className="flex items-center gap-2">
             <Input
               type="number"
               inputMode="numeric"
-              placeholder="від"
+              placeholder={t('products.filters.priceFrom')}
               value={localMinPrice}
               onChange={(e) => setLocalMinPrice(e.target.value)}
               onBlur={applyPrice}
@@ -276,7 +282,7 @@ export function ProductsFilters({ initialValues }: ProductsFiltersProps) {
             <Input
               type="number"
               inputMode="numeric"
-              placeholder="до"
+              placeholder={t('products.filters.priceTo')}
               value={localMaxPrice}
               onChange={(e) => setLocalMaxPrice(e.target.value)}
               onBlur={applyPrice}

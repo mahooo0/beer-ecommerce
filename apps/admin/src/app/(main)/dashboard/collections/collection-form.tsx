@@ -1,12 +1,13 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/api';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Collection } from '@repo/types';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
@@ -15,15 +16,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 
-const collectionSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-  image: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  slug: z.string().min(1, 'Slug is required'),
-  isActive: z.boolean().default(true),
-});
+const buildCollectionSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(1, t('collections.errors.nameRequired')),
+    description: z.string().optional(),
+    image: z.string().url(t('collections.errors.urlInvalid')).optional().or(z.literal('')),
+    slug: z.string().min(1, t('collections.errors.slugRequired')),
+    isActive: z.boolean().default(true),
+  });
 
-type CollectionFormData = z.infer<typeof collectionSchema>;
+type CollectionFormData = z.infer<ReturnType<typeof buildCollectionSchema>>;
 
 interface CollectionFormProps {
   collection?: Collection;
@@ -31,10 +33,13 @@ interface CollectionFormProps {
 }
 
 export default function CollectionForm({ collection, onSuccess }: CollectionFormProps) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const collectionSchema = useMemo(() => buildCollectionSchema(t), [t]);
 
   const {
     register,
@@ -78,7 +83,7 @@ export default function CollectionForm({ collection, onSuccess }: CollectionForm
 
       const token = await getToken();
       if (!token) {
-        throw new Error('Not authenticated');
+        throw new Error(t('collections.errors.notAuth'));
       }
 
       if (collection) {
@@ -90,7 +95,7 @@ export default function CollectionForm({ collection, onSuccess }: CollectionForm
       router.refresh();
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save collection');
+      setError(err instanceof Error ? err.message : t('collections.errors.saveFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -106,7 +111,7 @@ export default function CollectionForm({ collection, onSuccess }: CollectionForm
 
       <div>
         <Label htmlFor="name" className="mb-1">
-          Name <span className="text-red-500">*</span>
+          {t('collections.form.name')} <span className="text-red-500">*</span>
         </Label>
         <Input
           type="text"
@@ -114,7 +119,7 @@ export default function CollectionForm({ collection, onSuccess }: CollectionForm
           {...register('name', {
             onChange: handleNameChange,
           })}
-          placeholder="Summer Collection"
+          placeholder={t('collections.form.namePlaceholder')}
         />
         {errors.name && (
           <p className="mt-1 text-sm text-red-600">{String(errors.name.message)}</p>
@@ -123,13 +128,13 @@ export default function CollectionForm({ collection, onSuccess }: CollectionForm
 
       <div>
         <Label htmlFor="slug" className="mb-1">
-          Slug <span className="text-red-500">*</span>
+          {t('collections.form.slug')} <span className="text-red-500">*</span>
         </Label>
         <Input
           type="text"
           id="slug"
           {...register('slug')}
-          placeholder="summer-collection"
+          placeholder={t('collections.form.slugPlaceholder')}
         />
         {errors.slug && (
           <p className="mt-1 text-sm text-red-600">{String(errors.slug.message)}</p>
@@ -138,19 +143,19 @@ export default function CollectionForm({ collection, onSuccess }: CollectionForm
 
       <div>
         <Label htmlFor="description" className="mb-1">
-          Description
+          {t('collections.form.description')}
         </Label>
         <Textarea
           id="description"
           {...register('description')}
           rows={3}
-          placeholder="Curated products for the summer season"
+          placeholder={t('collections.form.descriptionPlaceholder')}
         />
       </div>
 
       <div>
         <Label className="mb-1">
-          Image
+          {t('collections.form.image')}
         </Label>
         <ImageUpload
           value={watch('image') || ''}
@@ -169,7 +174,7 @@ export default function CollectionForm({ collection, onSuccess }: CollectionForm
           onCheckedChange={(checked) => setValue('isActive', !!checked)}
         />
         <Label htmlFor="isActive" className="text-sm">
-          Active
+          {t('collections.form.active')}
         </Label>
       </div>
 
@@ -178,10 +183,14 @@ export default function CollectionForm({ collection, onSuccess }: CollectionForm
           type="submit"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Saving...' : collection ? 'Update Collection' : 'Create Collection'}
+          {isSubmitting
+            ? t('collections.form.saving')
+            : collection
+              ? t('collections.form.update')
+              : t('collections.form.create')}
         </Button>
         <Button variant="outline" asChild>
-          <a href="/dashboard/collections">Cancel</a>
+          <a href="/dashboard/collections">{t('collections.form.cancel')}</a>
         </Button>
       </div>
     </form>

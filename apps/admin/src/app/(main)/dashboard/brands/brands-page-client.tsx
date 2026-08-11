@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import type { Brand } from '@repo/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,16 +14,20 @@ import { Tag, Image, Globe } from 'lucide-react';
 import { BrandRowActions } from './brand-row-actions';
 import { BrandSheet } from './brand-sheet';
 
-const brandFilterConfigs: FilterConfig[] = [
-  { key: 'search', label: 'Search', type: 'search', placeholder: 'Search brands...' },
-];
-
 interface BrandsPageClientProps {
   brands: Brand[];
 }
 
 export function BrandsPageClient({ brands }: BrandsPageClientProps) {
+  const { t } = useTranslation();
   const router = useRouter();
+
+  const brandFilterConfigs: FilterConfig[] = useMemo(
+    () => [
+      { key: 'search', label: t('brands.filters.search'), type: 'search', placeholder: t('brands.filters.searchPlaceholder') },
+    ],
+    [t],
+  );
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({ search: '' });
@@ -45,18 +50,18 @@ export function BrandsPageClient({ brands }: BrandsPageClientProps) {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Brands</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t('brands.title')}</h1>
         <Button onClick={() => { setEditingBrand(null); setSheetOpen(true); }}>
-          Add Brand
+          {t('brands.addBrand')}
         </Button>
       </div>
 
       <div className="mb-4">
-        <AnalyticsPanel title="Brand Analytics">
+        <AnalyticsPanel title={t('brands.analytics.title')}>
           <div className="grid grid-cols-3 gap-3">
-            <StatCard label="Total Brands" value={brands.length} icon={<Tag className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-            <StatCard label="With Logos" value={brandsWithLogos} icon={<Image className="h-4 w-4 text-purple-600" />} color="bg-purple-50" subtitle={`${brands.length > 0 ? Math.round((brandsWithLogos / brands.length) * 100) : 0}%`} />
-            <StatCard label="With Websites" value={brandsWithWebsites} icon={<Globe className="h-4 w-4 text-green-600" />} color="bg-green-50" subtitle={`${brands.length > 0 ? Math.round((brandsWithWebsites / brands.length) * 100) : 0}%`} />
+            <StatCard label={t('brands.analytics.totalBrands')} value={brands.length} icon={<Tag className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
+            <StatCard label={t('brands.analytics.withLogos')} value={brandsWithLogos} icon={<Image className="h-4 w-4 text-purple-600" />} color="bg-purple-50" subtitle={`${brands.length > 0 ? Math.round((brandsWithLogos / brands.length) * 100) : 0}%`} />
+            <StatCard label={t('brands.analytics.withWebsites')} value={brandsWithWebsites} icon={<Globe className="h-4 w-4 text-green-600" />} color="bg-green-50" subtitle={`${brands.length > 0 ? Math.round((brandsWithWebsites / brands.length) * 100) : 0}%`} />
           </div>
         </AnalyticsPanel>
       </div>
@@ -74,12 +79,12 @@ export function BrandsPageClient({ brands }: BrandsPageClientProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Slug</TableHead>
-              <TableHead>Logo</TableHead>
-              <TableHead>Website</TableHead>
-              <TableHead>Products</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead>{t('brands.columns.name')}</TableHead>
+              <TableHead>{t('brands.columns.slug')}</TableHead>
+              <TableHead>{t('brands.columns.logo')}</TableHead>
+              <TableHead>{t('brands.columns.website')}</TableHead>
+              <TableHead>{t('brands.columns.products')}</TableHead>
+              <TableHead>{t('brands.columns.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -95,12 +100,12 @@ export function BrandsPageClient({ brands }: BrandsPageClientProps) {
                   {brand.logo ? (
                     <img src={brand.logo} alt={brand.name} className="h-8 w-8 object-contain" />
                   ) : (
-                    <span className="text-muted-foreground">No logo</span>
+                    <span className="text-muted-foreground">{t('brands.noLogo')}</span>
                   )}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {brand.website ? (
-                    <a href={brand.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Visit</a>
+                    <a href={brand.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{t('brands.visit')}</a>
                   ) : (
                     <span className="text-muted-foreground">-</span>
                   )}
@@ -118,7 +123,7 @@ export function BrandsPageClient({ brands }: BrandsPageClientProps) {
         </Table>
         {filteredBrands.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
-            No brands found. Create one to get started.
+            {t('brands.empty')}
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ToastContainer } from "react-toastify";
 
+import { I18nProvider } from "@/components/providers/I18nProvider";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -70,7 +71,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
               navbarStyle={navbar_style}
               font={font}
             >
-              <QueryProvider>{children}</QueryProvider>
+              <I18nProvider>
+                <QueryProvider>{children}</QueryProvider>
+              </I18nProvider>
               <Toaster />
               <ToastContainer position="bottom-right" />
             </PreferencesStoreProvider>

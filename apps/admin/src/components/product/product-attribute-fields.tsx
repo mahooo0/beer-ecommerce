@@ -25,6 +25,7 @@
  */
 
 import { useEffect, useMemo, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Attribute, AttributeValue } from '@repo/types';
 import type { ProductAttributeValueInput } from '@/lib/api';
 import { useAttributesByCategory } from '@/lib/queries/attributes';
@@ -57,6 +58,7 @@ export function ProductAttributeFields({
   value,
   onChange,
 }: ProductAttributeFieldsProps) {
+  const { t } = useTranslation();
   const {
     data: attributes,
     isLoading,
@@ -130,7 +132,7 @@ export function ProductAttributeFields({
   if (!categoryId) {
     return (
       <p className="text-sm text-muted-foreground">
-        Оберіть категорію, щоб задати атрибути товару.
+        {t('productForm.attributes.selectCategoryFirst')}
       </p>
     );
   }
@@ -139,7 +141,7 @@ export function ProductAttributeFields({
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Spinner className="h-4 w-4" />
-        Завантаження атрибутів…
+        {t('productForm.attributes.loading')}
       </div>
     );
   }
@@ -147,7 +149,7 @@ export function ProductAttributeFields({
   if (isError) {
     return (
       <p className="text-sm text-destructive">
-        Не вдалося завантажити атрибути для цієї категорії.
+        {t('productForm.attributes.loadError')}
       </p>
     );
   }
@@ -155,8 +157,7 @@ export function ProductAttributeFields({
   if (!attributes || attributes.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Для цієї категорії не визначено атрибутів. Додайте їх на сторінці
-        категорії.
+        {t('productForm.attributes.empty')}
       </p>
     );
   }
@@ -191,6 +192,7 @@ function AttributeControl({
   onToggleMulti: (valueId: string) => void;
   onSetSingle: (valueId: string | null) => void;
 }) {
+  const { t } = useTranslation();
   // Values arrive pre-sorted by AttributeValue.sortOrder from the server.
   const values = (attr.values ?? []).filter((v) => v.isActive !== false);
   const multi = isMultiSelect(attr.displayType);
@@ -211,7 +213,7 @@ function AttributeControl({
       <div className="space-y-2">
         {header}
         <p className="text-xs text-muted-foreground">
-          Немає значень. Додайте «спільні опції» на сторінці категорії.
+          {t('productForm.attributes.noValues')}
         </p>
       </div>
     );
@@ -255,7 +257,7 @@ function AttributeControl({
           value={currentSingle ?? ''}
           onChange={(e) => onSetSingle(e.target.value || null)}
         >
-          <option value="">— не задано —</option>
+          <option value="">{t('productForm.attributes.notSet')}</option>
           {values.map((v) => (
             <option key={v.id} value={v.id}>
               {valueLabel(v)}

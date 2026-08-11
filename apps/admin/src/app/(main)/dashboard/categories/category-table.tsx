@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
+import { useTranslation } from 'react-i18next';
 import type { Category } from '@repo/types';
 import { Pencil, SlidersHorizontal, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -23,6 +24,7 @@ interface CategoryTableProps {
 }
 
 export default function CategoryTable({ categories, onEditCategory }: CategoryTableProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { getToken } = useAuth();
 
@@ -33,7 +35,7 @@ export default function CategoryTable({ categories, onEditCategory }: CategoryTa
       await api.categories.delete(categoryId, token);
       router.refresh();
     } catch (err: any) {
-      showError(err.message || 'Failed to delete category');
+      showError(err.message || t('categoryPage.toasts.deleteFailed'));
     }
   };
 
@@ -45,11 +47,11 @@ export default function CategoryTable({ categories, onEditCategory }: CategoryTa
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Slug</TableHead>
-            <TableHead>Path</TableHead>
-            <TableHead>Depth</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead>{t('categoryPage.table.columns.name')}</TableHead>
+            <TableHead>{t('categoryPage.table.columns.slug')}</TableHead>
+            <TableHead>{t('categoryPage.table.columns.path')}</TableHead>
+            <TableHead>{t('categoryPage.table.columns.depth')}</TableHead>
+            <TableHead className="text-right">{t('categoryPage.table.columns.actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -71,9 +73,9 @@ export default function CategoryTable({ categories, onEditCategory }: CategoryTa
               <TableCell className="text-muted-foreground">{category.depth ?? 0}</TableCell>
               <TableCell className="text-right">
                 <DataTableRowActions actions={[
-                  { label: 'Edit', ...(onEditCategory ? { onClick: () => onEditCategory(category) } : { href: `/dashboard/categories/${category.id}` }), icon: <Pencil className="h-4 w-4" /> },
-                  { label: 'Attributes & Filters', href: `/dashboard/categories/${category.id}`, icon: <SlidersHorizontal className="h-4 w-4" /> },
-                  { label: 'Delete', onClick: () => handleDelete(category.id), variant: 'destructive', icon: <Trash2 className="h-4 w-4" />, confirm: `Are you sure you want to delete "${category.name}"?` },
+                  { label: t('categoryPage.actions.edit'), ...(onEditCategory ? { onClick: () => onEditCategory(category) } : { href: `/dashboard/categories/${category.id}` }), icon: <Pencil className="h-4 w-4" /> },
+                  { label: t('categoryPage.actions.attributesAndFilters'), href: `/dashboard/categories/${category.id}`, icon: <SlidersHorizontal className="h-4 w-4" /> },
+                  { label: t('categoryPage.actions.delete'), onClick: () => handleDelete(category.id), variant: 'destructive', icon: <Trash2 className="h-4 w-4" />, confirm: t('categoryPage.confirm.deleteNamed', { name: category.name }) },
                 ]} />
               </TableCell>
             </TableRow>
@@ -81,7 +83,7 @@ export default function CategoryTable({ categories, onEditCategory }: CategoryTa
         </TableBody>
       </Table>
       {sorted.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">No categories found.</div>
+        <div className="text-center py-8 text-muted-foreground">{t('categoryPage.table.empty')}</div>
       )}
     </div>
   );

@@ -33,6 +33,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 import { GripVertical, Star, X } from 'lucide-react';
 import { ImageUpload } from '../ui/image-upload';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ export function ImageManager({
   onChange,
   maxFiles = 10,
 }: ImageManagerProps) {
+  const { t } = useTranslation();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
@@ -98,8 +100,8 @@ export function ImageManager({
       {images.length > 0 && (
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            {images.length}/{maxFiles} зображень
-            {images.length > 1 && ' · перетягніть, щоб змінити порядок'}
+            {t('productForm.images.count', { count: images.length, max: maxFiles })}
+            {images.length > 1 && t('productForm.images.reorderHint')}
           </p>
           <Button
             type="button"
@@ -108,7 +110,7 @@ export function ImageManager({
             className="h-7 text-xs text-destructive hover:text-destructive"
             onClick={handleClearAll}
           >
-            Очистити все
+            {t('productForm.images.clearAll')}
           </Button>
         </div>
       )}
@@ -156,6 +158,7 @@ function SortableGalleryImage({
   onRemove: (url: string) => void;
   onSetMain: (url: string) => void;
 }) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -183,7 +186,7 @@ function SortableGalleryImage({
       <div className="aspect-square relative">
         <Image
           src={url}
-          alt="Зображення товару"
+          alt={t('productForm.images.alt')}
           fill
           className="object-cover"
           sizes="200px"
@@ -194,7 +197,7 @@ function SortableGalleryImage({
       {isMain && (
         <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-1 rounded bg-primary px-1.5 py-0.5 text-[10px] font-medium text-primary-foreground">
           <Star className="h-3 w-3 fill-current" />
-          Головне
+          {t('productForm.images.mainBadge')}
         </span>
       )}
 
@@ -204,7 +207,7 @@ function SortableGalleryImage({
         {...attributes}
         {...listeners}
         className="absolute bottom-2 left-2 z-10 flex h-7 w-7 cursor-grab items-center justify-center rounded bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
-        title="Перетягнути"
+        title={t('productForm.images.dragTitle')}
       >
         <GripVertical className="h-4 w-4" />
       </button>
@@ -215,7 +218,7 @@ function SortableGalleryImage({
           type="button"
           onClick={() => onSetMain(url)}
           className="absolute bottom-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded bg-black/50 text-white opacity-0 transition-opacity hover:bg-primary group-hover:opacity-100"
-          title="Зробити головним"
+          title={t('productForm.images.setMainTitle')}
         >
           <Star className="h-4 w-4" />
         </button>
@@ -226,7 +229,7 @@ function SortableGalleryImage({
         type="button"
         onClick={() => onRemove(url)}
         className="absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100"
-        title="Видалити"
+        title={t('productForm.images.removeTitle')}
       >
         <X className="h-4 w-4" />
       </button>

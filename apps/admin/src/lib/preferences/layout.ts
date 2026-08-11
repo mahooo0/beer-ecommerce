@@ -59,8 +59,8 @@ export type Direction = (typeof DIRECTION_VALUES)[number];
 // Language
 export const LANGUAGE_OPTIONS = [
   { label: "English", value: "en" },
-  { label: "Deutsch", value: "de" },
-  { label: "Français", value: "fr" },
+  { label: "Polski", value: "pl" },
+  { label: "Українська", value: "uk" },
 ] as const;
 export const LANGUAGE_VALUES = LANGUAGE_OPTIONS.map((v) => v.value);
 export type Language = (typeof LANGUAGE_VALUES)[number];

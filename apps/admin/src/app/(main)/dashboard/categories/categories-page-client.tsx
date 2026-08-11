@@ -2,15 +2,12 @@
 
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import type { Category } from '@repo/types';
 import { Button } from '@/components/ui/button';
 import { DataTableFilters, type FilterConfig } from '@/components/DataTableFilters';
 import CategoryViews from './category-views';
 import { CategorySheet } from './category-sheet';
-
-const categoryFilterConfigs: FilterConfig[] = [
-  { key: 'search', label: 'Search', type: 'search', placeholder: 'Search categories...' },
-];
 
 function filterCategoryTree(categories: Category[], search: string): Category[] {
   if (!search) return categories;
@@ -30,10 +27,23 @@ interface CategoriesPageClientProps {
 }
 
 export function CategoriesPageClient({ categories }: CategoriesPageClientProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const [sheetOpen, setSheetOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [filterValues, setFilterValues] = useState<Record<string, any>>({ search: '' });
+
+  const categoryFilterConfigs: FilterConfig[] = useMemo(
+    () => [
+      {
+        key: 'search',
+        label: t('categories.searchLabel'),
+        type: 'search',
+        placeholder: t('categories.searchPlaceholder'),
+      },
+    ],
+    [t],
+  );
 
   const filteredCategories = useMemo(() => {
     return filterCategoryTree(categories, filterValues.search as string || '');
@@ -58,9 +68,9 @@ export function CategoriesPageClient({ categories }: CategoriesPageClientProps) 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Categories</h1>
+        <h1 className="text-2xl font-bold">{t('categories.title')}</h1>
         <Button onClick={handleCreate}>
-          Add Category
+          {t('categories.add')}
         </Button>
       </div>
 
@@ -72,7 +82,7 @@ export function CategoriesPageClient({ categories }: CategoriesPageClientProps) 
       />
 
       <div className="bg-card rounded-lg shadow p-4">
-        <h2 className="text-xl font-semibold mb-4">Category Hierarchy</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('categories.hierarchy')}</h2>
         <CategoryViews categories={filteredCategories} onEditCategory={handleEdit} />
       </div>
 

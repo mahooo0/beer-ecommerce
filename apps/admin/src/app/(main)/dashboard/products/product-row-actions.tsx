@@ -2,7 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
-import { Eye, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Pencil, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { DataTableRowActions } from '@/components/DataTableRowActions';
 import { showError } from '@/lib/toast';
@@ -10,6 +11,7 @@ import { showError } from '@/lib/toast';
 export function ProductRowActions({ productId }: { productId: string }) {
   const router = useRouter();
   const { getToken } = useAuth();
+  const { t } = useTranslation();
 
   const handleDelete = async () => {
     try {
@@ -18,14 +20,14 @@ export function ProductRowActions({ productId }: { productId: string }) {
       await api.products.delete(productId, token);
       router.refresh();
     } catch (err: any) {
-      showError(err.message || 'Failed to delete product');
+      showError(err.message || t('products.toasts.deleteFailed'));
     }
   };
 
   return (
     <DataTableRowActions actions={[
-      { label: 'View', href: `/dashboard/products/${productId}`, icon: <Eye className="h-4 w-4" /> },
-      { label: 'Delete', onClick: handleDelete, variant: 'destructive', icon: <Trash2 className="h-4 w-4" />, confirm: 'Are you sure you want to delete this product?' },
+      { label: t('products.actions.edit'), href: `/dashboard/products/${productId}`, icon: <Pencil className="h-4 w-4" /> },
+      { label: t('products.actions.delete'), onClick: handleDelete, variant: 'destructive', icon: <Trash2 className="h-4 w-4" />, confirm: t('products.actions.deleteConfirm') },
     ]} />
   );
 }

@@ -94,9 +94,6 @@ export default function SingleImageUpload({
           ) : (
             <Upload className="h-5 w-5 text-muted-foreground" />
           )}
-          <span className="mt-1 text-xs text-muted-foreground">
-            {uploading ? 'Завантаження…' : 'Завантажити'}
-          </span>
         </button>
       )}
       <input

@@ -31,12 +31,12 @@ function computeRowCompleteness(row: ProductRow) {
   });
 }
 
-export const columns: ColumnDef<Product>[] = [
+export const getColumns = (t: (key: string) => string): ColumnDef<Product>[] => [
   {
     id: 'select',
     header: ({ table }) => (
       <Checkbox
-        aria-label="Обрати всі"
+        aria-label={t('products.columns.selectAll')}
         checked={
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && 'indeterminate')
@@ -46,7 +46,7 @@ export const columns: ColumnDef<Product>[] = [
     ),
     cell: ({ row }) => (
       <Checkbox
-        aria-label="Обрати рядок"
+        aria-label={t('products.columns.selectRow')}
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
       />
@@ -56,7 +56,7 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     id: 'image',
-    header: 'Зображення',
+    header: t('products.columns.image'),
     cell: ({ row }) => {
       const product = row.original;
       const src = product.images?.[0];
@@ -76,7 +76,7 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'name',
-    header: 'Назва',
+    header: t('products.columns.name'),
     cell: ({ row }) => {
       const product = row.original;
       return (
@@ -92,7 +92,7 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     id: 'category',
-    header: 'Категорія',
+    header: t('products.columns.category'),
     cell: ({ row }) => {
       const category = (row.original as ProductRow).category;
       return category?.name ? (
@@ -105,7 +105,7 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'price',
-    header: 'Ціна',
+    header: t('products.columns.price'),
     cell: ({ row }) => {
       const { price, salePrice } = row.original;
       // salePrice (discount, "цена со скидкой") is the active price when set;
@@ -125,7 +125,7 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     id: 'availability',
-    header: 'Наявність',
+    header: t('products.columns.availability'),
     cell: ({ row }) => {
       const { trackQuantity, quantity, isAvailable } = row.original;
       // Dual-mode stock: in "кількість" mode show the numeric stock (coloured by
@@ -140,7 +140,7 @@ export const columns: ColumnDef<Product>[] = [
                 : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
             }
           >
-            {quantity} шт
+            {t('products.availability.units', { count: quantity })}
           </Badge>
         );
       }
@@ -153,7 +153,7 @@ export const columns: ColumnDef<Product>[] = [
               : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
           }
         >
-          {isAvailable ? 'В наявності' : 'Немає'}
+          {isAvailable ? t('products.availability.inStock') : t('products.availability.outOfStock')}
         </Badge>
       );
     },
@@ -162,7 +162,7 @@ export const columns: ColumnDef<Product>[] = [
   {
     id: 'completeness',
     accessorFn: (row) => computeRowCompleteness(row as ProductRow).percent,
-    header: 'Заповнення',
+    header: t('products.columns.completeness'),
     cell: ({ row }) => (
       <CompletenessBar
         data={computeRowCompleteness(row.original as ProductRow)}
@@ -173,7 +173,7 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Статус',
+    header: t('products.columns.status'),
     cell: ({ getValue }) => {
       const status = getValue() as 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
       return <ProductStatusBadge status={status} />;
@@ -182,14 +182,14 @@ export const columns: ColumnDef<Product>[] = [
   },
   {
     id: 'actions',
-    header: 'Дії',
+    header: t('products.columns.actions'),
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <Link
           href={`/dashboard/products/${row.original.id}`}
           className="text-sm text-blue-600 hover:text-blue-800"
         >
-          Редагувати
+          {t('products.actions.edit')}
         </Link>
       </div>
     ),

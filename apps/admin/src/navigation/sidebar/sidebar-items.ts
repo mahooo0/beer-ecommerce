@@ -20,7 +20,10 @@ import {
   type LucideIcon,
   Mail,
   MessageSquare,
+  Newspaper,
   Package,
+  PackagePlus,
+  PackageSearch,
   ReceiptText,
   Search,
   ShoppingBag,
@@ -62,34 +65,39 @@ export const sidebarItems: NavGroup[] = [
     label: "Таранка",
     items: [
       {
-        title: "Overview",
+        title: "nav.overview",
         url: "/dashboard",
         icon: LayoutDashboard,
       },
       {
-        title: "Products",
+        title: "nav.catalog",
         url: "/dashboard/products",
         icon: Package,
         subItems: [
-          { title: "All Products", url: "/dashboard/products" },
-          { title: "Add Product", url: "/dashboard/products/new" },
+          { title: "nav.allProducts", url: "/dashboard/products", icon: PackageSearch },
+          { title: "nav.addProduct", url: "/dashboard/products/new", icon: PackagePlus },
+          { title: "nav.categories", url: "/dashboard/categories", icon: FolderTree },
+          { title: "nav.collections", url: "/dashboard/collections", icon: Layers },
+          { title: "nav.brands", url: "/dashboard/brands", icon: Award },
         ],
       },
       {
-        title: "Categories",
-        url: "/dashboard/categories",
-        icon: FolderTree,
+        title: "nav.users",
+        url: "/dashboard/users",
+        icon: Users,
       },
       {
-        title: "Collections",
-        url: "/dashboard/collections",
-        icon: Layers,
+        title: "nav.blog",
+        url: (process.env.NEXT_PUBLIC_CMS_URL ?? "https://cms.dev.taranka.online") + "/admin",
+        icon: Newspaper,
+        newTab: true,
       },
-      {
-        title: "Brands",
-        url: "/dashboard/brands",
-        icon: Award,
-      },
+    ],
+  },
+  {
+    id: 2,
+    label: "Template",
+    items: [
       {
         title: "Orders",
         url: "/dashboard/orders",
@@ -117,11 +125,6 @@ export const sidebarItems: NavGroup[] = [
         icon: Tags,
       },
       {
-        title: "Users",
-        url: "/dashboard/users",
-        icon: Users,
-      },
-      {
         title: "Analytics",
         url: "/dashboard/analytics",
         icon: BarChart3,
@@ -134,7 +137,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 2,
+    id: 3,
     label: "Template · Dashboards",
     items: [
       {
@@ -189,7 +192,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 3,
+    id: 4,
     label: "Template · Pages",
     items: [
       {
@@ -247,7 +250,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 4,
+    id: 5,
     label: "Template · Legacy",
     items: [
       {
@@ -263,7 +266,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 5,
+    id: 6,
     label: "Template · Misc",
     items: [
       {

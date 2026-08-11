@@ -212,6 +212,7 @@ export function ImageUpload({
           aspect={ASPECT_RATIOS[preset]}
           onCrop={handleCrop}
           onCancel={() => setCropImage(null)}
+          allowBackgroundRemoval={preset === 'product'}
         />
       )}
     </div>

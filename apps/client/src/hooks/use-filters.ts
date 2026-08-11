@@ -16,7 +16,9 @@ export function useFilters() {
     },
     {
       history: 'push',
-      shallow: true,
+      // Server components read these from searchParams, so a filter change must
+      // trigger a real navigation (re-fetch) — not a shallow client-only update.
+      shallow: false,
       clearOnDefault: true,
     }
   );

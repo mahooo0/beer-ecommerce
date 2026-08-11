@@ -5,17 +5,34 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 
-const baseCategories = [
-  { label: "Snaks", image: "/categories/snaks.png" },
-  { label: "Kiszonki", image: "/categories/kiszonki.png" },
-  { label: "Wino", image: "/categories/wino.png" },
-  { label: "Słodycze", image: "/categories/slodycze.png" },
+export interface CategorySlide {
+  label: string;
+  image: string;
+  href: string;
+}
+
+const fallbackImages = [
+  "/categories/snaks.png",
+  "/categories/kiszonki.png",
+  "/categories/wino.png",
+  "/categories/slodycze.png",
 ];
 
-// Duplicate so loop mode has enough slides (Swiper needs slidesPerView * 2 minimum)
-const categories = [...baseCategories, ...baseCategories, ...baseCategories];
+const DEFAULT_CAT_IMG = "/categories/snaks.png";
 
-export function TarankaCategorySlider() {
+const baseCategories: CategorySlide[] = [
+  { label: "Snaks", image: "/categories/snaks.png", href: "/products" },
+  { label: "Kiszonki", image: "/categories/kiszonki.png", href: "/products" },
+  { label: "Wino", image: "/categories/wino.png", href: "/products" },
+  { label: "Słodycze", image: "/categories/slodycze.png", href: "/products" },
+];
+
+export function TarankaCategorySlider({ categories: input }: { categories?: CategorySlide[] } = {}) {
+  const source = input && input.length > 0 ? input : baseCategories;
+  // Duplicate so loop mode has enough slides (Swiper needs slidesPerView * 2 minimum)
+  const categories =
+    source.length >= 6 ? source : [...source, ...source, ...source].slice(0, Math.max(6, source.length));
+
   return (
     <section className="overflow-hidden bg-background py-12">
       <Swiper
@@ -36,13 +53,13 @@ export function TarankaCategorySlider() {
         {categories.map((c, i) => (
           <SwiperSlide key={i} className="!w-[282px]">
             <Link
-              href="/products"
+              href={c.href}
               className="group relative block h-[306px] w-[282px]"
             >
               <div className="absolute inset-x-0 bottom-0 h-[219px] rounded-[20px] bg-[#D6D3C8] transition-all duration-500 group-hover:bg-ink-900 group-hover:shadow-[0_20px_40px_-12px_rgba(39,36,34,0.35)]" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={c.image}
+                src={c.image || fallbackImages[i % fallbackImages.length] || DEFAULT_CAT_IMG}
                 alt={c.label}
                 className="pointer-events-none absolute left-1/2 top-0 h-[242px] w-auto max-w-[260px] -translate-x-1/2 object-contain transition-transform duration-500 group-hover:-translate-y-2 group-hover:scale-105"
               />

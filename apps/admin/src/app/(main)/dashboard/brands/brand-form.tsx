@@ -1,12 +1,13 @@
 'use client';
 
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '@/lib/api';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Brand } from '@repo/types';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { Input } from '@/components/ui/input';
@@ -14,15 +15,16 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-const brandSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-  logo: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  website: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  slug: z.string().min(1, 'Slug is required'),
-});
+const buildBrandSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(1, t('brands.errors.nameRequired')),
+    description: z.string().optional(),
+    logo: z.string().url(t('brands.errors.urlInvalid')).optional().or(z.literal('')),
+    website: z.string().url(t('brands.errors.urlInvalid')).optional().or(z.literal('')),
+    slug: z.string().min(1, t('brands.errors.slugRequired')),
+  });
 
-type BrandFormData = z.infer<typeof brandSchema>;
+type BrandFormData = z.infer<ReturnType<typeof buildBrandSchema>>;
 
 interface BrandFormProps {
   brand?: Brand;
@@ -30,10 +32,13 @@ interface BrandFormProps {
 }
 
 export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const brandSchema = useMemo(() => buildBrandSchema(t), [t]);
 
   const {
     register,
@@ -75,7 +80,7 @@ export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
 
       const token = await getToken();
       if (!token) {
-        throw new Error('Not authenticated');
+        throw new Error(t('brands.errors.notAuth'));
       }
 
       if (brand) {
@@ -87,7 +92,7 @@ export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
       router.refresh();
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save brand');
+      setError(err instanceof Error ? err.message : t('brands.errors.saveFailed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -103,7 +108,7 @@ export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
 
       <div>
         <Label htmlFor="name" className="mb-1">
-          Name <span className="text-red-500">*</span>
+          {t('brands.form.name')} <span className="text-red-500">*</span>
         </Label>
         <Input
           type="text"
@@ -111,7 +116,7 @@ export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
           {...register('name', {
             onChange: handleNameChange,
           })}
-          placeholder="Nike"
+          placeholder={t('brands.form.namePlaceholder')}
         />
         {errors.name && (
           <p className="mt-1 text-sm text-red-600">{String(errors.name.message)}</p>
@@ -120,13 +125,13 @@ export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
 
       <div>
         <Label htmlFor="slug" className="mb-1">
-          Slug <span className="text-red-500">*</span>
+          {t('brands.form.slug')} <span className="text-red-500">*</span>
         </Label>
         <Input
           type="text"
           id="slug"
           {...register('slug')}
-          placeholder="nike"
+          placeholder={t('brands.form.slugPlaceholder')}
         />
         {errors.slug && (
           <p className="mt-1 text-sm text-red-600">{String(errors.slug.message)}</p>
@@ -135,19 +140,19 @@ export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
 
       <div>
         <Label htmlFor="description" className="mb-1">
-          Description
+          {t('brands.form.description')}
         </Label>
         <Textarea
           id="description"
           {...register('description')}
           rows={3}
-          placeholder="A leading sports brand"
+          placeholder={t('brands.form.descriptionPlaceholder')}
         />
       </div>
 
       <div>
         <Label className="mb-1">
-          Logo
+          {t('brands.form.logo')}
         </Label>
         <ImageUpload
           value={watch('logo') || ''}
@@ -161,13 +166,13 @@ export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
 
       <div>
         <Label htmlFor="website" className="mb-1">
-          Website
+          {t('brands.form.website')}
         </Label>
         <Input
           type="text"
           id="website"
           {...register('website')}
-          placeholder="https://example.com"
+          placeholder={t('brands.form.websitePlaceholder')}
         />
         {errors.website && (
           <p className="mt-1 text-sm text-red-600">{String(errors.website.message)}</p>
@@ -179,10 +184,10 @@ export default function BrandForm({ brand, onSuccess }: BrandFormProps) {
           type="submit"
           disabled={isSubmitting}
         >
-          {isSubmitting ? 'Saving...' : brand ? 'Update Brand' : 'Create Brand'}
+          {isSubmitting ? t('brands.form.saving') : brand ? t('brands.form.update') : t('brands.form.create')}
         </Button>
         <Button variant="outline" asChild>
-          <a href="/dashboard/brands">Cancel</a>
+          <a href="/dashboard/brands">{t('brands.form.cancel')}</a>
         </Button>
       </div>
     </form>

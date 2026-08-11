@@ -3,12 +3,12 @@ import {
   MapPin,
   ChevronDown,
   LayoutGrid,
-  Search,
   Heart,
 } from "lucide-react";
 import { MiniCart } from "./mini-cart";
 import { CartTrigger } from "./cart-trigger";
 import { UserMenu } from "./user-menu";
+import { HeaderSearch } from "./header-search";
 
 const navLinks = [
   { label: "Sugestie", href: "#" },
@@ -79,14 +79,7 @@ export function TarankaHeader() {
         <div className="ml-auto flex h-full items-center">
           <div className="h-full w-px bg-cream-300" />
 
-          <div className="flex h-full items-center bg-cream-200 px-5 w-[252px]">
-            <input
-              type="search"
-              placeholder=""
-              className="h-full flex-1 bg-transparent text-sm text-ink-900 placeholder:text-cream-400 outline-none"
-            />
-            <Search className="size-5 text-ink-900" strokeWidth={1.75} />
-          </div>
+          <HeaderSearch />
 
           <UserMenu />
           <div className="h-full w-px bg-cream-300" />

@@ -5,6 +5,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { Search } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ export function SearchDialog() {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const router = useRouter();
+  const { t } = useTranslation();
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -110,16 +112,16 @@ export function SearchDialog() {
     groupBy(items).map(({ group, items: groupItems }, index) => (
       <React.Fragment key={group}>
         {index > 0 && <CommandSeparator />}
-        <CommandGroup heading={group}>
+        <CommandGroup heading={t(group)}>
           {groupItems.map((item) => (
             <CommandItem
               disabled={item.disabled}
               key={`${group}-${item.url}-${item.label}`}
-              value={`${item.group} ${item.label}`}
+              value={`${t(item.group)} ${t(item.label)}`}
               onSelect={() => handleSelect(item)}
             >
               {item.icon && <item.icon />}
-              <span>{item.label}</span>
+              <span>{t(item.label)}</span>
 
               {item.disabled && (
                 <Badge variant="outline" className="text-xs">
@@ -140,16 +142,16 @@ export function SearchDialog() {
         className="px-0! font-normal text-muted-foreground hover:no-underline"
       >
         <Search data-icon="inline-start" />
-        Search
+        {t("common.search")}
         <kbd className="inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-medium text-[10px]">
           <span className="text-xs">⌘</span>J
         </kbd>
       </Button>
       <CommandDialog open={open} onOpenChange={handleOpenChange}>
         <Command>
-          <CommandInput placeholder="Search dashboards, users, and more…" value={query} onValueChange={setQuery} />
+          <CommandInput placeholder={t("search.placeholder")} value={query} onValueChange={setQuery} />
           <CommandList>
-            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandEmpty>{t("common.noResults")}</CommandEmpty>
             {query ? renderGroups(searchItems) : renderGroups(recommendations)}
           </CommandList>
         </Command>

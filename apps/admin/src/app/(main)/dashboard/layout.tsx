@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { cookies } from "next/headers";
 
 import { AppSidebar } from "@/app/(main)/dashboard/_components/sidebar/app-sidebar";
-import { AdminChatWidget } from "@/components/ai-assistant/AdminChatWidget";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { users } from "@/data/users";
@@ -13,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { getPreference } from "@/server/server-actions";
 
 import { AccountSwitcher } from "./_components/sidebar/account-switcher";
+import { LanguageSwitcher } from "./_components/sidebar/language-switcher";
 import { LayoutControls } from "./_components/sidebar/layout-controls";
 import { NotificationsSheet } from "./_components/sidebar/notifications-sheet";
 import { SearchDialog } from "./_components/sidebar/search-dialog";
@@ -64,6 +64,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
               <SearchDialog />
             </div>
             <div className="flex items-center gap-2">
+              <LanguageSwitcher />
               <NotificationsSheet />
               <LayoutControls />
               <ThemeSwitcher />
@@ -73,7 +74,6 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
         </header>
         <div className="h-full p-4 md:p-6">{children}</div>
       </SidebarInset>
-      <AdminChatWidget />
     </SidebarProvider>
   );
 }

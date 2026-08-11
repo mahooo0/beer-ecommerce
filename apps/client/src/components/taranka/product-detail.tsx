@@ -1,38 +1,72 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, Minus, Plus, CheckCircle2, Truck, CreditCard, Check } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { resolveWholesaleUnitPrice, sortedWholesaleTiers, type WholesaleTier } from "@repo/types";
 import { useCart } from "@/lib/cart-store";
 
-const thumbs = [
-  "/product/image0.png",
-  "/product/image0.png",
-  "/product/image0.png",
-  "/product/image0.png",
-  "/product/image0.png",
-];
+export interface ProductDetailData {
+  id: string;
+  slug: string;
+  name: string;
+  weight: string;
+  images: string[];
+  /** Current price in major units (e.g. 6.45). */
+  price: number;
+  /** Optional crossed-out price in major units. */
+  oldPrice?: number;
+  /** Retail unit price in cents — basis for wholesale tier math. */
+  basePriceCents: number;
+  /** Wholesale quantity tiers (cents); applied only for WHOLESALE customers. */
+  wholesaleTiers?: WholesaleTier[];
+  /** Total available stock, or null when unknown. */
+  stock: number | null;
+  specs: { label: string; value: string }[];
+}
 
-const specs = [
-  { label: "Charakterystyka:", value: "Charakterystyka" },
-  { label: "Charakterystyka:", value: "Charakterystyka" },
-  { label: "Charakterystyka:", value: "Charakterystyka" },
-];
+const IMAGE_FALLBACK = "/categories/product-chrupki.png";
+const fmt = (v: number) => `${v.toFixed(2)} zł`;
 
-export function TarankaProductDetail() {
+export function TarankaProductDetail({ product }: { product: ProductDetailData }) {
+  const images = product.images.length > 0 ? product.images : [IMAGE_FALLBACK];
   const [activeThumb, setActiveThumb] = useState(0);
-  const [qty, setQty] = useState(10);
+  const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const addItem = useCart((s) => s.addItem);
+  const setWholesale = useCart((s) => s.setWholesale);
+
+  // Wholesale customers (Clerk publicMetadata.customerType === 'WHOLESALE') see
+  // quantity tiers; retail always pays the regular price.
+  const { user } = useUser();
+  const isWholesale = user?.publicMetadata?.customerType === "WHOLESALE";
+  const tiers = product.wholesaleTiers ?? [];
+  const showWholesale = isWholesale && tiers.length > 0;
+  const sortedTiers = sortedWholesaleTiers(tiers);
+  const effUnit =
+    resolveWholesaleUnitPrice({
+      basePrice: product.basePriceCents,
+      tiers,
+      quantity: qty,
+      isWholesale,
+    }) / 100;
+
+  // Keep the cart's wholesale flag in sync so mini-cart re-prices by quantity.
+  useEffect(() => {
+    setWholesale(isWholesale);
+  }, [isWholesale, setWholesale]);
 
   const handleAddToCart = () => {
     addItem(
       {
-        id: "chrupki-kukurydziane-mleko",
-        name: "Chrupki kukurydziane słodkie o smaku mleka",
-        weight: "140 g",
-        image: "/product/image0.png",
-        oldPrice: 1.95,
-        newPrice: 1.25,
+        id: product.id,
+        name: product.name,
+        weight: product.weight,
+        image: images[0] ?? IMAGE_FALLBACK,
+        oldPrice: product.oldPrice ?? product.price,
+        newPrice: showWholesale ? effUnit : product.price,
+        basePriceCents: product.basePriceCents,
+        tiers,
       },
       qty
     );
@@ -47,61 +81,106 @@ export function TarankaProductDetail() {
           <div className="flex h-[487px] items-center justify-center rounded-[20px] bg-white">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={thumbs[activeThumb]}
-              alt="Chrupki kukurydziane słodkie o smaku mleka"
+              src={images[activeThumb] ?? images[0]}
+              alt={product.name}
               className="h-[358px] w-auto object-contain"
             />
           </div>
 
-          <div className="mt-6 flex gap-[23px]">
-            {thumbs.map((src, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setActiveThumb(i)}
-                className={`relative flex h-[77px] w-[79px] items-center justify-center rounded-[3.6px] bg-white transition-all ${
-                  i === activeThumb
-                    ? "ring-2 ring-brand-red-500 ring-offset-2"
-                    : "opacity-70 hover:opacity-100"
-                }`}
-                aria-label={`Wybierz zdjęcie ${i + 1}`}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-[65px] w-auto object-contain" />
-              </button>
-            ))}
-          </div>
+          {images.length > 1 && (
+            <div className="mt-6 flex gap-[23px]">
+              {images.slice(0, 5).map((src, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setActiveThumb(i)}
+                  className={`relative flex h-[77px] w-[79px] items-center justify-center rounded-[3.6px] bg-white transition-all ${
+                    i === activeThumb
+                      ? "ring-2 ring-brand-red-500 ring-offset-2"
+                      : "opacity-70 hover:opacity-100"
+                  }`}
+                  aria-label={`Wybierz zdjęcie ${i + 1}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="h-[65px] w-auto object-contain" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex-1">
           <h1 className="text-[32px] font-semibold leading-[42px] text-[#443029]">
-            Chrupki kukurydziane słodkie o smaku mleka
+            {product.name}
           </h1>
 
-          <p className="mt-3 text-2xl font-semibold text-[#443029]">140 g</p>
+          {product.weight && (
+            <p className="mt-3 text-2xl font-semibold text-[#443029]">{product.weight}</p>
+          )}
 
-          <p className="mt-6 inline-flex items-center gap-2 text-base text-[#188E55]">
-            <CheckCircle2 className="size-4" strokeWidth={2} />
-            w magazynie 123 sztuki
-          </p>
+          {product.stock != null && (
+            <p
+              className={`mt-6 inline-flex items-center gap-2 text-base ${
+                product.stock > 0 ? "text-[#188E55]" : "text-brand-red-500"
+              }`}
+            >
+              <CheckCircle2 className="size-4" strokeWidth={2} />
+              {product.stock > 0 ? `w magazynie ${product.stock} sztuki` : "brak w magazynie"}
+            </p>
+          )}
 
-          <dl className="mt-8 space-y-2">
-            {specs.map((s, i) => (
-              <div key={i} className="flex gap-6 text-base text-[#2B2A29]">
-                <dt className="w-[155px] font-semibold">{s.label}</dt>
-                <dd>{s.value}</dd>
-              </div>
-            ))}
-          </dl>
+          {product.specs.length > 0 && (
+            <dl className="mt-8 space-y-2">
+              {product.specs.map((s, i) => (
+                <div key={i} className="flex gap-6 text-base text-[#2B2A29]">
+                  <dt className="w-[155px] font-semibold">{s.label}</dt>
+                  <dd>{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
 
           <div className="mt-6 space-y-2">
-            <p className="text-xl font-bold text-[#9E9B90] line-through">
-              1.95 EUR <span className="font-normal text-base">cena detaliczna</span>
-            </p>
+            {product.oldPrice != null && product.oldPrice > product.price && (
+              <p className="text-xl font-bold text-[#9E9B90] line-through">
+                {fmt(product.oldPrice)} <span className="font-normal text-base">cena detaliczna</span>
+              </p>
+            )}
             <p className="text-2xl font-bold text-[#443029]">
-              1.25 EUR <span className="font-normal text-base">cena hurtowa</span>
+              {fmt(showWholesale ? effUnit : product.price)}{" "}
+              <span className="font-normal text-base">cena hurtowa</span>
             </p>
+            {showWholesale && qty > 1 && (
+              <p className="text-base text-[#443029]">
+                razem: <span className="font-semibold">{fmt(effUnit * qty)}</span> za {qty} szt.
+              </p>
+            )}
           </div>
+
+          {showWholesale && sortedTiers.length > 0 && (
+            <div className="mt-5 rounded-[14px] border border-[#E7E2D6] bg-[#FBF9F3] p-4">
+              <p className="text-sm font-semibold text-[#443029]">Ceny hurtowe (ilościowe)</p>
+              <ul className="mt-2 space-y-1">
+                {sortedTiers.map((tier) => {
+                  const active = qty >= tier.minQty;
+                  return (
+                    <li
+                      key={tier.minQty}
+                      className={`flex items-baseline justify-between text-sm ${
+                        active ? "font-semibold text-[#443029]" : "text-[#8A857A]"
+                      }`}
+                    >
+                      <span>od {tier.minQty} szt.</span>
+                      <span>
+                        {fmt(tier.price / 100)}{" "}
+                        <span className="text-xs font-normal">({fmt(tier.unitPrice / 100)}/szt.)</span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-9 flex items-center gap-3">
             <div className="inline-flex h-[30px] w-24 items-center justify-between rounded-full border border-[#9E9B90] px-2">

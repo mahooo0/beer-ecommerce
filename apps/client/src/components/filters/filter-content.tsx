@@ -14,6 +14,7 @@ interface FacetCount {
 }
 
 interface BrandFacet {
+  id: string;
   name: string;
   count: number;
 }
@@ -48,11 +49,11 @@ function BrandFilter({ brands }: { brands: BrandFacet[] }) {
 
   if (brands.length === 0) return null;
 
-  const toggle = (brandName: string) => {
+  const toggle = (brandId: string) => {
     const current = filters.brands;
-    const updated = current.includes(brandName)
-      ? current.filter((b) => b !== brandName)
-      : [...current, brandName];
+    const updated = current.includes(brandId)
+      ? current.filter((b) => b !== brandId)
+      : [...current, brandId];
     setFilters({ brands: updated, page: 1 });
   };
 
@@ -60,17 +61,17 @@ function BrandFilter({ brands }: { brands: BrandFacet[] }) {
     <div className="space-y-2" data-testid="brand-filter">
       <h3 className="text-sm font-semibold text-primary">Brand</h3>
       <div className="space-y-1.5">
-        {brands.map(({ name, count }) => {
-          const checked = filters.brands.includes(name);
+        {brands.map(({ id, name, count }) => {
+          const checked = filters.brands.includes(id);
           return (
             <div
-              key={name}
+              key={id}
               className="flex items-center justify-between"
-              data-testid={`brand-option-${name}`}
+              data-testid={`brand-option-${id}`}
             >
               <Checkbox
                 isSelected={checked}
-                onChange={() => toggle(name)}
+                onChange={() => toggle(id)}
                 aria-label={`Brand: ${name}`}
                 label={<span className="text-secondary">{name}</span>}
               />

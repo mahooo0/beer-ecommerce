@@ -1,15 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createUser } from './actions';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 
 export function CreateUserForm({
-  onClose,
+  open,
+  onOpenChange,
   onCreated,
 }: {
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onCreated?: () => void;
 }) {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -19,95 +34,68 @@ export function CreateUserForm({
     try {
       await createUser(formData);
       onCreated?.();
-      onClose();
+      onOpenChange(false);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to create user');
+      setError(e instanceof Error ? e.message : t('users.toasts.createFailed'));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="mb-4 text-lg font-semibold">Create New User</h2>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('users.form.title')}</DialogTitle>
+        </DialogHeader>
 
         {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{error}</div>
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {error}
+          </div>
         )}
 
         <form action={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">First Name</label>
-              <input
-                name="firstName"
-                required
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+            <div className="space-y-1.5">
+              <Label htmlFor="firstName">{t('users.form.firstName')}</Label>
+              <Input id="firstName" name="firstName" required />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Last Name</label>
-              <input
-                name="lastName"
-                required
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+            <div className="space-y-1.5">
+              <Label htmlFor="lastName">{t('users.form.lastName')}</Label>
+              <Input id="lastName" name="lastName" required />
             </div>
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Email</label>
-            <input
-              name="email"
-              type="email"
-              required
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
+          <div className="space-y-1.5">
+            <Label htmlFor="email">{t('users.form.email')}</Label>
+            <Input id="email" name="email" type="email" required />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Password</label>
-            <input
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
+          <div className="space-y-1.5">
+            <Label htmlFor="password">{t('users.form.password')}</Label>
+            <Input id="password" name="password" type="password" required minLength={8} />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Role</label>
-            <select
-              name="role"
-              defaultValue="CUSTOMER"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="CUSTOMER">Customer</option>
-              <option value="ADMIN">Admin</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
-            </select>
+          <div className="space-y-1.5">
+            <Label htmlFor="role">{t('users.form.role')}</Label>
+            <NativeSelect id="role" name="role" defaultValue="CUSTOMER" className="w-full">
+              <NativeSelectOption value="CUSTOMER">{t('users.roles.CUSTOMER')}</NativeSelectOption>
+              <NativeSelectOption value="ADMIN">{t('users.roles.ADMIN')}</NativeSelectOption>
+              <NativeSelectOption value="SUPER_ADMIN">{t('users.roles.SUPER_ADMIN')}</NativeSelectOption>
+            </NativeSelect>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              {loading ? 'Creating...' : 'Create User'}
-            </button>
-          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              {t('users.form.cancel')}
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? t('users.form.creating') : t('users.form.submit')}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

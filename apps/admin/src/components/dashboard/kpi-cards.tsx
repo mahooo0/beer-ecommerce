@@ -1,6 +1,7 @@
 'use client';
 
 import { DollarSign, ShoppingCart, TrendingUp, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { formatCurrency } from '@/lib/analytics-utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -15,28 +16,28 @@ interface KpiCardsProps {
 const cards = [
   {
     key: 'revenue' as const,
-    label: 'Total Revenue',
+    labelKey: 'overview.kpi.totalRevenue',
     icon: DollarSign,
     color: 'bg-green-50 text-green-600',
     format: (v: number) => formatCurrency(v),
   },
   {
     key: 'totalOrders' as const,
-    label: 'Total Orders',
+    labelKey: 'overview.kpi.totalOrders',
     icon: ShoppingCart,
     color: 'bg-blue-50 text-blue-600',
     format: (v: number) => v.toLocaleString(),
   },
   {
     key: 'avgOrderValue' as const,
-    label: 'Avg Order Value',
+    labelKey: 'overview.kpi.avgOrderValue',
     icon: TrendingUp,
     color: 'bg-purple-50 text-purple-600',
     format: (v: number) => formatCurrency(v),
   },
   {
     key: 'customerCount' as const,
-    label: 'Total Customers',
+    labelKey: 'overview.kpi.totalCustomers',
     icon: Users,
     color: 'bg-indigo-50 text-indigo-600',
     format: (v: number) => v.toLocaleString(),
@@ -44,6 +45,7 @@ const cards = [
 ];
 
 export function KpiCards({ revenue, totalOrders, avgOrderValue, customerCount, loading }: KpiCardsProps) {
+  const { t } = useTranslation();
   const values = { revenue, totalOrders, avgOrderValue, customerCount };
 
   return (
@@ -55,7 +57,7 @@ export function KpiCards({ revenue, totalOrders, avgOrderValue, customerCount, l
               <card.icon className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm text-muted-foreground">{card.label}</p>
+              <p className="text-sm text-muted-foreground">{t(card.labelKey)}</p>
               {loading ? (
                 <Skeleton className="h-7 w-24 mt-1" />
               ) : (

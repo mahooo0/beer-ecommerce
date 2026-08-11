@@ -3,6 +3,7 @@ import { ClerkProvider } from '@clerk/nextjs';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { TarankaHeader } from '@/components/taranka/header';
 import { AutoBreadcrumbs } from '@/components/taranka/auto-breadcrumbs';
+import { CartWholesaleSync } from '@/components/taranka/cart-wholesale-sync';
 import { mursGothic, montserrat, poppins } from './fonts';
 import './globals.css';
 
@@ -21,6 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <html lang="pl" className={`${mursGothic.variable} ${montserrat.variable} ${poppins.variable}`}>
         <body className="min-h-screen bg-background font-taranka-body text-foreground antialiased">
           <NuqsAdapter>
+            <CartWholesaleSync />
             <TarankaHeader />
             <AutoBreadcrumbs />
             <main>{children}</main>

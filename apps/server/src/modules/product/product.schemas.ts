@@ -5,6 +5,8 @@ import { productSchema, updateProductSchema } from '@repo/types/product-schemas'
 export const filterQuerySchema = z.object({
   minPrice: z.coerce.number().optional(),
   maxPrice: z.coerce.number().optional(),
+  // Free-text product-name search, so the main catalog can combine search + filters.
+  search: z.string().optional(),
   brands: z.string().optional(), // comma-separated brand IDs
   attributes: z.string().optional(), // comma-separated "key:value" pairs (legacy JSONB)
   // Normalized attribute-value filter: comma-separated AttributeValue ids.

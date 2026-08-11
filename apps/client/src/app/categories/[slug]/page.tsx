@@ -169,7 +169,7 @@ export default async function CategoryPage({ params, searchParams }: CategoryPag
       });
 
       facetCounts = {
-        brands: (raw.brands || []).map((b: any) => ({ name: b.name || b.id, count: b.count })),
+        brands: (raw.brands || []).map((b: any) => ({ id: b.id, name: b.name || b.id, count: b.count })),
         attributes: raw.attributes || {},
         availability: availabilityObj,
         priceRange: raw.priceRange || { min: 0, max: 999999 },

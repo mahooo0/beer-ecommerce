@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import {
   useReactTable,
   getCoreRowModel,
@@ -14,7 +15,7 @@ import {
   type RowSelectionState,
 } from '@tanstack/react-table';
 import type { Product } from '@repo/types';
-import { columns } from './columns';
+import { getColumns } from './columns';
 import { api } from '@/lib/api';
 import Link from 'next/link';
 import { showError } from '@/lib/toast';
@@ -35,10 +36,13 @@ export function ProductsTable({
   total,
 }: ProductsTableProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [searchValue, setSearchValue] = useState('');
+
+  const columns = useMemo(() => getColumns(t), [t]);
 
   const table = useReactTable({
     data,
@@ -77,11 +81,11 @@ export function ProductsTable({
     const ids = selectedRows.map((row) => row.original.id);
 
     if (ids.length === 0) {
-      showError('Please select products to update');
+      showError(t('products.toasts.selectToUpdate'));
       return;
     }
 
-    if (!confirm(`Update ${ids.length} products to ${status}?`)) {
+    if (!confirm(t('products.bulk.confirmUpdate', { count: ids.length, status }))) {
       return;
     }
 
@@ -90,7 +94,7 @@ export function ProductsTable({
       router.refresh();
       setRowSelection({});
     } catch (error) {
-      showError('Failed to update products: ' + (error as Error).message);
+      showError(t('products.toasts.updateFailed', { message: (error as Error).message }));
     }
   };
 
@@ -99,11 +103,11 @@ export function ProductsTable({
     const ids = selectedRows.map((row) => row.original.id);
 
     if (ids.length === 0) {
-      showError('Please select products to delete');
+      showError(t('products.toasts.selectToDelete'));
       return;
     }
 
-    if (!confirm(`Delete ${ids.length} products? This action cannot be undone.`)) {
+    if (!confirm(t('products.bulk.confirmDelete', { count: ids.length }))) {
       return;
     }
 
@@ -112,7 +116,7 @@ export function ProductsTable({
       router.refresh();
       setRowSelection({});
     } catch (error) {
-      showError('Failed to delete products: ' + (error as Error).message);
+      showError(t('products.toasts.deleteFailedDetail', { message: (error as Error).message }));
     }
   };
 
@@ -125,7 +129,7 @@ export function ProductsTable({
         {/* Search */}
         <input
           type="text"
-          placeholder="Search products..."
+          placeholder={t('products.table.searchPlaceholder')}
           value={searchValue}
           onChange={(e) => handleSearch(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -136,10 +140,10 @@ export function ProductsTable({
           onChange={(e) => handleStatusFilter(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="ALL">All Statuses</option>
-          <option value="DRAFT">Draft</option>
-          <option value="ACTIVE">Active</option>
-          <option value="ARCHIVED">Archived</option>
+          <option value="ALL">{t('products.filters.allStatuses')}</option>
+          <option value="DRAFT">{t('products.status.DRAFT')}</option>
+          <option value="ACTIVE">{t('products.status.ACTIVE')}</option>
+          <option value="ARCHIVED">{t('products.status.ARCHIVED')}</option>
         </select>
 
         {/* Product Type Filter */}
@@ -147,12 +151,12 @@ export function ProductsTable({
           onChange={(e) => handleTypeFilter(e.target.value)}
           className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          <option value="ALL">All Types</option>
-          <option value="SIMPLE">Simple</option>
-          <option value="VARIABLE">Variable</option>
-          <option value="WEIGHTED">Weighted</option>
-          <option value="DIGITAL">Digital</option>
-          <option value="BUNDLED">Bundled</option>
+          <option value="ALL">{t('products.filters.allTypes')}</option>
+          <option value="SIMPLE">{t('products.type.SIMPLE')}</option>
+          <option value="VARIABLE">{t('products.type.VARIABLE')}</option>
+          <option value="WEIGHTED">{t('products.type.WEIGHTED')}</option>
+          <option value="DIGITAL">{t('products.type.DIGITAL')}</option>
+          <option value="BUNDLED">{t('products.type.BUNDLED')}</option>
         </select>
 
         {/* Create Product Button */}
@@ -160,7 +164,7 @@ export function ProductsTable({
           href="/products/new"
           className="ml-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          Create Product
+          {t('products.table.createProduct')}
         </Link>
       </div>
 
@@ -209,7 +213,7 @@ export function ProductsTable({
                     colSpan={columns.length}
                     className="px-6 py-12 text-center text-gray-500"
                   >
-                    No products found
+                    {t('products.table.empty')}
                   </td>
                 </tr>
               ) : (
@@ -235,7 +239,7 @@ export function ProductsTable({
           {selectedCount > 0 && (
             <>
               <span className="text-sm text-gray-600">
-                {selectedCount} selected
+                {t('products.bulk.selectedCount', { count: selectedCount })}
               </span>
               <select
                 onChange={(e) => {
@@ -249,11 +253,11 @@ export function ProductsTable({
                 }}
                 className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               >
-                <option value="">Bulk Actions</option>
-                <option value="ACTIVE">Set to Active</option>
-                <option value="DRAFT">Set to Draft</option>
-                <option value="ARCHIVED">Set to Archived</option>
-                <option value="DELETE">Delete Selected</option>
+                <option value="">{t('products.bulk.actions')}</option>
+                <option value="ACTIVE">{t('products.bulk.setActive')}</option>
+                <option value="DRAFT">{t('products.bulk.setDraft')}</option>
+                <option value="ARCHIVED">{t('products.bulk.setArchived')}</option>
+                <option value="DELETE">{t('products.bulk.deleteSelected')}</option>
               </select>
             </>
           )}
@@ -266,26 +270,26 @@ export function ProductsTable({
             disabled={pageIndex === 1}
             className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
-            Previous
+            {t('products.pagination.previous')}
           </button>
           <span className="text-sm text-gray-600">
-            Page {pageIndex} of {pageCount}
+            {t('products.pagination.pageOf', { page: pageIndex, total: pageCount })}
           </span>
           <button
             onClick={() => router.push(`/products?page=${pageIndex + 2}`)}
             disabled={pageIndex >= pageCount}
             className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
           >
-            Next
+            {t('products.pagination.next')}
           </button>
           <select
             value={pageSize}
             onChange={(e) => router.push(`/products?page=1&limit=${e.target.value}`)}
             className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
           >
-            <option value="10">10 per page</option>
-            <option value="25">25 per page</option>
-            <option value="50">50 per page</option>
+            <option value="10">{t('products.pagination.perPage', { count: 10 })}</option>
+            <option value="25">{t('products.pagination.perPage', { count: 25 })}</option>
+            <option value="50">{t('products.pagination.perPage', { count: 50 })}</option>
           </select>
         </div>
       </div>

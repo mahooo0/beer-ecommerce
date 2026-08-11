@@ -25,8 +25,10 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@clerk/nextjs';
-import { useForm, Controller, type Resolver } from 'react-hook-form';
+import { useForm, useFieldArray, Controller, type Resolver } from 'react-hook-form';
+import { Trash2, Plus } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { productSchema, type ProductFormData } from '@repo/types';
 import type { ProductAttributeValueInput } from '@/lib/api';
@@ -90,6 +92,7 @@ const EMPTY_DEFAULTS: ProductFormData = {
   isActive: true,
   attributes: {},
   attributeValues: [],
+  wholesaleTiers: [],
 };
 
 export function ProductForm({
@@ -99,6 +102,7 @@ export function ProductForm({
   productId,
 }: ProductFormProps) {
   const router = useRouter();
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +131,10 @@ export function ProductForm({
   const trackQuantity = watch('trackQuantity');
   const attributeValues = (watch('attributeValues') ?? []) as ProductAttributeValueInput[];
 
+  // Wholesale quantity pricing tiers ("оптова ціна за кількість").
+  const tierArray = useFieldArray({ control, name: 'wholesaleTiers' });
+  const watchedTiers = watch('wholesaleTiers') ?? [];
+
   const onSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
     setError(null);
@@ -146,15 +154,15 @@ export function ProductForm({
 
       if (isEdit && productId) {
         await api.products.update(productId, payload as any, token || undefined);
-        showSuccess('Товар оновлено');
+        showSuccess(t('productForm.toasts.updated'));
       } else {
         await api.products.create(payload as any, token || undefined);
-        showSuccess('Товар створено');
+        showSuccess(t('productForm.toasts.created'));
       }
       router.push('/dashboard/products');
       router.refresh();
     } catch (err) {
-      const msg = (err as Error).message || 'Не вдалося зберегти товар';
+      const msg = (err as Error).message || t('productForm.toasts.saveFailed');
       setError(msg);
       showError(msg);
     } finally {
@@ -183,6 +191,10 @@ export function ProductForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <h1 className="mb-6 text-2xl font-bold">
+        {isEdit ? t('productForm.pageTitle.edit') : t('productForm.pageTitle.create')}
+      </h1>
+
       {error && (
         <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-4">
           <p className="text-sm text-destructive">{error}</p>
@@ -195,15 +207,15 @@ export function ProductForm({
           {/* Basic info */}
           <Card>
             <CardHeader>
-              <CardTitle>Основна інформація</CardTitle>
+              <CardTitle>{t('productForm.sections.basicInfo')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="mb-1 block">Назва *</Label>
+                <Label className="mb-1 block">{t('productForm.fields.name')} *</Label>
                 <Input
                   {...register('name')}
                   onChange={handleNameChange}
-                  placeholder="Введіть назву товару"
+                  placeholder={t('productForm.placeholders.name')}
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-destructive">
@@ -213,7 +225,7 @@ export function ProductForm({
               </div>
 
               <div>
-                <Label className="mb-1 block">Опис *</Label>
+                <Label className="mb-1 block">{t('productForm.fields.description')} *</Label>
                 <Controller
                   control={control}
                   name="description"
@@ -221,7 +233,7 @@ export function ProductForm({
                     <RichTextEditor
                       value={field.value || ''}
                       onChange={(html) => field.onChange(html)}
-                      placeholder="Опишіть товар"
+                      placeholder={t('productForm.placeholders.description')}
                     />
                   )}
                 />
@@ -233,7 +245,7 @@ export function ProductForm({
               </div>
 
               <div>
-                <Label className="mb-1 block">Склад</Label>
+                <Label className="mb-1 block">{t('productForm.fields.composition')}</Label>
                 <Controller
                   control={control}
                   name="composition"
@@ -241,7 +253,7 @@ export function ProductForm({
                     <RichTextEditor
                       value={field.value || ''}
                       onChange={(html) => field.onChange(html)}
-                      placeholder="Склад / інгредієнти"
+                      placeholder={t('productForm.placeholders.composition')}
                     />
                   )}
                 />
@@ -253,7 +265,7 @@ export function ProductForm({
               </div>
 
               <div>
-                <Label className="mb-1 block">Slug (URL)</Label>
+                <Label className="mb-1 block">{t('productForm.fields.slug')}</Label>
                 <Controller
                   control={control}
                   name="slug"
@@ -264,13 +276,12 @@ export function ProductForm({
                         slugTouched.current = true;
                         field.onChange(slugifyLive(e.target.value));
                       }}
-                      placeholder="url-tovaru"
+                      placeholder={t('productForm.placeholders.slug')}
                     />
                   )}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Формується з назви. Сервер перевіряє унікальність під час
-                  збереження.
+                  {t('productForm.hints.slug')}
                 </p>
               </div>
             </CardContent>
@@ -279,11 +290,11 @@ export function ProductForm({
           {/* Pricing */}
           <Card>
             <CardHeader>
-              <CardTitle>Ціна</CardTitle>
+              <CardTitle>{t('productForm.sections.pricing')}</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <div>
-                <Label className="mb-1 block">Ціна (копійки) *</Label>
+                <Label className="mb-1 block">{t('productForm.fields.price')} *</Label>
                 <Input
                   type="number"
                   min="0"
@@ -298,7 +309,7 @@ export function ProductForm({
                 )}
               </div>
               <div>
-                <Label className="mb-1 block">Ціна зі знижкою (копійки)</Label>
+                <Label className="mb-1 block">{t('productForm.fields.salePrice')}</Label>
                 <Input
                   type="number"
                   min="0"
@@ -318,7 +329,7 @@ export function ProductForm({
                 )}
               </div>
               <div>
-                <Label className="mb-1 block">Одиниця виміру</Label>
+                <Label className="mb-1 block">{t('productForm.fields.baseUnit')}</Label>
                 <Input {...register('baseUnit')} placeholder="piece" />
                 {errors.baseUnit && (
                   <p className="mt-1 text-sm text-destructive">
@@ -329,10 +340,96 @@ export function ProductForm({
             </CardContent>
           </Card>
 
+          {/* Wholesale quantity pricing ("оптова ціна за кількість") */}
+          <Card>
+            <CardHeader>
+              <CardTitle>{t('productForm.sections.wholesale')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                {t('productForm.wholesale.description')}
+              </p>
+
+              {tierArray.fields.length === 0 && (
+                <p className="text-sm italic text-muted-foreground">
+                  {t('productForm.wholesale.empty')}
+                </p>
+              )}
+
+              {tierArray.fields.map((field, index) => {
+                const q = Number(watchedTiers?.[index]?.minQty) || 0;
+                const p = Number(watchedTiers?.[index]?.price) || 0;
+                const perUnit = q > 0 && p > 0 ? p / q : 0;
+                return (
+                  <div key={field.id} className="flex flex-wrap items-end gap-3">
+                    <div className="w-32">
+                      <Label className="mb-1 block">
+                        {t('productForm.wholesale.minQty')}
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="50"
+                        {...register(`wholesaleTiers.${index}.minQty` as const, {
+                          valueAsNumber: true,
+                        })}
+                      />
+                    </div>
+                    <div className="w-40">
+                      <Label className="mb-1 block">
+                        {t('productForm.wholesale.price')}
+                      </Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        step="1"
+                        placeholder="22000"
+                        {...register(`wholesaleTiers.${index}.price` as const, {
+                          valueAsNumber: true,
+                        })}
+                      />
+                    </div>
+                    <p className="min-w-[120px] flex-1 pb-2 text-sm text-muted-foreground">
+                      {perUnit > 0 &&
+                        t('productForm.wholesale.perUnit', {
+                          value: (perUnit / 100).toFixed(2),
+                        })}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => tierArray.remove(index)}
+                      aria-label={t('productForm.wholesale.remove')}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  tierArray.append({
+                    minQty: '' as unknown as number,
+                    price: '' as unknown as number,
+                  })
+                }
+              >
+                <Plus className="size-4" />
+                {t('productForm.wholesale.addTier')}
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Stock — dual mode */}
           <Card>
             <CardHeader>
-              <CardTitle>Наявність / Запас</CardTitle>
+              <CardTitle>{t('productForm.sections.stock')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Tabs
@@ -344,13 +441,13 @@ export function ProductForm({
                 }
               >
                 <TabsList className="grid w-full max-w-sm grid-cols-2">
-                  <TabsTrigger value="quantity">Кількість</TabsTrigger>
-                  <TabsTrigger value="availability">Наявність</TabsTrigger>
+                  <TabsTrigger value="quantity">{t('productForm.stock.quantityTab')}</TabsTrigger>
+                  <TabsTrigger value="availability">{t('productForm.stock.availabilityTab')}</TabsTrigger>
                 </TabsList>
 
                 {/* Mode A: numeric quantity */}
                 <TabsContent value="quantity" className="pt-4">
-                  <Label className="mb-1 block">Кількість на складі</Label>
+                  <Label className="mb-1 block">{t('productForm.stock.quantityLabel')}</Label>
                   <Input
                     type="number"
                     min="0"
@@ -364,7 +461,7 @@ export function ProductForm({
                     </p>
                   )}
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Відстежується числом; списується при замовленні.
+                    {t('productForm.stock.quantityHint')}
                   </p>
                 </TabsContent>
 
@@ -380,13 +477,15 @@ export function ProductForm({
                           onCheckedChange={(checked) => field.onChange(checked)}
                         />
                         <span className="text-sm">
-                          {field.value ? 'В наявності' : 'Немає в наявності'}
+                          {field.value
+                            ? t('productForm.stock.inStock')
+                            : t('productForm.stock.outOfStock')}
                         </span>
                       </label>
                     )}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Ручний перемикач наявності без обліку кількості.
+                    {t('productForm.stock.availabilityHint')}
                   </p>
                 </TabsContent>
               </Tabs>
@@ -396,7 +495,7 @@ export function ProductForm({
           {/* Attributes */}
           <Card>
             <CardHeader>
-              <CardTitle>Атрибути</CardTitle>
+              <CardTitle>{t('productForm.sections.attributes')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ProductAttributeFields
@@ -414,15 +513,15 @@ export function ProductForm({
         <div className="space-y-6 lg:col-span-1">
           <Card>
             <CardHeader>
-              <CardTitle>Організація</CardTitle>
+              <CardTitle>{t('productForm.sections.organization')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="mb-1 block">Категорія *</Label>
+                <Label className="mb-1 block">{t('productForm.fields.category')} *</Label>
                 <CategoryPicker
                   value={categoryId || undefined}
                   onChange={handleCategoryChange}
-                  placeholder="Оберіть категорію"
+                  placeholder={t('productForm.placeholders.category')}
                 />
                 {errors.categoryId && (
                   <p className="mt-1 text-sm text-destructive">
@@ -432,15 +531,15 @@ export function ProductForm({
               </div>
 
               <div>
-                <Label className="mb-1 block">Виробник</Label>
+                <Label className="mb-1 block">{t('productForm.fields.manufacturer')}</Label>
                 <Input
                   {...register('manufacturer')}
-                  placeholder="Назва виробника"
+                  placeholder={t('productForm.placeholders.manufacturer')}
                 />
               </div>
 
               <div>
-                <Label className="mb-1 block">Бренд</Label>
+                <Label className="mb-1 block">{t('productForm.fields.brand')}</Label>
                 <Controller
                   control={control}
                   name="brandId"
@@ -450,7 +549,7 @@ export function ProductForm({
                       onValueChange={(v) => field.onChange(v || undefined)}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Оберіть бренд (необов'язково)" />
+                        <SelectValue placeholder={t('productForm.placeholders.brand')} />
                       </SelectTrigger>
                       <SelectContent>
                         {brands.map((brand) => (
@@ -465,7 +564,7 @@ export function ProductForm({
               </div>
 
               <div>
-                <Label className="mb-1 block">Статус *</Label>
+                <Label className="mb-1 block">{t('productForm.fields.status')} *</Label>
                 <Controller
                   control={control}
                   name="status"
@@ -480,9 +579,9 @@ export function ProductForm({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="DRAFT">Чернетка</SelectItem>
-                        <SelectItem value="ACTIVE">Активний</SelectItem>
-                        <SelectItem value="ARCHIVED">Архів</SelectItem>
+                        <SelectItem value="DRAFT">{t('productForm.status.draft')}</SelectItem>
+                        <SelectItem value="ACTIVE">{t('productForm.status.active')}</SelectItem>
+                        <SelectItem value="ARCHIVED">{t('productForm.status.archived')}</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -493,7 +592,7 @@ export function ProductForm({
 
           <Card>
             <CardHeader>
-              <CardTitle>Зображення</CardTitle>
+              <CardTitle>{t('productForm.sections.images')}</CardTitle>
             </CardHeader>
             <CardContent>
               <ImageManager
@@ -513,7 +612,7 @@ export function ProductForm({
 
           <Card>
             <CardHeader>
-              <CardTitle>Ключові слова</CardTitle>
+              <CardTitle>{t('productForm.sections.keywords')}</CardTitle>
             </CardHeader>
             <CardContent>
               <Controller
@@ -524,7 +623,7 @@ export function ProductForm({
                     value={field.value ?? []}
                     onChange={field.onChange}
                     disabled
-                    placeholder="Формуються автоматично на сервері"
+                    placeholder={t('productForm.placeholders.keywords')}
                   />
                 )}
               />
@@ -541,14 +640,14 @@ export function ProductForm({
           onClick={() => router.push('/dashboard/products')}
           disabled={isSubmitting}
         >
-          Скасувати
+          {t('productForm.actions.cancel')}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting
-            ? 'Збереження…'
+            ? t('productForm.actions.saving')
             : isEdit
-              ? 'Оновити товар'
-              : 'Створити товар'}
+              ? t('productForm.actions.update')
+              : t('productForm.actions.create')}
         </Button>
       </div>
     </form>

@@ -23,7 +23,6 @@ export default async function NewProductPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">Створити товар</h1>
       <ProductForm brands={brands} />
     </div>
   );

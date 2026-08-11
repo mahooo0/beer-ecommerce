@@ -63,11 +63,11 @@ export default async function EditProductPage(props: PageProps) {
     isActive: product.isActive ?? true,
     attributes: product.attributes || {},
     attributeValues,
+    wholesaleTiers: product.wholesaleTiers ?? [],
   };
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold">Редагувати товар</h1>
       <ProductForm
         isEdit
         productId={id}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import BrandForm from './brand-form';
 import type { Brand } from '@repo/types';
@@ -12,6 +13,7 @@ interface BrandSheetProps {
 }
 
 export function BrandSheet({ open, onOpenChange, brand, onSuccess }: BrandSheetProps) {
+  const { t } = useTranslation();
   const handleSuccess = () => {
     onOpenChange(false);
     onSuccess();
@@ -21,9 +23,9 @@ export function BrandSheet({ open, onOpenChange, brand, onSuccess }: BrandSheetP
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{brand ? 'Edit Brand' : 'Create Brand'}</SheetTitle>
+          <SheetTitle>{brand ? t('brands.sheet.editTitle') : t('brands.sheet.createTitle')}</SheetTitle>
           <SheetDescription>
-            {brand ? 'Update the brand details below.' : 'Fill in the details to create a new brand.'}
+            {brand ? t('brands.sheet.editDescription') : t('brands.sheet.createDescription')}
           </SheetDescription>
         </SheetHeader>
         <div className="px-4">

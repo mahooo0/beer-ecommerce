@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 
@@ -9,10 +10,10 @@ interface DateRangeFilterProps {
 }
 
 const presets = [
-  { label: 'Last 7d', days: 7 },
-  { label: 'Last 30d', days: 30 },
-  { label: 'Last 90d', days: 90 },
-  { label: 'This Year', days: -1 },
+  { labelKey: 'overview.dateRange.last7d', days: 7 },
+  { labelKey: 'overview.dateRange.last30d', days: 30 },
+  { labelKey: 'overview.dateRange.last90d', days: 90 },
+  { labelKey: 'overview.dateRange.thisYear', days: -1 },
 ];
 
 function getPresetRange(days: number): { from: string; to: string } {
@@ -26,16 +27,17 @@ function getPresetRange(days: number): { from: string; to: string } {
 }
 
 export function DateRangeFilter({ value, onChange }: DateRangeFilterProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {presets.map((preset) => (
         <Button
-          key={preset.label}
+          key={preset.labelKey}
           variant="outline"
           size="sm"
           onClick={() => onChange(getPresetRange(preset.days))}
         >
-          {preset.label}
+          {t(preset.labelKey)}
         </Button>
       ))}
       <DateRangePicker

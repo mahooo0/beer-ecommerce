@@ -9,7 +9,6 @@ import {
   ChevronRight,
   CircleHelp,
   ClipboardList,
-  Command,
   Database,
   File,
   Search,
@@ -24,7 +23,6 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
@@ -36,7 +34,6 @@ import { usePreferencesStore } from "@/stores/preferences/preferences-provider";
 
 import { NavMain } from "./nav-main";
 import { NavUser } from "./nav-user";
-import { SidebarSupportCard } from "./sidebar-support-card";
 
 function SidebarCollapseToggle({ className }: { className?: string }) {
   const { toggleSidebar, state, isMobile } = useSidebar();
@@ -137,12 +134,30 @@ export function AppSidebar({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <Link prefetch={false} href="/dashboard">
-                <Command />
-                <span className="font-semibold text-base">{APP_CONFIG.name}</span>
-              </Link>
-            </SidebarMenuButton>
+            {/* Logo sits on a dark plate so it keeps its natural (cream) colors
+                in both light and dark themes. Centered when the sidebar is open. */}
+            <Link
+              prefetch={false}
+              href="/dashboard"
+              aria-label={APP_CONFIG.name}
+              className="flex w-full items-center justify-center py-1"
+            >
+              <span className="flex w-full items-center justify-center rounded-xl bg-[#272423] px-4 py-2.5 shadow-sm group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:w-8 group-data-[collapsible=icon]:p-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/taranka-logo.svg"
+                  alt={APP_CONFIG.name}
+                  className="h-8 w-auto object-contain group-data-[collapsible=icon]:hidden"
+                />
+                {/* Compact mark for the collapsed icon rail */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/taranka-logo.svg"
+                  alt={APP_CONFIG.name}
+                  className="hidden size-6 object-contain group-data-[collapsible=icon]:block"
+                />
+              </span>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -152,7 +167,6 @@ export function AppSidebar({
         {/* <NavSecondary items={data.navSecondary} className="mt-auto" /> */}
       </SidebarContent>
       <SidebarFooter>
-        <SidebarSupportCard />
         <NavUser user={rootUser} />
       </SidebarFooter>
     </Sidebar>

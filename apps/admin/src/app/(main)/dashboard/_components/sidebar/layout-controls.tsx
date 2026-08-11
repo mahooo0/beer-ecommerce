@@ -5,12 +5,10 @@ import {
   AlignLeft,
   AlignRight,
   Globe,
-  LayoutPanelLeft,
   Maximize2,
   Minimize2,
   Monitor,
   Moon,
-  PanelTop,
   Rows3,
   Rows4,
   Settings,
@@ -38,7 +36,6 @@ import type {
   Density,
   Direction,
   Language,
-  LayoutMode,
   NavbarStyle,
   SidebarCollapsible,
   SidebarVariant,
@@ -49,7 +46,6 @@ import {
   applyDirection,
   applyFont,
   applyLanguage,
-  applyLayoutMode,
   applyNavbarStyle,
   applySidebarCollapsible,
   applySidebarVariant,
@@ -74,11 +70,6 @@ const DENSITY_VISUALS: { value: Density; label: string; Icon: typeof Rows4 }[] =
   { value: "spacious", label: "Spacious", Icon: AlignJustify },
 ];
 
-const LAYOUT_MODE_VISUALS: { value: LayoutMode; label: string; Icon: typeof LayoutPanelLeft }[] = [
-  { value: "sidebar", label: "Sidebar", Icon: LayoutPanelLeft },
-  { value: "top-nav", label: "Top Nav", Icon: PanelTop },
-];
-
 const CONTAINER_VISUALS: { value: ContentLayout; label: string; Icon: typeof Maximize2 }[] = [
   { value: "full-width", label: "Fluid", Icon: Maximize2 },
   { value: "centered", label: "Boxed", Icon: Minimize2 },
@@ -91,8 +82,8 @@ const DIRECTION_VISUALS: { value: Direction; label: string; Icon: typeof AlignLe
 
 const LANGUAGE_VISUALS: { value: Language; label: string }[] = [
   { value: "en", label: "English" },
-  { value: "de", label: "Deutsch" },
-  { value: "fr", label: "Français" },
+  { value: "pl", label: "Polski" },
+  { value: "uk", label: "Українська" },
 ];
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -145,8 +136,6 @@ export function LayoutControls() {
   const setFont = usePreferencesStore((s) => s.setFont);
   const density = usePreferencesStore((s) => s.density);
   const setDensity = usePreferencesStore((s) => s.setDensity);
-  const layoutMode = usePreferencesStore((s) => s.layoutMode);
-  const setLayoutMode = usePreferencesStore((s) => s.setLayoutMode);
   const direction = usePreferencesStore((s) => s.direction);
   const setDirection = usePreferencesStore((s) => s.setDirection);
   const language = usePreferencesStore((s) => s.language);
@@ -204,12 +193,6 @@ export function LayoutControls() {
     void persistPreference("density", value);
   };
 
-  const onLayoutModeChange = (value: LayoutMode) => {
-    applyLayoutMode(value);
-    setLayoutMode(value);
-    void persistPreference("layout_mode", value);
-  };
-
   const onContainerChange = (value: ContentLayout) => {
     onContentLayoutChange(value);
   };
@@ -235,7 +218,6 @@ export function LayoutControls() {
     onSidebarCollapseModeChange(PREFERENCE_DEFAULTS.sidebar_collapsible);
     onFontChange(PREFERENCE_DEFAULTS.font);
     onDensityChange(PREFERENCE_DEFAULTS.density);
-    onLayoutModeChange(PREFERENCE_DEFAULTS.layout_mode);
     onDirectionChange(PREFERENCE_DEFAULTS.direction);
     onLanguageChange(PREFERENCE_DEFAULTS.language);
   };
@@ -308,24 +290,6 @@ export function LayoutControls() {
                     active={density === value}
                     ariaLabel={label}
                     onClick={() => onDensityChange(value)}
-                  >
-                    <Icon className="size-4" />
-                    <span className="text-foreground">{label}</span>
-                  </IconTile>
-                ))}
-              </div>
-            </section>
-
-            {/* Layout */}
-            <section className="space-y-2.5">
-              <SectionLabel>Layout</SectionLabel>
-              <div className="grid grid-cols-2 gap-2">
-                {LAYOUT_MODE_VISUALS.map(({ value, label, Icon }) => (
-                  <IconTile
-                    key={value}
-                    active={layoutMode === value}
-                    ariaLabel={label}
-                    onClick={() => onLayoutModeChange(value)}
                   >
                     <Icon className="size-4" />
                     <span className="text-foreground">{label}</span>

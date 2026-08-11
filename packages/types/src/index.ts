@@ -1,5 +1,7 @@
 /// <reference path="./clerk.d.ts" />
 
+import type { WholesaleTier } from './product-schemas';
+
 // ============================================================================
 // ENUMS
 // ============================================================================
@@ -236,6 +238,8 @@ export interface Product {
   productType: ProductType;
   status: ProductStatus;
   attributes: Record<string, any>; // legacy JSONB dynamic attributes
+  // Wholesale quantity pricing tiers (only applied to WHOLESALE customers).
+  wholesaleTiers?: WholesaleTier[];
   // Dual-mode stock.
   trackQuantity: boolean;
   quantity: number;

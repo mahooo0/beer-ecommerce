@@ -222,6 +222,9 @@ model Product {
   productType     ProductType @default(SIMPLE)
   status          ProductStatus @default(DRAFT)
   attributes      Json     @default("{}") // legacy JSONB dynamic attributes (superseded by ProductAttributeValue)
+  // Wholesale quantity pricing: [{ minQty, price }] (price = total cents for minQty units).
+  // Applied only to WHOLESALE customers; retail always pays the regular unit price.
+  wholesaleTiers  Json     @default("[]")
   // Stock — dual mode: trackQuantity=true → numeric `quantity` that decrements on order;
   // trackQuantity=false → manual `isAvailable` in/out-of-stock flag (no number tracked)
   trackQuantity   Boolean  @default(false)

@@ -3,12 +3,16 @@
  *
  * "client-cookie"  → write cookie on the browser only.
  * "server-cookie"  → write cookie through a Server Action.
- * "localStorage"   → save only on the client (non-layout stuff).
+ * "localStorage"   → save only on the client, persists across visits.
  * "none"           → no saving, resets on reload.
  *
- * Layout-critical prefs (sidebar_variant / sidebar_collapsible)
- * must stay consistent during SSR → so they can’t use localStorage.
- * Others are flexible and can use any persistence.
+ * Everything the user changes in the customizer is now persisted to
+ * localStorage so the exact same settings come back on the next visit.
+ * The pre-hydration boot script (scripts/theme-boot.tsx) reads localStorage
+ * and applies all data-* attributes before first paint, so CSS-driven prefs
+ * do not flicker. sidebar_variant / sidebar_collapsible are also stored in
+ * localStorage; because they feed an SSR prop they reconcile on the client
+ * right after hydration (negligible, only on a hard reload).
  */
 
 import type { FontKey } from "@/lib/fonts/registry";
@@ -47,32 +51,18 @@ export type PreferenceValueMap = {
 export type PreferenceKey = keyof PreferenceValueMap;
 
 /**
- * Layout-critical keys → these affect SSR UI (sidebar shape)
- * so they must be accessible on the server.
+ * Layout-critical keys → these still feed an SSR prop (sidebar shape) in the
+ * dashboard layout. They are allowed to use localStorage now; the client
+ * reconciles the value right after hydration (see boot script + app-sidebar).
  */
 export const LAYOUT_CRITICAL_KEYS = ["sidebar_variant", "sidebar_collapsible"] as const;
 export type LayoutCriticalKey = (typeof LAYOUT_CRITICAL_KEYS)[number];
 
 /**
- * Everything else is non-critical and can be read from the client.
- */
-export type NonCriticalKey = Exclude<PreferenceKey, LayoutCriticalKey>;
-
-/**
- * Layout-critical cannot use "localStorage" because SSR needs the value.
- * So remove it from allowed persistence types for those keys.
- */
-type LayoutCriticalPersistence = Exclude<PreferencePersistence, "localStorage">;
-
-/**
- * Final config:
- * - layout-critical keys → restricted persistence
- * - non-critical keys → can use any persistence
+ * Every key can use any persistence mode.
  */
 type PreferencePersistenceConfig = {
-  [K in LayoutCriticalKey]: LayoutCriticalPersistence;
-} & {
-  [K in NonCriticalKey]: PreferencePersistence;
+  [K in PreferenceKey]: PreferencePersistence;
 };
 
 /**
@@ -94,18 +84,19 @@ export const PREFERENCE_DEFAULTS: PreferenceValueMap = {
 
 /**
  * How each preference is persisted.
- * You can change these per-key.
+ * Everything the user picks in the customizer is saved to localStorage so it
+ * survives across visits.
  */
 export const PREFERENCE_PERSISTENCE: PreferencePersistenceConfig = {
-  theme_mode: "client-cookie",
-  theme_preset: "client-cookie",
-  font: "client-cookie",
-  content_layout: "client-cookie",
-  navbar_style: "client-cookie",
-  sidebar_variant: "client-cookie", // layout-critical → cannot be "localStorage"
-  sidebar_collapsible: "client-cookie", // layout-critical → cannot be "localStorage"
-  density: "client-cookie",
-  layout_mode: "client-cookie",
-  direction: "client-cookie",
-  language: "client-cookie",
+  theme_mode: "localStorage",
+  theme_preset: "localStorage",
+  font: "localStorage",
+  content_layout: "localStorage",
+  navbar_style: "localStorage",
+  sidebar_variant: "localStorage",
+  sidebar_collapsible: "localStorage",
+  density: "localStorage",
+  layout_mode: "localStorage",
+  direction: "localStorage",
+  language: "localStorage",
 };

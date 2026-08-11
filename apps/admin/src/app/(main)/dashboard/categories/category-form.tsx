@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { useTranslation } from 'react-i18next';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { Category } from '@repo/types';
@@ -16,17 +17,21 @@ import { Textarea } from '@/components/ui/textarea';
 import CategoryPicker from '@/components/CategoryPicker';
 import { slugify } from '@/lib/slugify';
 
-const categoryFormSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name must be 100 characters or less'),
-  description: z.string().optional(),
-  parentId: z.string().nullable().optional(),
-  image: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-  metaTitle: z.string().max(60, 'Meta title must be 60 characters or less').optional(),
-  metaDescription: z.string().max(160, 'Meta description must be 160 characters or less').optional(),
-  slug: z.string().regex(/^[a-z0-9-]+$/, 'Slug must contain only lowercase letters, numbers, and hyphens').optional(),
-});
+const buildCategoryFormSchema = (t: (key: string) => string) =>
+  z.object({
+    name: z.string().min(1, t('categories.form.errors.nameRequired')).max(100, t('categories.form.errors.nameMax')),
+    description: z.string().optional(),
+    parentId: z.string().nullable().optional(),
+    image: z.string().url(t('categories.form.errors.urlInvalid')).optional().or(z.literal('')),
+    metaTitle: z.string().max(60, t('categories.form.errors.metaTitleMax')).optional(),
+    metaDescription: z.string().max(160, t('categories.form.errors.metaDescMax')).optional(),
+    slug: z
+      .string()
+      .regex(/^[a-z0-9-]+$/, t('categories.form.errors.slugInvalid'))
+      .optional(),
+  });
 
-type CategoryFormData = z.infer<typeof categoryFormSchema>;
+type CategoryFormData = z.infer<ReturnType<typeof buildCategoryFormSchema>>;
 
 interface CategoryFormProps {
   category?: Category;
@@ -35,11 +40,14 @@ interface CategoryFormProps {
 }
 
 export default function CategoryForm({ category, categories, onSuccess }: CategoryFormProps) {
+  const { t } = useTranslation();
   const { getToken } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
+  const categoryFormSchema = useMemo(() => buildCategoryFormSchema(t), [t]);
 
   const {
     register,
@@ -79,7 +87,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
     try {
       const token = await getToken();
       if (!token) {
-        setError('Not authenticated');
+        setError(t('categories.form.errors.notAuth'));
         return;
       }
 
@@ -100,7 +108,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
         router.refresh();
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to save category');
+      setError(err.message || t('categories.form.errors.saveFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +125,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
       {/* Name */}
       <div>
         <Label htmlFor="name" className="mb-1">
-          Name *
+          {t('categories.form.name')} *
         </Label>
         <Input
           {...register('name')}
@@ -132,7 +140,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
       {/* Description */}
       <div>
         <Label htmlFor="description" className="mb-1">
-          Description
+          {t('categories.form.description')}
         </Label>
         <Textarea
           {...register('description')}
@@ -147,14 +155,14 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
       {/* Parent Category */}
       <div>
         <Label htmlFor="parentId" className="mb-1">
-          Parent Category
+          {t('categories.form.parent')}
         </Label>
         <CategoryPicker
           value={watch('parentId') ?? null}
           onChange={(id) => setValue('parentId', id, { shouldValidate: true })}
           allowNone
-          noneLabel="None (Root Category)"
-          placeholder="None (Root Category)"
+          noneLabel={t('categories.form.none')}
+          placeholder={t('categories.form.none')}
           excludeSubtreeId={category?.id}
         />
         {errors.parentId && (
@@ -165,7 +173,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
       {/* Image */}
       <div>
         <Label className="mb-1">
-          Image
+          {t('categories.form.image')}
         </Label>
         <ImageUpload
           value={watch('image') || ''}
@@ -179,12 +187,12 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
 
       {/* SEO Section */}
       <div className="border-t pt-4 mt-6">
-        <h3 className="text-lg font-semibold mb-3">SEO Settings</h3>
+        <h3 className="text-lg font-semibold mb-3">{t('categories.form.seo')}</h3>
 
         {/* Slug */}
         <div className="mb-4">
           <Label htmlFor="slug" className="mb-1">
-            URL Slug
+            {t('categories.form.slug')}
           </Label>
           <Input
             {...register('slug')}
@@ -197,7 +205,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
           />
           {slug && (
             <p className="text-xs text-muted-foreground mt-1">
-              Preview: /categories/{slug}
+              {t('categories.form.slugPreview', { slug })}
             </p>
           )}
           {errors.slug && (
@@ -208,7 +216,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
         {/* Meta Title */}
         <div className="mb-4">
           <Label htmlFor="metaTitle" className="mb-1">
-            Meta Title
+            {t('categories.form.metaTitle')}
             <span className="text-xs text-muted-foreground ml-2">
               ({metaTitle?.length || 0}/60)
             </span>
@@ -227,7 +235,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
         {/* Meta Description */}
         <div>
           <Label htmlFor="metaDescription" className="mb-1">
-            Meta Description
+            {t('categories.form.metaDescription')}
             <span className="text-xs text-muted-foreground ml-2">
               ({metaDescription?.length || 0}/160)
             </span>
@@ -250,7 +258,11 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
           type="submit"
           disabled={isLoading}
         >
-          {isLoading ? 'Saving...' : category ? 'Update Category' : 'Create Category'}
+          {isLoading
+            ? t('categories.form.saving')
+            : category
+              ? t('categories.form.update')
+              : t('categories.form.create')}
         </Button>
         <Button
           type="button"
@@ -258,7 +270,7 @@ export default function CategoryForm({ category, categories, onSuccess }: Catego
           onClick={() => router.push('/dashboard/categories')}
           disabled={isLoading}
         >
-          Cancel
+          {t('categories.form.cancel')}
         </Button>
       </div>
     </form>

@@ -3,6 +3,7 @@
 import { use } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft } from 'lucide-react';
 import type { Category } from '@repo/types';
 
@@ -33,6 +34,7 @@ export default function CategoryDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { t } = useTranslation();
   const { id } = use(params);
 
   const {
@@ -64,24 +66,24 @@ export default function CategoryDetailPage({
   if (error) {
     return (
       <div className="p-8 text-center text-destructive">
-        Помилка: {error instanceof Error ? error.message : 'Не вдалося завантажити'}
+        {t('categoryPage.detail.errorPrefix')}: {error instanceof Error ? error.message : t('categoryPage.detail.loadFailed')}
       </div>
     );
   }
 
   if (!category) {
-    return <div className="p-8 text-center">Категорію не знайдено</div>;
+    return <div className="p-8 text-center">{t('categoryPage.detail.notFound')}</div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 rounded-md bg-secondary px-4 py-2">
         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-          <Link href="/dashboard/categories" aria-label="Назад до категорій">
+          <Link href="/dashboard/categories" aria-label={t('categoryPage.detail.backToCategories')}>
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h1 className="font-semibold">Редагувати категорію: {category.name}</h1>
+        <h1 className="font-semibold">{t('categoryPage.detail.editTitle', { name: category.name })}</h1>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -93,12 +95,12 @@ export default function CategoryDetailPage({
         {/* Sidebar: structured attributes + manual filters */}
         <div className="space-y-4">
           <div className="space-y-4 rounded-md border bg-background p-4">
-            <h2 className="text-sm font-semibold">Атрибути</h2>
+            <h2 className="text-sm font-semibold">{t('categoryPage.detail.attributesHeading')}</h2>
             <AttributeSection categoryId={category.id} />
           </div>
 
           <div className="space-y-4 rounded-md border bg-background p-4">
-            <h2 className="text-sm font-semibold">Фільтри категорії</h2>
+            <h2 className="text-sm font-semibold">{t('categoryPage.detail.filtersHeading')}</h2>
             <FilterSection categoryId={category.id} />
           </div>
         </div>

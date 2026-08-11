@@ -5,17 +5,9 @@ import Link from "next/link";
 import { Heart, Check } from "lucide-react";
 import { HeroArrowIcon } from "./icons";
 import { useCart } from "@/lib/cart-store";
+import type { CatalogProduct } from "./catalog-card";
 
-interface Product {
-  id: number;
-  name: string;
-  weight: string;
-  oldPrice: string;
-  newPrice: string;
-  image: string;
-}
-
-const products: Product[] = Array.from({ length: 8 }, (_, i) => ({
+const fallbackProducts: CatalogProduct[] = Array.from({ length: 8 }, (_, i) => ({
   id: i,
   name: "Chrupki kukurydziane słodkie o smaku mleka",
   weight: "140g",
@@ -27,9 +19,10 @@ const products: Product[] = Array.from({ length: 8 }, (_, i) => ({
 const parsePrice = (s: string) =>
   parseFloat(s.replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
 
-function PopularProductCard({ product: p }: { product: Product }) {
+function PopularProductCard({ product: p }: { product: CatalogProduct }) {
   const addItem = useCart((s) => s.addItem);
   const [added, setAdded] = useState(false);
+  const href = `/products/${p.slug ?? p.id}`;
 
   const handleAdd = () => {
     addItem({
@@ -47,7 +40,7 @@ function PopularProductCard({ product: p }: { product: Product }) {
   return (
     <article className="group flex h-[380px] flex-col gap-4 rounded-[20px] bg-white px-[25px] pt-4 pb-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_24px_48px_-12px_rgba(39,36,34,0.18)]">
       <Link
-        href={`/products/${p.id}`}
+        href={href}
         className="flex h-[174px] w-full cursor-pointer items-center justify-center overflow-hidden"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -60,7 +53,7 @@ function PopularProductCard({ product: p }: { product: Product }) {
 
       <div className="flex flex-1 flex-col gap-1">
         <Link
-          href={`/products/${p.id}`}
+          href={href}
           className="text-base font-semibold leading-tight text-[#443029] transition-colors group-hover:text-brand-red-500"
         >
           {p.name}
@@ -68,7 +61,9 @@ function PopularProductCard({ product: p }: { product: Product }) {
         <p className="text-sm text-[#443029]">{p.weight}</p>
 
         <div className="mt-1 flex items-center gap-4">
-          <span className="text-base text-cream-300 line-through">{p.oldPrice}</span>
+          {p.oldPrice && (
+            <span className="text-base text-cream-300 line-through">{p.oldPrice}</span>
+          )}
           <span className="text-xl font-bold text-[#443029]">{p.newPrice}</span>
         </div>
 
@@ -99,7 +94,8 @@ function PopularProductCard({ product: p }: { product: Product }) {
   );
 }
 
-export function TarankaPopularProducts() {
+export function TarankaPopularProducts({ products: input }: { products?: CatalogProduct[] } = {}) {
+  const products = input && input.length > 0 ? input : fallbackProducts;
   return (
     <section className="bg-background py-16">
       <div className="mx-auto max-w-[1196px] px-6">

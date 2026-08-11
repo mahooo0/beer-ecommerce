@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslation } from 'react-i18next';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import CategoryForm from './category-form';
 import type { Category } from '@repo/types';
@@ -13,6 +14,7 @@ interface CategorySheetProps {
 }
 
 export function CategorySheet({ open, onOpenChange, category, categories, onSuccess }: CategorySheetProps) {
+  const { t } = useTranslation();
   const handleSuccess = () => {
     onOpenChange(false);
     onSuccess();
@@ -22,9 +24,9 @@ export function CategorySheet({ open, onOpenChange, category, categories, onSucc
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>{category ? 'Edit Category' : 'Create Category'}</SheetTitle>
+          <SheetTitle>{category ? t('categories.editTitle') : t('categories.createTitle')}</SheetTitle>
           <SheetDescription>
-            {category ? 'Update the category details below.' : 'Fill in the details to create a new category.'}
+            {category ? t('categories.editDesc') : t('categories.createDesc')}
           </SheetDescription>
         </SheetHeader>
         <div className="px-4">
