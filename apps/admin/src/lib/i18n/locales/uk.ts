@@ -397,6 +397,17 @@ export const uk: Resources = {
       "deleteFailed": "Не вдалося видалити колекцію"
     }
   },
+  blog: {
+    title: "Блог",
+    add: "Новий пост",
+    empty: "Постів ще немає.",
+    searchPlaceholder: "Пошук за назвою або slug…",
+    analytics: { title: "Огляд блогу", total: "Усього", published: "Опубліковані", drafts: "Чернетки" },
+    columns: { title: "Назва", categories: "Категорії", status: "Статус", updated: "Оновлено", actions: "Дії" },
+    status: { published: "Опубліковано", draft: "Чернетка" },
+    actions: { edit: "Редагувати", delete: "Видалити", deleteConfirm: "Видалити цей пост?" },
+    errors: { deleteFailed: "Не вдалося видалити пост" },
+  },
   promoBanners: {
     title: "Промо-банери",
     add: "Додати банер",

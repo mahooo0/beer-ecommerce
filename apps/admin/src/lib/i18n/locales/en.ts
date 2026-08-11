@@ -395,6 +395,17 @@ export const en = {
       "deleteFailed": "Failed to delete collection"
     }
   },
+  blog: {
+    title: "Blog",
+    add: "New Post",
+    empty: "No posts yet.",
+    searchPlaceholder: "Search by title or slug…",
+    analytics: { title: "Blog Overview", total: "Total", published: "Published", drafts: "Drafts" },
+    columns: { title: "Title", categories: "Categories", status: "Status", updated: "Updated", actions: "Actions" },
+    status: { published: "Published", draft: "Draft" },
+    actions: { edit: "Edit", delete: "Delete", deleteConfirm: "Delete this post?" },
+    errors: { deleteFailed: "Failed to delete post" },
+  },
   promoBanners: {
     title: "Promo Banners",
     add: "Add Banner",

@@ -90,9 +90,8 @@ export const sidebarItems: NavGroup[] = [
       },
       {
         title: "nav.blog",
-        url: (process.env.NEXT_PUBLIC_CMS_URL ?? "https://cms.dev.taranka.online") + "/admin",
+        url: "/dashboard/blog",
         icon: Newspaper,
-        newTab: true,
       },
     ],
   },

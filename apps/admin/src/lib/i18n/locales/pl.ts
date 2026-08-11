@@ -397,6 +397,17 @@ export const pl: Resources = {
       "deleteFailed": "Nie udało się usunąć kolekcji"
     }
   },
+  blog: {
+    title: "Blog",
+    add: "Nowy wpis",
+    empty: "Brak wpisów.",
+    searchPlaceholder: "Szukaj po tytule lub slug…",
+    analytics: { title: "Przegląd bloga", total: "Wszystkie", published: "Opublikowane", drafts: "Szkice" },
+    columns: { title: "Tytuł", categories: "Kategorie", status: "Status", updated: "Zaktualizowano", actions: "Akcje" },
+    status: { published: "Opublikowany", draft: "Szkic" },
+    actions: { edit: "Edytuj", delete: "Usuń", deleteConfirm: "Usunąć ten wpis?" },
+    errors: { deleteFailed: "Nie udało się usunąć wpisu" },
+  },
   promoBanners: {
     title: "Banery promo",
     add: "Dodaj baner",
