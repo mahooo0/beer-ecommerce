@@ -167,10 +167,10 @@ const forms = {
 async function upsertForm(payload: Awaited<ReturnType<typeof getPayload>>, data: (typeof forms)[keyof typeof forms]) {
   const existing = await payload.find({ collection: 'forms', where: { title: { equals: data.title } }, limit: 1, depth: 0 })
   if (existing.docs[0]) {
-    const doc = await payload.update({ collection: 'forms', id: existing.docs[0].id, data: data as never, depth: 0 })
+    const doc = await payload.update({ collection: 'forms', id: existing.docs[0].id, data: data as never, depth: 0, context: { disableRevalidate: true } })
     return doc.id
   }
-  const doc = await payload.create({ collection: 'forms', data: data as never, depth: 0 })
+  const doc = await payload.create({ collection: 'forms', data: data as never, depth: 0, context: { disableRevalidate: true } })
   return doc.id
 }
 
@@ -185,13 +185,13 @@ async function upsertPage(
   let id: number | string
   if (existing.docs[0]) {
     id = existing.docs[0].id
-    await payload.update({ collection: 'pages', id, locale: 'pl', data: plData as never, depth: 0 })
+    await payload.update({ collection: 'pages', id, locale: 'pl', data: plData as never, depth: 0, context: { disableRevalidate: true } })
   } else {
-    const created = await payload.create({ collection: 'pages', locale: 'pl', data: plData as never, depth: 0 })
+    const created = await payload.create({ collection: 'pages', locale: 'pl', data: plData as never, depth: 0, context: { disableRevalidate: true } })
     id = created.id
   }
   // Set the Ukrainian localized values on the same document.
-  await payload.update({ collection: 'pages', id, locale: 'uk', data: { title: uk.title, layout: uk.layout } as never, depth: 0 })
+  await payload.update({ collection: 'pages', id, locale: 'uk', data: { title: uk.title, layout: uk.layout } as never, depth: 0, context: { disableRevalidate: true } })
   return id
 }
 
