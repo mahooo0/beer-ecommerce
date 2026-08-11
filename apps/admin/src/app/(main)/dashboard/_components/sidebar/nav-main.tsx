@@ -24,7 +24,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   useSidebar,
-} from "@/components/ui/sidebar";
+} from "@/components/animate-ui/components/radix/sidebar";
 import type { NavGroup, NavMainItem } from "@/navigation/sidebar/sidebar-items";
 
 import { QuickActions } from "./quick-actions";

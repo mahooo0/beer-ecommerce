@@ -3,11 +3,11 @@
 @import "shadcn/tailwind.css";
 
 /* Theme preset styles: these override CSS variables based on the selected data-theme-preset */
-@import "../styles/presets/zinc.css";
 @import "../styles/presets/blue.css";
 @import "../styles/presets/violet.css";
-@import "../styles/presets/rose.css";
-@import "../styles/presets/orange.css";
+@import "../styles/presets/sunset.css";
+@import "../styles/presets/aurora.css";
+@import "../styles/presets/cosmic.css";
 
 @custom-variant dark (&:is(.dark *));
 

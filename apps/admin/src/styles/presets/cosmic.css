@@ -1,0 +1,26 @@
+/*
+label: Cosmic
+value: cosmic
+*/
+
+:root[data-theme-preset="cosmic"] {
+  --primary: oklch(0.58 0.24 310);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.58 0.24 310);
+  --sidebar-primary: oklch(0.58 0.24 310);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #d946ef 55%, #ec4899 100%);
+  --sidebar-ring: oklch(0.58 0.24 310);
+  --chart-1: oklch(0.58 0.24 310);
+}
+
+.dark:root[data-theme-preset="cosmic"] {
+  --primary: oklch(0.66 0.22 310);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.66 0.22 310);
+  --sidebar-primary: oklch(0.66 0.22 310);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-primary-gradient: linear-gradient(135deg, #9d74f8 0%, #e05cf5 55%, #f45ba6 100%);
+  --sidebar-ring: oklch(0.66 0.22 310);
+  --chart-1: oklch(0.66 0.22 310);
+}

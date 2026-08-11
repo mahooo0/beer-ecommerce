@@ -261,7 +261,9 @@ export function LayoutControls() {
               <div className="grid grid-cols-3 gap-2">
                 {THEME_PRESET_OPTIONS.map((preset) => {
                   const active = themePreset === preset.value;
-                  const swatch = (resolvedThemeMode ?? "light") === "dark" ? preset.primary.dark : preset.primary.light;
+                  const isDark = (resolvedThemeMode ?? "light") === "dark";
+                  const gradient = isDark ? preset.gradient.dark : preset.gradient.light;
+                  const swatch = isDark ? preset.primary.dark : preset.primary.light;
                   return (
                     <IconTile
                       key={preset.value}
@@ -271,7 +273,7 @@ export function LayoutControls() {
                     >
                       <span
                         className="size-5 rounded-full border border-border/40 shadow-sm"
-                        style={{ backgroundColor: swatch }}
+                        style={gradient ? { backgroundImage: gradient } : { backgroundColor: swatch }}
                       />
                       <span className="text-foreground">{preset.label}</span>
                     </IconTile>

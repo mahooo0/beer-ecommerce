@@ -1,0 +1,26 @@
+/*
+label: Sunset
+value: sunset
+*/
+
+:root[data-theme-preset="sunset"] {
+  --primary: oklch(0.68 0.2 15);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.68 0.2 15);
+  --sidebar-primary: oklch(0.68 0.2 15);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-primary-gradient: linear-gradient(135deg, #ff9a3c 0%, #ff5c72 50%, #f43f8f 100%);
+  --sidebar-ring: oklch(0.68 0.2 15);
+  --chart-1: oklch(0.68 0.2 15);
+}
+
+.dark:root[data-theme-preset="sunset"] {
+  --primary: oklch(0.72 0.19 15);
+  --primary-foreground: oklch(0.99 0 0);
+  --ring: oklch(0.72 0.19 15);
+  --sidebar-primary: oklch(0.72 0.19 15);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-primary-gradient: linear-gradient(135deg, #ffa24a 0%, #ff6379 50%, #f74d97 100%);
+  --sidebar-ring: oklch(0.72 0.19 15);
+  --chart-1: oklch(0.72 0.19 15);
+}
