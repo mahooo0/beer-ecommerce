@@ -17,7 +17,8 @@
   "card": {
     "addToFavorites": "Додати до улюблених",
     "added": "Додано",
-    "addToCart": "До кошика"
+    "addToCart": "До кошика",
+    "outOfStock": "Немає в наявності"
   },
   "detail": {
     "selectImage": "Вибрати фото {{index}}",
@@ -32,7 +33,14 @@
     "quickOrder": "швидке замовлення",
     "addToFavorites": "Додати до улюблених",
     "delivery": "Доставка",
-    "payment": "Оплата"
+    "payment": "Оплата",
+    "wholesale": {
+      "totalLabel": "разом:",
+      "perQty": "за {{qty}} шт.",
+      "heading": "Оптові ціни (за кількістю)",
+      "fromQty": "від {{qty}} шт.",
+      "perPc": "/шт."
+    }
   },
   "description": {
     "tabDescription": "Опис",

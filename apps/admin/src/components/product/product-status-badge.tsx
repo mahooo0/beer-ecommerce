@@ -1,3 +1,7 @@
+'use client';
+
+import { useTranslation } from 'react-i18next';
+
 type ProductStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
 interface ProductStatusBadgeProps {
@@ -5,6 +9,8 @@ interface ProductStatusBadgeProps {
 }
 
 export function ProductStatusBadge({ status }: ProductStatusBadgeProps) {
+  const { t } = useTranslation();
+
   const styles = {
     DRAFT: 'bg-gray-100 text-gray-700 border border-gray-300',
     ACTIVE: 'bg-green-100 text-green-700 border border-green-300',
@@ -15,7 +21,7 @@ export function ProductStatusBadge({ status }: ProductStatusBadgeProps) {
     <span
       className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status]}`}
     >
-      {status}
+      {t(`products.status.${status}`)}
     </span>
   );
 }

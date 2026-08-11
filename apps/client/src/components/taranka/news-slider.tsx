@@ -1,23 +1,36 @@
 "use client";
 
+import Link from "next/link";
 import { Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 
-const baseNews = [
-  { image: "/news/image0.jpg", date: "11.11.2023", views: "4356", title: "Historia ukraińskiego piwa" },
-  { image: "/news/image1.jpg", date: "11.11.2023", views: "4356", title: "Historia ukraińskiego piwa" },
-  { image: "/news/image2.jpg", date: "11.11.2023", views: "4356", title: "Historia ukraińskiego piwa" },
-  { image: "/news/image3.jpg", date: "11.11.2023", views: "4356", title: "Historia ukraińskiego piwa" },
-  { image: "/news/image4.jpg", date: "11.11.2023", views: "4356", title: "Historia ukraińskiego piwa" },
-  { image: "/news/image5.jpg", date: "11.11.2023", views: "4356", title: "Historia ukraińskiego piwa" },
+export interface NewsSlide {
+  image: string;
+  date: string;
+  title: string;
+  href?: string;
+  meta?: string; // category name / views
+}
+
+// Fallback used only when no posts are passed (CMS empty or unreachable).
+const baseNews: NewsSlide[] = [
+  { image: "/news/image0.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
+  { image: "/news/image1.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
+  { image: "/news/image2.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
+  { image: "/news/image3.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
+  { image: "/news/image4.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
+  { image: "/news/image5.jpg", date: "11.11.2023", title: "Historia ukraińskiego piwa", meta: "4356" },
 ];
 
-const news = [...baseNews, ...baseNews];
+export function TarankaNewsSlider({ items }: { items?: NewsSlide[] }) {
+  const source = items && items.length > 0 ? items : baseNews;
+  // Swiper's infinite loop needs enough slides — repeat when there are few posts.
+  const slides: NewsSlide[] =
+    source.length >= 6 ? source : Array.from({ length: 6 }, (_, i) => source[i % source.length]!);
 
-export function TarankaNewsSlider() {
   const { t } = useTranslation("home");
   return (
     <section className="overflow-hidden bg-background py-16 font-taranka-body">
@@ -40,8 +53,8 @@ export function TarankaNewsSlider() {
         slidesOffsetAfter={120}
         className="!overflow-visible"
       >
-        {news.map((item, i) => (
-          <SwiperSlide key={i} className="!w-[282px]">
+        {slides.map((item, i) => {
+          const inner = (
             <article className="group w-[282px] cursor-pointer">
               <div className="h-[220px] w-[282px] overflow-hidden rounded-[20px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -54,10 +67,12 @@ export function TarankaNewsSlider() {
 
               <div className="mt-5 flex items-center gap-4 text-xs text-[#443029]">
                 <span>{item.date}</span>
-                <span className="inline-flex items-center gap-1">
-                  <Eye className="size-4" strokeWidth={1.75} />
-                  {item.views}
-                </span>
+                {item.meta ? (
+                  <span className="inline-flex items-center gap-1">
+                    <Eye className="size-4" strokeWidth={1.75} />
+                    {item.meta}
+                  </span>
+                ) : null}
               </div>
 
               <h3 className="mt-2 text-[20px] font-semibold leading-tight text-[#443029] transition-colors group-hover:text-brand-red-500">
@@ -68,8 +83,18 @@ export function TarankaNewsSlider() {
                 {t("newsSlider.readMore")}
               </span>
             </article>
-          </SwiperSlide>
-        ))}
+          );
+
+          return (
+            <SwiperSlide key={i} className="!w-[282px]">
+              {item.href ? (
+                <Link href={item.href}>{inner}</Link>
+              ) : (
+                inner
+              )}
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
     </section>
   );

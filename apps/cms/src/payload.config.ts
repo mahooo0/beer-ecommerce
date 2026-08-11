@@ -74,7 +74,9 @@ export default buildConfig({
   },
   db: postgresAdapter({
     // Dedicated `taranka_blog` database — fully isolated from the shop's Prisma tables.
-    push: process.env.NODE_ENV !== 'production', // dev: auto-sync schema; prod: migrations
+    // DEV box runs a production build (`next start`) against the already-pushed schema,
+    // so keep push on to auto-sync (real prod should switch to `payload migrate`).
+    push: true,
     pool: {
       connectionString: process.env.DATABASE_URL,
       max: 5,

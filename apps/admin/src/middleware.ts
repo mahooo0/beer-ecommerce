@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { hasAdminAccess, hasPermission, permissionForPath } from '@repo/types/rbac';
 
-const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/unauthorized']);
+const isPublicRoute = createRouteMatcher(['/sign-in(.*)', '/sign-up(.*)', '/unauthorized', '/auth(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
   // Public routes can be accessed without authentication

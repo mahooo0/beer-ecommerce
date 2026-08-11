@@ -1,8 +1,7 @@
 import sharp from 'sharp';
 import { v4 as uuidv4 } from 'uuid';
-import path from 'path';
-import fs from 'fs/promises';
 import { config } from '../config.js';
+import { s3 } from './s3.js';
 
 export type Preset = 'product' | 'category' | 'brand' | 'collection' | 'avatar';
 
@@ -27,6 +26,10 @@ export interface FileRecord {
   mimeType: string;
 }
 
+function objectUrl(key: string): string {
+  return `${config.s3.publicUrl}/${config.s3.bucket}/${key}`;
+}
+
 export async function saveFile(
   buffer: Buffer,
   originalName: string,
@@ -36,12 +39,6 @@ export async function saveFile(
   const now = new Date();
   const year = now.getFullYear().toString();
   const month = String(now.getMonth() + 1).padStart(2, '0');
-
-  const dirPath = path.join(config.uploadDir, year, month);
-  await fs.mkdir(dirPath, { recursive: true });
-
-  const filename = `${id}.webp`;
-  const filePath = path.join(dirPath, filename);
 
   let pipeline = sharp(buffer);
 
@@ -54,46 +51,45 @@ export async function saveFile(
   }
 
   const output = await pipeline.webp({ quality: 85 }).toBuffer();
-  await fs.writeFile(filePath, output);
 
-  const relativePath = `uploads/${year}/${month}/${filename}`;
-  const url = `${config.storageUrl}/${relativePath}`;
+  const key = `uploads/${year}/${month}/${id}.webp`;
+  await s3.putObject(config.s3.bucket, key, output, output.length, {
+    'Content-Type': 'image/webp',
+    'Cache-Control': 'public, max-age=31536000, immutable',
+  });
 
   return {
     id,
-    url,
-    filename,
+    url: objectUrl(key),
+    filename: `${id}.webp`,
     size: output.length,
     mimeType: 'image/webp',
   };
 }
 
 export async function deleteFile(id: string): Promise<boolean> {
-  // Search for the file in uploads directory
-  const uploadsDir = config.uploadDir;
+  // We only receive the id, not the full key, so find the object whose name
+  // ends with `<id>.webp` under the uploads/ prefix and remove it.
+  const suffix = `/${id}.webp`;
 
-  try {
-    const years = await fs.readdir(uploadsDir);
-    for (const year of years) {
-      const yearPath = path.join(uploadsDir, year);
-      const stat = await fs.stat(yearPath);
-      if (!stat.isDirectory()) continue;
+  return new Promise((resolve) => {
+    const stream = s3.listObjectsV2(config.s3.bucket, 'uploads/', true);
+    let settled = false;
+    const finish = (result: boolean) => {
+      if (settled) return;
+      settled = true;
+      resolve(result);
+    };
 
-      const months = await fs.readdir(yearPath);
-      for (const month of months) {
-        const filePath = path.join(yearPath, month, `${id}.webp`);
-        try {
-          await fs.access(filePath);
-          await fs.unlink(filePath);
-          return true;
-        } catch {
-          // File not in this directory, continue
-        }
+    stream.on('data', (obj) => {
+      if (!settled && obj.name && obj.name.endsWith(suffix)) {
+        s3.removeObject(config.s3.bucket, obj.name)
+          .then(() => finish(true))
+          .catch(() => finish(false));
+        (stream as unknown as { destroy?: () => void }).destroy?.();
       }
-    }
-  } catch {
-    // uploads directory doesn't exist yet
-  }
-
-  return false;
+    });
+    stream.on('end', () => finish(false));
+    stream.on('error', () => finish(false));
+  });
 }

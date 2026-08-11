@@ -3,6 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import Image from 'next/image';
+import { useTranslation } from 'react-i18next';
 
 interface SortableImageProps {
   id: string;
@@ -11,6 +12,7 @@ interface SortableImageProps {
 }
 
 export function SortableImage({ id, url, onRemove }: SortableImageProps) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -36,7 +38,7 @@ export function SortableImage({ id, url, onRemove }: SortableImageProps) {
       <div className="aspect-square relative">
         <Image
           src={url}
-          alt="Product image"
+          alt={t('productForm.images.alt')}
           fill
           className="object-cover"
           sizes="200px"
@@ -48,7 +50,7 @@ export function SortableImage({ id, url, onRemove }: SortableImageProps) {
         {...attributes}
         {...listeners}
         className="absolute inset-0 cursor-move"
-        title="Drag to reorder"
+        title={t('productForm.images.dragTitle')}
       />
 
       {/* Remove button - appears on hover */}
@@ -56,7 +58,7 @@ export function SortableImage({ id, url, onRemove }: SortableImageProps) {
         type="button"
         onClick={() => onRemove(url)}
         className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10"
-        title="Remove image"
+        title={t('productForm.images.removeTitle')}
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { MapPin, LayoutGrid, Search, Heart } from "lucide-react";
+import { MapPin, LayoutGrid, Heart } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { MiniCart } from "./mini-cart";
 import { CartTrigger } from "./cart-trigger";
 import { UserMenu } from "./user-menu";
 import { LanguageSwitcher } from "./language-switcher";
+import { HeaderSearch } from "./header-search";
 
 const navLinks = [
   { key: "suggestions", href: "#" },
@@ -70,14 +71,7 @@ export function TarankaHeader() {
         <div className="ml-auto flex h-full items-center">
           <div className="h-full w-px bg-cream-300" />
 
-          <div className="flex h-full items-center bg-cream-200 px-5 w-[252px]">
-            <input
-              type="search"
-              placeholder={t("header.searchPlaceholder")}
-              className="h-full flex-1 bg-transparent text-sm text-ink-900 placeholder:text-cream-400 outline-none"
-            />
-            <Search className="size-5 text-ink-900" strokeWidth={1.75} />
-          </div>
+          <HeaderSearch />
 
           <UserMenu />
           <div className="h-full w-px bg-cream-300" />

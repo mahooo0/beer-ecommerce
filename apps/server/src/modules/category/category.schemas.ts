@@ -85,3 +85,57 @@ export const updateCategoryAttributeSchema = z.object({
     }
   ),
 });
+
+// ============================================================================
+// CATEGORY FILTER (manual "добавить фильтр для категории") SCHEMAS
+// ============================================================================
+
+const filterTypeEnum = z.enum(['select', 'multi-select', 'range', 'checkbox']);
+const filterSourceEnum = z.enum(['manual', 'manufacturer']);
+
+// Create category filter schema — categoryId comes from the route param.
+export const createCategoryFilterSchema = z.object({
+  body: z.object({
+    name: z.string().min(1).max(100).optional(),
+    displayName: z.string().min(1).max(100),
+    type: filterTypeEnum.default('select'),
+    source: filterSourceEnum.default('manual'),
+    required: z.boolean().default(false),
+    sortOrder: z.number().int().min(0).default(0),
+    isActive: z.boolean().default(true),
+  }),
+});
+
+// Update category filter schema
+export const updateCategoryFilterSchema = z.object({
+  body: z.object({
+    name: z.string().min(1).max(100).optional(),
+    displayName: z.string().min(1).max(100).optional(),
+    type: filterTypeEnum.optional(),
+    source: filterSourceEnum.optional(),
+    required: z.boolean().optional(),
+    sortOrder: z.number().int().min(0).optional(),
+    isActive: z.boolean().optional(),
+  }),
+});
+
+// Create filter option schema
+export const createFilterOptionSchema = z.object({
+  body: z.object({
+    filterId: z.string().min(1),
+    value: z.string().min(1).max(200),
+    label: z.string().max(200).optional(),
+    sortOrder: z.number().int().min(0).default(0),
+    isActive: z.boolean().default(true),
+  }),
+});
+
+// Update filter option schema
+export const updateFilterOptionSchema = z.object({
+  body: z.object({
+    value: z.string().min(1).max(200).optional(),
+    label: z.string().max(200).nullable().optional(),
+    sortOrder: z.number().int().min(0).optional(),
+    isActive: z.boolean().optional(),
+  }),
+});

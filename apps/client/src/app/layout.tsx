@@ -5,6 +5,7 @@ import { I18nProvider } from '@/components/providers/i18n-provider';
 import { getServerLang, getServerT } from '@/lib/i18n/server';
 import { TarankaHeader } from '@/components/taranka/header';
 import { AutoBreadcrumbs } from '@/components/taranka/auto-breadcrumbs';
+import { CartWholesaleSync } from '@/components/taranka/cart-wholesale-sync';
 import { mursGothic, montserrat, poppins } from './fonts';
 import './globals.css';
 
@@ -28,6 +29,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <body className="min-h-screen bg-background font-taranka-body text-foreground antialiased">
           <I18nProvider lang={lang}>
             <NuqsAdapter>
+              <CartWholesaleSync />
               <TarankaHeader />
               <AutoBreadcrumbs />
               <main>{children}</main>

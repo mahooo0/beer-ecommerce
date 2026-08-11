@@ -6,6 +6,7 @@ import { config } from './config/index.js';
 import { errorHandler } from './common/middleware/error-handler.js';
 import { productRoutes } from './modules/product/product.routes.js';
 import { categoryRoutes } from './modules/category/category.routes.js';
+import { attributeRoutes } from './modules/attribute/attribute.routes.js';
 import { collectionRoutes } from './modules/collection/collection.routes.js';
 import { brandRoutes } from './modules/brand/brand.routes.js';
 import { tagRoutes } from './modules/tag/tag.routes.js';
@@ -40,6 +41,7 @@ app.use(express.json());
 // Routes
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
+app.use('/api/attributes', attributeRoutes);
 app.use('/api/collections', collectionRoutes);
 app.use('/api/brands', brandRoutes);
 app.use('/api/tags', tagRoutes);

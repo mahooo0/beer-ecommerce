@@ -42,12 +42,29 @@ export function resolvePrices(product: Product): { currentCents: number; regular
 }
 
 /**
+ * Effective in-stock flag for a product: honors the manual `isAvailable` flag
+ * and, when quantity is tracked, a positive count. Mirrors the storefront rule
+ * used on the detail page.
+ */
+export function isInStock(product: Product): boolean {
+  const p = product as Product & {
+    isAvailable?: boolean;
+    trackQuantity?: boolean;
+    quantity?: number;
+  };
+  if (p.isAvailable === false) return false;
+  if (p.trackQuantity && (p.quantity ?? 0) <= 0) return false;
+  return true;
+}
+
+/**
  * Map a server `Product` into the display shape the Taranka catalog cards expect.
  * Prices come from the API in cents.
  */
 export function toCatalogProduct(product: Product): CatalogProduct {
   const image = product.images?.[0] || PRODUCT_IMAGE_FALLBACK;
   const { currentCents, regularCents } = resolvePrices(product);
+  const p = product as Product & { wholesaleTiers?: CatalogProduct['wholesaleTiers'] };
 
   return {
     id: product.id,
@@ -57,6 +74,9 @@ export function toCatalogProduct(product: Product): CatalogProduct {
     oldPrice: regularCents != null ? formatZl(regularCents) : '',
     newPrice: formatZl(currentCents),
     image,
+    inStock: isInStock(product),
+    basePriceCents: currentCents,
+    wholesaleTiers: p.wholesaleTiers ?? [],
   };
 }
 

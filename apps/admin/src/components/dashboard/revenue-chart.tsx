@@ -7,15 +7,9 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import type { TimeSeriesPoint } from '@/lib/analytics-utils';
 import { Skeleton } from '@/components/ui/skeleton';
-
-const chartConfig = {
-  revenue: {
-    label: 'Revenue',
-    color: 'var(--chart-1)',
-  },
-} satisfies ChartConfig;
 
 interface RevenueChartProps {
   data: TimeSeriesPoint[];
@@ -23,6 +17,15 @@ interface RevenueChartProps {
 }
 
 export function RevenueChart({ data, loading }: RevenueChartProps) {
+  const { t } = useTranslation();
+
+  const chartConfig = {
+    revenue: {
+      label: t('overview.revenue.label'),
+      color: 'var(--chart-1)',
+    },
+  } satisfies ChartConfig;
+
   if (loading) {
     return (
       <div className="rounded-lg border bg-card p-4">
@@ -39,10 +42,10 @@ export function RevenueChart({ data, loading }: RevenueChartProps) {
 
   return (
     <div className="rounded-lg border bg-card p-4">
-      <h2 className="text-lg font-medium mb-4">Revenue Over Time</h2>
+      <h2 className="text-lg font-medium mb-4">{t('overview.revenue.title')}</h2>
       {chartData.length === 0 ? (
         <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-          No data for selected period
+          {t('overview.revenue.empty')}
         </div>
       ) : (
         <ChartContainer config={chartConfig} className="min-h-[250px] w-full">

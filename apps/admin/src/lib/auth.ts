@@ -53,10 +53,6 @@ export async function getCurrentPermissions(): Promise<Permission[]> {
   return getPermissions(await getCurrentRole());
 }
 
-/**
- * Legacy helper: require ADMIN or SUPER_ADMIN. Prefer requirePermission()
- * for section-level checks. Kept for existing callers.
- */
 export async function requireAdmin(): Promise<void> {
   const { sessionClaims } = await auth();
 

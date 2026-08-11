@@ -1,4 +1,4 @@
 packages:
   - "apps/*"
-  - "!apps/cms" # Payload CMS blog — isolated app (own lockfile/deps, own container, not in turbo dev)
+  - "!apps/cms" # Payload CMS blog — isolated app (own lockfile/deps, own container)
   - "packages/*"

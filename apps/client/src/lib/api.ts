@@ -34,6 +34,7 @@ interface GetProductsParams {
 
 export interface FilterProductsParams {
   categoryPath?: string;
+  search?: string;
   minPrice?: number;
   maxPrice?: number;
   brands?: string[];
@@ -103,6 +104,7 @@ export const api = {
     filter: (params: FilterProductsParams = {}) => {
       const queryParams = new URLSearchParams();
       if (params.categoryPath) queryParams.set('categoryPath', params.categoryPath);
+      if (params.search) queryParams.set('search', params.search);
       if (params.minPrice !== undefined && params.minPrice > 0) queryParams.set('minPrice', params.minPrice.toString());
       if (params.maxPrice !== undefined && params.maxPrice < 999999) queryParams.set('maxPrice', params.maxPrice.toString());
       if (params.brands && params.brands.length > 0) queryParams.set('brands', params.brands.join(','));

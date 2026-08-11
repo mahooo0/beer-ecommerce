@@ -8,6 +8,8 @@ import { TarankaFooter } from '@/components/taranka/footer';
 import { api } from '@/lib/api';
 import { toCatalogProducts } from '@/lib/product-mapper';
 import type { CatalogProduct } from '@/components/taranka/catalog-card';
+import { getLatestPostsSafe, postImageURL, formatBlogDate } from '@/lib/blog-api';
+import type { NewsSlide } from '@/components/taranka/news-slider';
 
 // Always fetch fresh catalog data on the server.
 export const dynamic = 'force-dynamic';
@@ -40,7 +42,21 @@ async function getPopularProducts(): Promise<CatalogProduct[]> {
 }
 
 export default async function HomePage() {
-  const [categories, popular] = await Promise.all([getCategorySlides(), getPopularProducts()]);
+  const [categories, popular, posts] = await Promise.all([
+    getCategorySlides(),
+    getPopularProducts(),
+    getLatestPostsSafe('pl', 8),
+  ]);
+
+  // Feed the existing news slider with the latest blog posts (pl). Falls back to
+  // the slider's built-in placeholders when the CMS has no posts / is unreachable.
+  const newsItems: NewsSlide[] = posts.map((p) => ({
+    image: postImageURL(p) || '/news/image0.jpg',
+    date: formatBlogDate(p.publishedAt),
+    title: p.title || '',
+    href: `/pl/blog/${p.slug}`,
+    meta: p.categories?.[0]?.title || undefined,
+  }));
 
   return (
     <div>
@@ -48,7 +64,7 @@ export default async function HomePage() {
       <TarankaCategorySlider categories={categories} />
       <TarankaPopularProducts products={popular} />
       <TarankaPromoBanner />
-      <TarankaNewsSlider />
+      <TarankaNewsSlider items={newsItems} />
       <TarankaAbout />
       <TarankaFooter />
     </div>

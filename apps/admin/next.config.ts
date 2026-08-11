@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
         port: storagePort,
         pathname: '/uploads/**',
       },
+      // MinIO object storage (dev + prod) — product/category/brand images
+      { protocol: 'https', hostname: 's3.dev.taranka.online' },
+      { protocol: 'https', hostname: 's3.taranka.online' },
     ],
   },
 };

@@ -9,7 +9,7 @@ import { TarankaFooter } from "@/components/taranka/footer";
 import { api } from "@/lib/api";
 import { toCatalogProducts, resolvePrices } from "@/lib/product-mapper";
 import { getServerT } from "@/lib/i18n/server";
-import type { Product } from "@repo/types";
+import type { Product, WholesaleTier } from "@repo/types";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +25,7 @@ type RawProduct = Product & {
   quantity?: number;
   trackQuantity?: boolean;
   isAvailable?: boolean;
+  wholesaleTiers?: WholesaleTier[];
 };
 
 function resolveStock(raw: RawProduct): number | null {
@@ -61,6 +62,8 @@ function toDetail(raw: RawProduct): ProductDetailData {
     images,
     price: currentCents / 100,
     oldPrice: regularCents != null ? regularCents / 100 : undefined,
+    basePriceCents: currentCents,
+    wholesaleTiers: Array.isArray(raw.wholesaleTiers) ? raw.wholesaleTiers : [],
     stock: resolveStock(raw),
     specs,
   };

@@ -17,12 +17,13 @@ export async function generateUniqueSlug(
     name = 'product';
   }
 
-  // Generate base slug
+  // Generate base slug. A fully-Cyrillic name under strict mode can collapse to
+  // '' — fall back to 'product' so we never store an empty/hyphen-only slug.
   const baseSlug = (slugifyFn as any)(name, {
     lower: true,
     strict: true,
     trim: true,
-  });
+  }) || 'product';
 
   let slug = baseSlug;
   let counter = 0;

@@ -36,10 +36,10 @@ yarn-error.log*
 
 # Prisma
 packages/db/src/generated/
+.pnpm-store/
+._*
 
 # Local Claude Code tooling (machine-specific)
-.claude/settings.local.json
-.claude/scheduled_tasks.lock
+.claude/
 skills-lock.json
 .agents/
-.claude/

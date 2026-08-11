@@ -1,4 +1,76 @@
-import type { ApiResponse, PaginatedResponse, Product, Order, User, ShippingZone, ShippingMethod, Category, CategoryAttribute, Brand, Tag, Collection } from '@repo/types';
+import type {
+  ApiResponse,
+  PaginatedResponse,
+  Product,
+  Order,
+  User,
+  ShippingZone,
+  ShippingMethod,
+  Category,
+  CategoryAttribute,
+  Brand,
+  Tag,
+  Collection,
+  Attribute,
+  AttributeValue,
+  ProductAttributeValue,
+  CategoryFilter,
+  CategoryFilterOption,
+} from '@repo/types';
+
+// ============================================================================
+// Structured-attribute / category-filter / product-facet payload shapes.
+// These mirror the server responses in apps/server/src/modules/{attribute,
+// category,product}. All ids are cuid strings.
+// ============================================================================
+
+/** A single attribute-value selection sent to PUT /attributes/product/:id. */
+export interface ProductAttributeValueInput {
+  attributeId: string;
+  attributeValueId: string;
+}
+
+/** Query params accepted by GET /products/filter (and /facets, /completeness-stats). */
+export interface ProductFilterParams {
+  minPrice?: number;
+  maxPrice?: number;
+  brands?: string; // comma-separated brand ids
+  attributes?: string; // legacy JSONB "key:value" pairs
+  attributeValues?: string; // comma-separated AttributeValue ids
+  availability?: string; // comma-separated: in_stock | out_of_stock | pre_order
+  isAvailable?: boolean; // manual in/out-of-stock flag
+  categoryId?: string;
+  categoryPath?: string;
+  completenessFilter?: 'complete' | 'incomplete';
+  status?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  token?: string;
+}
+
+/** GET /products/facets response payload (data field of ApiResponse). */
+export interface ProductFacets {
+  brands: Array<{ id: string; name: string; count: number }>;
+  attributes: Record<string, Array<{ value: string; count: number }>>;
+  attributeValues: Array<{ attributeValueId: string; count: number }>;
+  availability: Array<{ status: string; count: number }>;
+  isAvailable: Array<{ value: boolean; count: number }>;
+  priceRange: { min: number; max: number } | null;
+}
+
+/** GET /products/completeness-stats response payload. */
+export interface ProductCompletenessStats {
+  total: number;
+  complete: number;
+  high: number;
+  medium: number;
+  low: number;
+  empty: number;
+  incomplete: number;
+  fields: number; // number of scored fields (COMPLETENESS_FIELDS = 6)
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 const STORAGE_URL = process.env.NEXT_PUBLIC_STORAGE_URL || 'http://localhost:4001';
@@ -89,6 +161,163 @@ export const api = {
       fetcher<ApiResponse<{ count: number }>>('/products/bulk/delete', {
         method: 'POST',
         body: JSON.stringify({ ids }),
+        token,
+      }),
+    getBySlug: (slug: string, token?: string) =>
+      fetcher<ApiResponse<Product>>(`/products/slug/${slug}`, { token }),
+    // Rich catalog filter — GET /products/filter. Returns a PaginatedResponse
+    // shaped envelope { success, data, total, page, limit, totalPages }.
+    filter: (params?: ProductFilterParams) => {
+      const qp = new URLSearchParams();
+      if (params?.minPrice != null) qp.set('minPrice', String(params.minPrice));
+      if (params?.maxPrice != null) qp.set('maxPrice', String(params.maxPrice));
+      if (params?.brands) qp.set('brands', params.brands);
+      if (params?.attributes) qp.set('attributes', params.attributes);
+      if (params?.attributeValues) qp.set('attributeValues', params.attributeValues);
+      if (params?.availability) qp.set('availability', params.availability);
+      if (params?.isAvailable != null) qp.set('isAvailable', String(params.isAvailable));
+      if (params?.categoryId) qp.set('categoryId', params.categoryId);
+      if (params?.categoryPath) qp.set('categoryPath', params.categoryPath);
+      if (params?.completenessFilter) qp.set('completenessFilter', params.completenessFilter);
+      if (params?.status) qp.set('status', params.status);
+      if (params?.page) qp.set('page', String(params.page));
+      if (params?.limit) qp.set('limit', String(params.limit));
+      if (params?.sortBy) qp.set('sortBy', params.sortBy);
+      if (params?.sortOrder) qp.set('sortOrder', params.sortOrder);
+      const qs = qp.toString();
+      return fetcher<PaginatedResponse<Product>>(`/products/filter${qs ? `?${qs}` : ''}`, { token: params?.token });
+    },
+    // GET /products/facets — facet counts for the current filter set.
+    facets: (params?: ProductFilterParams) => {
+      const qp = new URLSearchParams();
+      if (params?.categoryPath) qp.set('categoryPath', params.categoryPath);
+      if (params?.categoryId) qp.set('categoryId', params.categoryId);
+      if (params?.minPrice != null) qp.set('minPrice', String(params.minPrice));
+      if (params?.maxPrice != null) qp.set('maxPrice', String(params.maxPrice));
+      if (params?.brands) qp.set('brands', params.brands);
+      if (params?.attributes) qp.set('attributes', params.attributes);
+      if (params?.attributeValues) qp.set('attributeValues', params.attributeValues);
+      if (params?.availability) qp.set('availability', params.availability);
+      if (params?.isAvailable != null) qp.set('isAvailable', String(params.isAvailable));
+      const qs = qp.toString();
+      return fetcher<ApiResponse<ProductFacets>>(`/products/facets${qs ? `?${qs}` : ''}`, { token: params?.token });
+    },
+    // GET /products/completeness-stats — accepts the same filter params as list.
+    completenessStats: (params?: ProductFilterParams) => {
+      const qp = new URLSearchParams();
+      if (params?.categoryId) qp.set('categoryId', params.categoryId);
+      if (params?.categoryPath) qp.set('categoryPath', params.categoryPath);
+      if (params?.status) qp.set('status', params.status);
+      if (params?.brands) qp.set('brands', params.brands);
+      if (params?.attributeValues) qp.set('attributeValues', params.attributeValues);
+      if (params?.isAvailable != null) qp.set('isAvailable', String(params.isAvailable));
+      const qs = qp.toString();
+      return fetcher<ApiResponse<ProductCompletenessStats>>(`/products/completeness-stats${qs ? `?${qs}` : ''}`, { token: params?.token });
+    },
+    // PUT /attributes/product/:productId — bulk-set a product's attribute values
+    // (delete-all-then-createMany server-side). Convenience alias that lives on
+    // api.products for the product form; the same call exists on api.attributes.
+    setAttributeValues: (productId: string, values: ProductAttributeValueInput[], token?: string) =>
+      fetcher<ApiResponse<ProductAttributeValue[]>>(`/attributes/product/${productId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ values }),
+        token,
+      }),
+  },
+  // ==========================================================================
+  // Structured attributes (normalized, 4fr-style) — mounted at /attributes.
+  // See apps/server/src/modules/attribute/attribute.routes.ts.
+  // ==========================================================================
+  attributes: {
+    // GET /attributes/category/:categoryId — attributes (with their values).
+    byCategory: (categoryId: string, token?: string) =>
+      fetcher<ApiResponse<Attribute[]>>(`/attributes/category/${categoryId}`, { token }),
+    // GET /attributes/:id — single attribute with values.
+    get: (id: string, token?: string) =>
+      fetcher<ApiResponse<Attribute>>(`/attributes/${id}`, { token }),
+    // POST /attributes — `name` (machine slug) optional; derived server-side.
+    create: (
+      data: {
+        categoryId: string;
+        displayName: string;
+        name?: string;
+        isFilterable?: boolean;
+        isVisibleOnProductPage?: boolean;
+        usedForVariations?: boolean;
+        showValueIcons?: boolean;
+        displayType?: 'checkbox' | 'select' | 'button' | 'color' | 'range';
+        sortOrder?: number;
+        isActive?: boolean;
+      },
+      token?: string
+    ) =>
+      fetcher<ApiResponse<Attribute>>('/attributes', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    // PUT /attributes/:id
+    update: (id: string, data: Partial<Attribute>, token?: string) =>
+      fetcher<ApiResponse<Attribute>>(`/attributes/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        token,
+      }),
+    // DELETE /attributes/:id
+    remove: (id: string, token?: string) =>
+      fetcher<ApiResponse<void>>(`/attributes/${id}`, { method: 'DELETE', token }),
+    // PUT /attributes/reorder — bulk drag-and-drop; body is a raw array.
+    reorder: (order: Array<{ id: string; sortOrder: number }>, token?: string) =>
+      fetcher<ApiResponse<void>>('/attributes/reorder', {
+        method: 'PUT',
+        body: JSON.stringify(order),
+        token,
+      }),
+    // ----- Attribute values (the "common option / общая опция") -----
+    // POST /attributes/values — 409 on duplicate value within an attribute.
+    createValue: (
+      data: {
+        attributeId: string;
+        value: string;
+        displayValue?: string;
+        colorCode?: string;
+        iconUrl?: string;
+        sortOrder?: number;
+        isActive?: boolean;
+      },
+      token?: string
+    ) =>
+      fetcher<ApiResponse<AttributeValue>>('/attributes/values', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        token,
+      }),
+    // PUT /attributes/values/:id
+    updateValue: (id: string, data: Partial<AttributeValue>, token?: string) =>
+      fetcher<ApiResponse<AttributeValue>>(`/attributes/values/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+        token,
+      }),
+    // DELETE /attributes/values/:id
+    removeValue: (id: string, token?: string) =>
+      fetcher<ApiResponse<void>>(`/attributes/values/${id}`, { method: 'DELETE', token }),
+    // PUT /attributes/values/reorder — bulk drag-and-drop; body is a raw array.
+    valuesReorder: (order: Array<{ id: string; sortOrder: number }>, token?: string) =>
+      fetcher<ApiResponse<void>>('/attributes/values/reorder', {
+        method: 'PUT',
+        body: JSON.stringify(order),
+        token,
+      }),
+    // ----- Product attribute values (junction) -----
+    // GET /attributes/product/:productId
+    getProductValues: (productId: string, token?: string) =>
+      fetcher<ApiResponse<ProductAttributeValue[]>>(`/attributes/product/${productId}`, { token }),
+    // PUT /attributes/product/:productId — bulk-set (delete-all-then-createMany).
+    setProductValues: (productId: string, values: ProductAttributeValueInput[], token?: string) =>
+      fetcher<ApiResponse<ProductAttributeValue[]>>(`/attributes/product/${productId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ values }),
         token,
       }),
   },
@@ -182,6 +411,41 @@ export const api = {
     createAttribute: (categoryId: string, data: Partial<CategoryAttribute>, token?: string) => fetcher<ApiResponse<CategoryAttribute>>(`/categories/${categoryId}/attributes`, { method: 'POST', body: JSON.stringify(data), token }),
     updateAttribute: (attributeId: string, data: Partial<CategoryAttribute>, token?: string) => fetcher<ApiResponse<CategoryAttribute>>(`/categories/attributes/${attributeId}`, { method: 'PUT', body: JSON.stringify(data), token }),
     deleteAttribute: (attributeId: string, token?: string) => fetcher<ApiResponse<void>>(`/categories/attributes/${attributeId}`, { method: 'DELETE', token }),
+    // Manual category filters ("добавить фильтр для категории"). These are
+    // mounted UNDER the category router: reads at /categories/:id/filters,
+    // writes at /categories/filters/... (see category.routes.ts).
+    filters: {
+      byCategory: (categoryId: string, token?: string) =>
+        fetcher<ApiResponse<CategoryFilter[]>>(`/categories/${categoryId}/filters`, { token }),
+      create: (categoryId: string, data: Partial<CategoryFilter>, token?: string) =>
+        fetcher<ApiResponse<CategoryFilter>>(`/categories/${categoryId}/filters`, {
+          method: 'POST',
+          body: JSON.stringify(data),
+          token,
+        }),
+      update: (filterId: string, data: Partial<CategoryFilter>, token?: string) =>
+        fetcher<ApiResponse<CategoryFilter>>(`/categories/filters/${filterId}`, {
+          method: 'PUT',
+          body: JSON.stringify(data),
+          token,
+        }),
+      remove: (filterId: string, token?: string) =>
+        fetcher<ApiResponse<void>>(`/categories/filters/${filterId}`, { method: 'DELETE', token }),
+      createOption: (data: { filterId: string; value: string; label?: string; sortOrder?: number; isActive?: boolean }, token?: string) =>
+        fetcher<ApiResponse<CategoryFilterOption>>('/categories/filters/options', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          token,
+        }),
+      removeOption: (optionId: string, token?: string) =>
+        fetcher<ApiResponse<void>>(`/categories/filters/options/${optionId}`, { method: 'DELETE', token }),
+      // POST /categories/filters/:id/auto-populate — manufacturer-source only.
+      autoPopulate: (filterId: string, token?: string) =>
+        fetcher<ApiResponse<{ count: number }>>(`/categories/filters/${filterId}/auto-populate`, {
+          method: 'POST',
+          token,
+        }),
+    },
   },
   collections: {
     getAll: (params?: { page?: number; limit?: number; token?: string }) => {

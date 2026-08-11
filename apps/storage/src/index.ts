@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { config } from './config.js';
 import uploadRoutes from './routes/upload.routes.js';
+import { ensureBucket } from './services/s3.js';
 
 const app = express();
 
@@ -40,8 +41,16 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 });
 
 async function start() {
-  // Ensure uploads directory exists
+  // Ensure uploads directory exists (legacy static serving / fallback)
   await fs.mkdir(config.uploadDir, { recursive: true });
+
+  // Ensure the MinIO bucket exists and is publicly readable
+  try {
+    await ensureBucket();
+    console.log(`[storage] object storage ready: bucket "${config.s3.bucket}" @ ${config.s3.endpoint}:${config.s3.port}`);
+  } catch (err) {
+    console.error('[storage] FAILED to init object storage:', (err as Error).message);
+  }
 
   app.listen(config.port, () => {
     console.log(`Storage service running on port ${config.port}`);

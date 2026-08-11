@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, Minus, Plus, CheckCircle2, Truck, CreditCard, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useUser } from "@clerk/nextjs";
+import { resolveWholesaleUnitPrice, sortedWholesaleTiers, type WholesaleTier } from "@repo/types";
 import { useCart } from "@/lib/cart-store";
 
 export interface ProductDetailData {
@@ -15,6 +17,10 @@ export interface ProductDetailData {
   price: number;
   /** Optional crossed-out price in major units. */
   oldPrice?: number;
+  /** Retail unit price in cents — basis for wholesale tier math. */
+  basePriceCents: number;
+  /** Wholesale quantity tiers (cents); applied only for WHOLESALE customers. */
+  wholesaleTiers?: WholesaleTier[];
   /** Total available stock, or null when unknown. */
   stock: number | null;
   specs: { label: string; value: string }[];
@@ -30,6 +36,27 @@ export function TarankaProductDetail({ product }: { product: ProductDetailData }
   const [added, setAdded] = useState(false);
   const addItem = useCart((s) => s.addItem);
   const { t } = useTranslation("catalog");
+  const setWholesale = useCart((s) => s.setWholesale);
+
+  // Wholesale customers (Clerk publicMetadata.customerType === 'WHOLESALE') see
+  // quantity tiers; retail always pays the regular price.
+  const { user } = useUser();
+  const isWholesale = user?.publicMetadata?.customerType === "WHOLESALE";
+  const tiers = product.wholesaleTiers ?? [];
+  const showWholesale = isWholesale && tiers.length > 0;
+  const sortedTiers = sortedWholesaleTiers(tiers);
+  const effUnit =
+    resolveWholesaleUnitPrice({
+      basePrice: product.basePriceCents,
+      tiers,
+      quantity: qty,
+      isWholesale,
+    }) / 100;
+
+  // Keep the cart's wholesale flag in sync so mini-cart re-prices by quantity.
+  useEffect(() => {
+    setWholesale(isWholesale);
+  }, [isWholesale, setWholesale]);
 
   const handleAddToCart = () => {
     addItem(
@@ -39,7 +66,9 @@ export function TarankaProductDetail({ product }: { product: ProductDetailData }
         weight: product.weight,
         image: images[0] ?? IMAGE_FALLBACK,
         oldPrice: product.oldPrice ?? product.price,
-        newPrice: product.price,
+        newPrice: showWholesale ? effUnit : product.price,
+        basePriceCents: product.basePriceCents,
+        tiers,
       },
       qty
     );
@@ -123,10 +152,42 @@ export function TarankaProductDetail({ product }: { product: ProductDetailData }
               </p>
             )}
             <p className="text-2xl font-bold text-[#443029]">
-              {fmt(product.price)}{" "}
+              {fmt(showWholesale ? effUnit : product.price)}{" "}
               <span className="font-normal text-base">{t("detail.wholesalePrice")}</span>
             </p>
+            {showWholesale && qty > 1 && (
+              <p className="text-base text-[#443029]">
+                {t("detail.wholesale.totalLabel")}{" "}
+                <span className="font-semibold">{fmt(effUnit * qty)}</span>{" "}
+                {t("detail.wholesale.perQty", { qty })}
+              </p>
+            )}
           </div>
+
+          {showWholesale && sortedTiers.length > 0 && (
+            <div className="mt-5 rounded-[14px] border border-[#E7E2D6] bg-[#FBF9F3] p-4">
+              <p className="text-sm font-semibold text-[#443029]">{t("detail.wholesale.heading")}</p>
+              <ul className="mt-2 space-y-1">
+                {sortedTiers.map((tier) => {
+                  const active = qty >= tier.minQty;
+                  return (
+                    <li
+                      key={tier.minQty}
+                      className={`flex items-baseline justify-between text-sm ${
+                        active ? "font-semibold text-[#443029]" : "text-[#8A857A]"
+                      }`}
+                    >
+                      <span>{t("detail.wholesale.fromQty", { qty: tier.minQty })}</span>
+                      <span>
+                        {fmt(tier.price / 100)}{" "}
+                        <span className="text-xs font-normal">({fmt(tier.unitPrice / 100)}{t("detail.wholesale.perPc")})</span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
           <div className="mt-9 flex items-center gap-3">
             <div className="inline-flex h-[30px] w-24 items-center justify-between rounded-full border border-[#9E9B90] px-2">

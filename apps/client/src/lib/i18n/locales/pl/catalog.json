@@ -17,7 +17,8 @@
   "card": {
     "addToFavorites": "Dodaj do ulubionych",
     "added": "Dodano",
-    "addToCart": "Do koszyka"
+    "addToCart": "Do koszyka",
+    "outOfStock": "Brak w magazynie"
   },
   "detail": {
     "selectImage": "Wybierz zdjęcie {{index}}",
@@ -32,7 +33,14 @@
     "quickOrder": "szybkie zamówienie",
     "addToFavorites": "Dodaj do ulubionych",
     "delivery": "Dostawa",
-    "payment": "Płatność"
+    "payment": "Płatność",
+    "wholesale": {
+      "totalLabel": "razem:",
+      "perQty": "za {{qty}} szt.",
+      "heading": "Ceny hurtowe (ilościowe)",
+      "fromQty": "od {{qty}} szt.",
+      "perPc": "/szt."
+    }
   },
   "description": {
     "tabDescription": "Opis",

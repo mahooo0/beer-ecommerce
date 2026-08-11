@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslation } from 'react-i18next';
 import type { Order } from '@repo/types';
 import {
   Table,
@@ -31,17 +32,18 @@ interface RecentOrdersTableProps {
 }
 
 export function RecentOrdersTable({ orders, loading }: RecentOrdersTableProps) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-lg border bg-card p-4">
-      <h2 className="text-lg font-medium mb-4">Recent Orders</h2>
+      <h2 className="text-lg font-medium mb-4">{t('overview.recentOrders.title')}</h2>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Order #</TableHead>
-            <TableHead>Customer</TableHead>
-            <TableHead>Total</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead>{t('overview.recentOrders.columns.orderNumber')}</TableHead>
+            <TableHead>{t('overview.recentOrders.columns.customer')}</TableHead>
+            <TableHead>{t('overview.recentOrders.columns.total')}</TableHead>
+            <TableHead>{t('overview.recentOrders.columns.status')}</TableHead>
+            <TableHead>{t('overview.recentOrders.columns.date')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -75,7 +77,7 @@ export function RecentOrdersTable({ orders, loading }: RecentOrdersTableProps) {
                       <span
                         className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${statusColors[order.status] || 'bg-muted text-foreground'}`}
                       >
-                        {order.status.replace('_', ' ')}
+                        {t(`overview.status.${order.status}`)}
                       </span>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -87,7 +89,7 @@ export function RecentOrdersTable({ orders, loading }: RecentOrdersTableProps) {
         </TableBody>
       </Table>
       {!loading && orders.length === 0 && (
-        <div className="text-center py-8 text-muted-foreground">No recent orders</div>
+        <div className="text-center py-8 text-muted-foreground">{t('overview.recentOrders.empty')}</div>
       )}
     </div>
   );

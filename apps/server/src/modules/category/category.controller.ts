@@ -131,6 +131,71 @@ export class CategoryController {
       next(error);
     }
   }
+
+  // Category filter methods (manual "добавить фильтр для категории")
+
+  async getFilters(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await categoryService.getFilters(req.params.id);
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createFilter(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await categoryService.createFilter(req.params.id, req.body);
+      res.status(201).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateFilter(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await categoryService.updateFilter(req.params.id, req.body);
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteFilter(req: Request, res: Response, next: NextFunction) {
+    try {
+      await categoryService.deleteFilter(req.params.id);
+      res.json({ success: true, message: 'Filter deleted' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createFilterOption(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await categoryService.createFilterOption(req.body);
+      res.status(201).json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteFilterOption(req: Request, res: Response, next: NextFunction) {
+    try {
+      await categoryService.deleteFilterOption(req.params.id);
+      res.json({ success: true, message: 'Filter option deleted' });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async autoPopulateFilter(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { count } = await categoryService.autoPopulateFilter(req.params.id);
+      res.json({ success: true, data: { count }, message: `Added ${count} options` });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const categoryController = new CategoryController();

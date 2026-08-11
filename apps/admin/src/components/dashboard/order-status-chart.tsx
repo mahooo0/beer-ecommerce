@@ -1,6 +1,7 @@
 'use client';
 
 import { Label, Pie, PieChart } from 'recharts';
+import { useTranslation } from 'react-i18next';
 import {
   ChartConfig,
   ChartContainer,
@@ -17,6 +18,7 @@ interface OrderStatusChartProps {
 }
 
 export function OrderStatusChart({ data, totalOrders, loading }: OrderStatusChartProps) {
+  const { t } = useTranslation();
   if (loading) {
     return (
       <div className="rounded-lg border bg-card p-4">
@@ -27,7 +29,7 @@ export function OrderStatusChart({ data, totalOrders, loading }: OrderStatusChar
   }
 
   const chartConfig: ChartConfig = {
-    count: { label: 'Orders' },
+    count: { label: t('overview.orderStatus.orders') },
     ...Object.fromEntries(
       data.map((d) => [
         d.status,
@@ -44,10 +46,10 @@ export function OrderStatusChart({ data, totalOrders, loading }: OrderStatusChar
 
   return (
     <div className="rounded-lg border bg-card p-4">
-      <h2 className="text-lg font-medium mb-4">Order Status</h2>
+      <h2 className="text-lg font-medium mb-4">{t('overview.orderStatus.title')}</h2>
       {chartData.length === 0 ? (
         <div className="flex items-center justify-center h-[250px] text-muted-foreground">
-          No order data
+          {t('overview.orderStatus.empty')}
         </div>
       ) : (
         <ChartContainer config={chartConfig} className="mx-auto aspect-square max-h-[250px]">
@@ -69,7 +71,7 @@ export function OrderStatusChart({ data, totalOrders, loading }: OrderStatusChar
                           {totalOrders.toLocaleString()}
                         </tspan>
                         <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 24} className="fill-muted-foreground">
-                          Orders
+                          {t('overview.orderStatus.orders')}
                         </tspan>
                       </text>
                     );
