@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Newspaper, CheckCircle2, FileEdit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -36,8 +37,6 @@ function fmtDate(iso?: string | null): string {
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
 }
 
-const CMS_URL = process.env.NEXT_PUBLIC_CMS_URL || 'https://cms.dev.taranka.online';
-
 export function BlogPostsPageClient({ posts }: { posts: AdminPost[] }) {
   const { t, i18n } = useTranslation();
   const lang = i18n.language?.startsWith('uk') ? 'uk' : 'pl';
@@ -58,11 +57,8 @@ export function BlogPostsPageClient({ posts }: { posts: AdminPost[] }) {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">{t('blog.title')}</h1>
-        {/* TODO(editor): swap to native /dashboard/blog/new once the post editor lands. */}
         <Button asChild>
-          <a href={`${CMS_URL}/admin/collections/posts/create`} target="_blank" rel="noreferrer">
-            {t('blog.add')}
-          </a>
+          <Link href="/dashboard/blog/new">{t('blog.add')}</Link>
         </Button>
       </div>
 
@@ -119,7 +115,7 @@ export function BlogPostsPageClient({ posts }: { posts: AdminPost[] }) {
                 </TableCell>
                 <TableCell className="text-muted-foreground">{fmtDate(p.updatedAt)}</TableCell>
                 <TableCell>
-                  <BlogPostRowActions postId={p.id} editHref={`${CMS_URL}/admin/collections/posts/${p.id}`} />
+                  <BlogPostRowActions postId={p.id} />
                 </TableCell>
               </TableRow>
             ))}

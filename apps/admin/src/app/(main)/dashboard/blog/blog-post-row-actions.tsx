@@ -8,13 +8,7 @@ import { api } from '@/lib/api';
 import { DataTableRowActions } from '@/components/DataTableRowActions';
 import { showError } from '@/lib/toast';
 
-export function BlogPostRowActions({
-  postId,
-  editHref,
-}: {
-  postId: string | number;
-  editHref: string;
-}) {
+export function BlogPostRowActions({ postId }: { postId: string | number }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { getToken } = useAuth();
@@ -33,10 +27,9 @@ export function BlogPostRowActions({
   return (
     <DataTableRowActions
       actions={[
-        // TODO(editor): point at native /dashboard/blog/[id] once the editor lands.
         {
           label: t('blog.actions.edit'),
-          onClick: () => window.open(editHref, '_blank', 'noopener'),
+          onClick: () => router.push(`/dashboard/blog/${postId}/edit`),
           icon: <Pencil className="h-4 w-4" />,
         },
         {
