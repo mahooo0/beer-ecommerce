@@ -37,6 +37,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { PRESERVED_NODES } from './preserved-nodes';
 
 const theme = {
   paragraph: 'mb-2 leading-relaxed',
@@ -157,7 +158,7 @@ export function RichTextEditor({ value, onChange, placeholder }: RichTextEditorP
       // eslint-disable-next-line no-console
       console.error('[lexical]', e);
     },
-    nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, LinkNode, AutoLinkNode],
+    nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode, LinkNode, AutoLinkNode, ...PRESERVED_NODES],
     editorState: hasValue ? JSON.stringify(value) : undefined,
   };
 
