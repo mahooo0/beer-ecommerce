@@ -1,15 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@clerk/nextjs';
-import { ArrowUp, ArrowDown, Trash2, Plus } from 'lucide-react';
+import { ArrowUp, ArrowDown, Trash2, Type, FormInput, Image as ImageIcon, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Card, CardHeader, CardTitle, CardDescription, CardContent,
+} from '@/components/ui/card';
 import { RichTextEditor } from '@/components/lexical/rich-text-editor';
+import { MediaPicker } from '@/components/blog/media-picker';
 import { api } from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
 
@@ -19,6 +23,13 @@ type Block = Record<string, unknown> & { blockType?: string; id?: string };
 export interface FormOpt {
   id: number | string;
   title: string;
+}
+
+interface MediaDoc {
+  id?: number | string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  sizes?: Record<string, { url?: string | null }> | null;
 }
 
 export interface EditablePage {
@@ -43,11 +54,58 @@ const EMPTY_RT = {
 
 const newContent = (): Block => ({ blockType: 'content', columns: [{ size: 'full', richText: EMPTY_RT }] });
 const newForm = (formId: number | string | undefined): Block => ({ blockType: 'formBlock', form: formId, enableIntro: false });
+const newMedia = (): Block => ({ blockType: 'mediaBlock', media: undefined });
 
 function blockLabel(type: string | undefined, t: (k: string) => string): string {
   if (type === 'content') return t('pages.blocks.content');
   if (type === 'formBlock') return t('pages.blocks.form');
+  if (type === 'mediaBlock') return t('pages.blocks.media');
   return type || 'block';
+}
+
+function mediaThumb(m: MediaDoc | null | undefined): string | null {
+  if (!m) return null;
+  return m.sizes?.thumbnail?.url || m.thumbnailURL || m.url || null;
+}
+
+/**
+ * Bridges a mediaBlock's `media` upload relationship to the shared MediaPicker.
+ * The page is fetched with depth=0, so an existing block carries `media` as a
+ * numeric id only — we lazily resolve its thumbnail URL for the preview, while
+ * the block itself keeps storing the id (writable back to Payload as-is).
+ */
+function MediaBlockField({ block, onChange }: { block: Block; onChange: (mediaId: number | string | null) => void }) {
+  const { getToken } = useAuth();
+  const media = (block as { media?: unknown }).media;
+  const id = media == null ? null : (typeof media === 'object' ? (media as { id: number | string }).id : (media as number | string));
+  const [url, setUrl] = useState<string | null>(typeof media === 'object' ? mediaThumb(media as MediaDoc) : null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (id != null && !url) {
+      (async () => {
+        try {
+          const token = await getToken();
+          if (!token) return;
+          const doc = await api.blog.get<MediaDoc>('media', id, { depth: 0 }, token);
+          if (!cancelled) setUrl(mediaThumb(doc));
+        } catch {
+          /* preview only — ignore resolve failures */
+        }
+      })();
+    }
+    return () => { cancelled = true; };
+  }, [id, url, getToken]);
+
+  return (
+    <MediaPicker
+      value={id}
+      valueUrl={url}
+      onChange={(newId, newUrl) => { setUrl(newUrl); onChange(newId); }}
+      aspect={16 / 9}
+      width={220}
+    />
+  );
 }
 
 export function PageForm({ page, forms }: { page: EditablePage; forms: FormOpt[] }) {
@@ -77,7 +135,8 @@ export function PageForm({ page, forms }: { page: EditablePage; forms: FormOpt[]
     const j = i + dir;
     if (j < 0 || j >= layout.length) return;
     const next = [...layout];
-    [next[i], next[j]] = [next[j], next[i]];
+    const [moved] = next.splice(i, 1);
+    if (moved) next.splice(j, 0, moved);
     setLayout(next);
   };
   const removeAt = (i: number) => setLayout(layout.filter((_, idx) => idx !== i));
@@ -91,8 +150,12 @@ export function PageForm({ page, forms }: { page: EditablePage; forms: FormOpt[]
     });
 
   const save = async (publish?: boolean) => {
-    if (!titlePl.trim()) { showError(t('pages.errors.titleRequired')); return; }
-    if (!layoutPl.length) { showError(t('pages.errors.layoutRequired')); return; }
+    // Both locales are mandatory: title + at least one layout block each.
+    if (!titlePl.trim()) { setLocale('pl'); showError(t('pages.errors.titleRequiredPl')); return; }
+    if (!titleUk.trim()) { setLocale('uk'); showError(t('pages.errors.titleRequiredUk')); return; }
+    if (!layoutPl.length) { setLocale('pl'); showError(t('pages.errors.layoutRequiredPl')); return; }
+    if (!layoutUk.length) { setLocale('uk'); showError(t('pages.errors.layoutRequiredUk')); return; }
+
     const st = publish !== undefined ? (publish ? 'published' : 'draft') : status;
     setSaving(true);
     try {
@@ -110,9 +173,9 @@ export function PageForm({ page, forms }: { page: EditablePage; forms: FormOpt[]
 
       const ukData: Record<string, unknown> = {
         title: titleUk || undefined,
+        layout: layoutUk,
         meta: { title: metaTitleUk || undefined, description: metaDescUk || undefined },
       };
-      if (layoutUk.length) ukData.layout = layoutUk;
       await api.blog.update('pages', page.id, ukData, { locale: 'uk' }, token);
 
       setStatus(st);
@@ -127,9 +190,9 @@ export function PageForm({ page, forms }: { page: EditablePage; forms: FormOpt[]
   };
 
   return (
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-foreground">{t('pages.editTitle')}</h1>
+    <div className="mx-auto max-w-3xl space-y-5">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('pages.editTitle')}</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => router.push('/dashboard/pages')} disabled={saving}>{t('pages.cancel')}</Button>
           <Button variant="outline" onClick={() => save(false)} disabled={saving}>{t('pages.saveDraft')}</Button>
@@ -137,48 +200,63 @@ export function PageForm({ page, forms }: { page: EditablePage; forms: FormOpt[]
         </div>
       </div>
 
-      <div className="mb-4 inline-flex rounded-md border p-0.5">
+      {/* Locale switch */}
+      <div className="inline-flex rounded-md border bg-card p-0.5">
         {(['pl', 'uk'] as Loc[]).map((l) => (
           <button
             key={l}
             type="button"
             onClick={() => setLocale(l)}
-            className={`rounded px-3 py-1 text-sm ${locale === l ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground'}`}
+            className={`rounded px-4 py-1 text-sm transition-colors ${locale === l ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
           >
             {l.toUpperCase()}
           </button>
         ))}
       </div>
 
-      <div className="grid gap-5">
-        <div className="grid gap-1.5">
-          <Label>{t('pages.fields.title')} ({locale.toUpperCase()})</Label>
-          {locale === 'pl' ? (
-            <Input value={titlePl} onChange={(e) => setTitlePl(e.target.value)} />
-          ) : (
-            <Input value={titleUk} onChange={(e) => setTitleUk(e.target.value)} />
-          )}
-        </div>
+      {/* Basic info */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('pages.sections.basics')}</CardTitle>
+          <CardDescription>{t('pages.sections.basicsHint')}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-1.5">
+            <Label>{t('pages.fields.title')} ({locale.toUpperCase()})</Label>
+            {locale === 'pl' ? (
+              <Input value={titlePl} onChange={(e) => setTitlePl(e.target.value)} />
+            ) : (
+              <Input value={titleUk} onChange={(e) => setTitleUk(e.target.value)} />
+            )}
+          </div>
+          <div className="grid gap-1.5">
+            <Label>{t('pages.fields.slug')}</Label>
+            <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug" />
+          </div>
+        </CardContent>
+      </Card>
 
-        <div className="grid gap-1.5">
-          <Label>{t('pages.fields.slug')}</Label>
-          <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="slug" />
-        </div>
-
-        {/* Layout blocks (localized) */}
-        <div className="grid gap-3">
-          <Label>{t('pages.layout')} ({locale.toUpperCase()})</Label>
+      {/* Layout blocks (localized) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('pages.layout')} ({locale.toUpperCase()})</CardTitle>
+          <CardDescription>{t('pages.sections.layoutHint')}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3">
           {layout.length === 0 && (
-            <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">{t('pages.noBlocks')}</div>
+            <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">{t('pages.noBlocks')}</div>
           )}
           {layout.map((b, i) => (
-            <div key={b.id || i} className="rounded-lg border bg-card">
-              <div className="flex items-center justify-between border-b px-3 py-2">
-                <span className="text-sm font-medium text-foreground">{blockLabel(b.blockType, t)}</span>
-                <div className="flex gap-1 text-muted-foreground">
-                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="rounded p-1 hover:bg-muted disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
-                  <button type="button" onClick={() => move(i, 1)} disabled={i === layout.length - 1} className="rounded p-1 hover:bg-muted disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
-                  <button type="button" onClick={() => removeAt(i)} className="rounded p-1 text-red-600 hover:bg-muted"><Trash2 className="h-4 w-4" /></button>
+            <div key={b.id || i} className="overflow-hidden rounded-lg border bg-background">
+              <div className="flex items-center justify-between gap-2 border-b bg-muted/40 px-3 py-2">
+                <span className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <GripVertical className="h-4 w-4 text-muted-foreground" />
+                  {blockLabel(b.blockType, t)}
+                </span>
+                <div className="flex items-center gap-0.5 text-muted-foreground">
+                  <button type="button" onClick={() => move(i, -1)} disabled={i === 0} title={t('pages.moveUp')} className="rounded p-1.5 hover:bg-muted disabled:opacity-30"><ArrowUp className="h-4 w-4" /></button>
+                  <button type="button" onClick={() => move(i, 1)} disabled={i === layout.length - 1} title={t('pages.moveDown')} className="rounded p-1.5 hover:bg-muted disabled:opacity-30"><ArrowDown className="h-4 w-4" /></button>
+                  <button type="button" onClick={() => removeAt(i)} title={t('pages.removeBlock')} className="rounded p-1.5 text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></button>
                 </div>
               </div>
               <div className="p-3">
@@ -208,36 +286,47 @@ export function PageForm({ page, forms }: { page: EditablePage; forms: FormOpt[]
                       ))}
                     </select>
                   </div>
+                ) : b.blockType === 'mediaBlock' ? (
+                  <MediaBlockField block={b} onChange={(mediaId) => patchBlock(i, (bl) => ({ ...bl, media: mediaId ?? undefined }))} />
                 ) : (
                   <div className="text-sm text-muted-foreground">{t('pages.blockReadonly')}: {b.blockType}</div>
                 )}
               </div>
             </div>
           ))}
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => add(newContent())}><Plus className="mr-1 h-4 w-4" />{t('pages.addContent')}</Button>
-            <Button variant="outline" size="sm" onClick={() => add(newForm(forms[0]?.id))}><Plus className="mr-1 h-4 w-4" />{t('pages.addForm')}</Button>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => add(newContent())}><Type className="mr-1.5 h-4 w-4" />{t('pages.addContent')}</Button>
+            <Button variant="outline" size="sm" onClick={() => add(newMedia())}><ImageIcon className="mr-1.5 h-4 w-4" />{t('pages.addMedia')}</Button>
+            <Button variant="outline" size="sm" onClick={() => add(newForm(forms[0]?.id))}><FormInput className="mr-1.5 h-4 w-4" />{t('pages.addForm')}</Button>
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        {/* SEO (localized) */}
-        <div className="grid gap-1.5">
-          <Label>{t('pages.fields.seoTitle')} ({locale.toUpperCase()})</Label>
-          {locale === 'pl' ? (
-            <Input value={metaTitlePl} onChange={(e) => setMetaTitlePl(e.target.value)} />
-          ) : (
-            <Input value={metaTitleUk} onChange={(e) => setMetaTitleUk(e.target.value)} />
-          )}
-        </div>
-        <div className="grid gap-1.5">
-          <Label>{t('pages.fields.seoDescription')} ({locale.toUpperCase()})</Label>
-          {locale === 'pl' ? (
-            <Textarea value={metaDescPl} onChange={(e) => setMetaDescPl(e.target.value)} rows={2} />
-          ) : (
-            <Textarea value={metaDescUk} onChange={(e) => setMetaDescUk(e.target.value)} rows={2} />
-          )}
-        </div>
-      </div>
+      {/* SEO (localized) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('pages.sections.seo')} ({locale.toUpperCase()})</CardTitle>
+          <CardDescription>{t('pages.sections.seoHint')}</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <div className="grid gap-1.5">
+            <Label>{t('pages.fields.seoTitle')}</Label>
+            {locale === 'pl' ? (
+              <Input value={metaTitlePl} onChange={(e) => setMetaTitlePl(e.target.value)} />
+            ) : (
+              <Input value={metaTitleUk} onChange={(e) => setMetaTitleUk(e.target.value)} />
+            )}
+          </div>
+          <div className="grid gap-1.5">
+            <Label>{t('pages.fields.seoDescription')}</Label>
+            {locale === 'pl' ? (
+              <Textarea value={metaDescPl} onChange={(e) => setMetaDescPl(e.target.value)} rows={2} />
+            ) : (
+              <Textarea value={metaDescUk} onChange={(e) => setMetaDescUk(e.target.value)} rows={2} />
+            )}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
