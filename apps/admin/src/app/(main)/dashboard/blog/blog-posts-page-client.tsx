@@ -3,17 +3,20 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import { Newspaper, CheckCircle2, FileEdit } from 'lucide-react';
+import { Newspaper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import { AnalyticsPanel, StatCard } from '@/components/AnalyticsPanel';
+import { PublishStatusBadge } from '@/components/blog/publish-status-badge';
 import { BlogPostRowActions } from './blog-post-row-actions';
 
 /** A localized field returned by Payload with `?locale=all`. */
 type Localized = { pl?: string; uk?: string } | string | null | undefined;
+
+interface HeroMedia {
+  url?: string | null;
+  thumbnailURL?: string | null;
+  sizes?: Record<string, { url?: string | null }> | null;
+}
 
 export interface AdminPost {
   id: number | string;
@@ -23,6 +26,7 @@ export interface AdminPost {
   updatedAt?: string | null;
   publishedAt?: string | null;
   categories?: Array<{ id: number | string; title?: Localized }> | null;
+  heroImage?: HeroMedia | number | string | null;
 }
 
 function loc(v: Localized, lang: 'pl' | 'uk'): string {
@@ -35,6 +39,11 @@ function fmtDate(iso?: string | null): string {
   if (!iso) return '—';
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString();
+}
+
+function cover(m: AdminPost['heroImage']): string | undefined {
+  if (m && typeof m === 'object') return m.sizes?.card?.url || m.sizes?.thumbnail?.url || m.thumbnailURL || m.url || undefined;
+  return undefined;
 }
 
 export function BlogPostsPageClient({ posts }: { posts: AdminPost[] }) {
@@ -50,81 +59,77 @@ export function BlogPostsPageClient({ posts }: { posts: AdminPost[] }) {
     );
   }, [posts, q, lang]);
 
-  const publishedCount = useMemo(() => posts.filter((p) => p._status === 'published').length, [posts]);
-  const draftCount = posts.length - publishedCount;
-
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{t('blog.title')}</h1>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('blog.title')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t('blog.count', { count: posts.length })}</p>
+        </div>
         <Button asChild>
           <Link href="/dashboard/blog/new">{t('blog.add')}</Link>
         </Button>
       </div>
 
-      <div className="mb-4">
-        <AnalyticsPanel title={t('blog.analytics.title')}>
-          <div className="grid grid-cols-3 gap-3">
-            <StatCard label={t('blog.analytics.total')} value={posts.length} icon={<Newspaper className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-            <StatCard label={t('blog.analytics.published')} value={publishedCount} icon={<CheckCircle2 className="h-4 w-4 text-green-600" />} color="bg-green-50" />
-            <StatCard label={t('blog.analytics.drafts')} value={draftCount} icon={<FileEdit className="h-4 w-4 text-amber-600" />} color="bg-amber-50" />
-          </div>
-        </AnalyticsPanel>
-      </div>
+      <Input
+        placeholder={t('blog.searchPlaceholder')}
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        className="max-w-sm"
+      />
 
-      <div className="mb-3">
-        <Input
-          placeholder={t('blog.searchPlaceholder')}
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="max-w-sm"
-        />
-      </div>
+      {filtered.length === 0 ? (
+        <div className="rounded-lg border bg-card py-16 text-center text-muted-foreground">{t('blog.empty')}</div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((p) => {
+            const src = cover(p.heroImage);
+            const cats = (p.categories || []).map((c) => loc(c.title, lang)).filter(Boolean).join(', ');
+            return (
+              <div
+                key={String(p.id)}
+                className="group flex flex-col overflow-hidden rounded-lg border bg-card transition-colors hover:border-foreground/20"
+              >
+                <Link
+                  href={`/dashboard/blog/${p.id}/edit`}
+                  className="relative block aspect-video overflow-hidden bg-muted"
+                >
+                  {src ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={src} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                      <Newspaper className="h-8 w-8" />
+                    </div>
+                  )}
+                  <div className="absolute left-2 top-2">
+                    <PublishStatusBadge status={p._status} labels={{ published: t('blog.status.published'), draft: t('blog.status.draft') }} />
+                  </div>
+                </Link>
 
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('blog.columns.title')}</TableHead>
-              <TableHead>{t('blog.columns.categories')}</TableHead>
-              <TableHead>{t('blog.columns.status')}</TableHead>
-              <TableHead>{t('blog.columns.updated')}</TableHead>
-              <TableHead>{t('blog.columns.actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((p) => (
-              <TableRow key={String(p.id)}>
-                <TableCell className="font-medium text-foreground">
-                  {loc(p.title, lang) || '—'}
-                  {p.slug ? <span className="ml-2 text-xs text-muted-foreground">/{p.slug}</span> : null}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {(p.categories || []).map((c) => loc(c.title, lang)).filter(Boolean).join(', ') || '—'}
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={
-                      p._status === 'published'
-                        ? 'inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'
-                        : 'inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700'
-                    }
-                  >
-                    {p._status === 'published' ? t('blog.status.published') : t('blog.status.draft')}
-                  </span>
-                </TableCell>
-                <TableCell className="text-muted-foreground">{fmtDate(p.updatedAt)}</TableCell>
-                <TableCell>
-                  <BlogPostRowActions postId={p.id} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {filtered.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground">{t('blog.empty')}</div>
-        )}
-      </div>
+                <div className="flex flex-1 flex-col gap-2 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <Link
+                      href={`/dashboard/blog/${p.id}/edit`}
+                      className="line-clamp-2 font-medium text-foreground hover:underline"
+                    >
+                      {loc(p.title, lang) || '—'}
+                    </Link>
+                    <div className="-mr-1 -mt-1 shrink-0">
+                      <BlogPostRowActions postId={p.id} />
+                    </div>
+                  </div>
+                  {p.slug ? <p className="truncate text-xs text-muted-foreground">/{p.slug}</p> : null}
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs text-muted-foreground">
+                    <span className="truncate">{cats || '—'}</span>
+                    <span className="whitespace-nowrap">{fmtDate(p.updatedAt)}</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

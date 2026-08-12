@@ -4,10 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { FileText, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import { AnalyticsPanel, StatCard } from '@/components/AnalyticsPanel';
+import { PublishStatusBadge } from '@/components/blog/publish-status-badge';
 
 export interface AdminPage {
   id: number | string;
@@ -28,59 +25,39 @@ export function PagesListClient({ pages }: { pages: AdminPage[] }) {
   const router = useRouter();
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{t('pages.title')}</h1>
+    <div className="space-y-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t('pages.title')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t('pages.count', { count: pages.length })}</p>
+        </div>
       </div>
 
-      <div className="mb-4">
-        <AnalyticsPanel title={t('pages.analytics.title')}>
-          <div className="grid grid-cols-1 gap-3">
-            <StatCard label={t('pages.analytics.total')} value={pages.length} icon={<FileText className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-          </div>
-        </AnalyticsPanel>
-      </div>
-
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('pages.columns.title')}</TableHead>
-              <TableHead>{t('pages.columns.slug')}</TableHead>
-              <TableHead>{t('pages.columns.status')}</TableHead>
-              <TableHead>{t('pages.columns.actions')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {pages.map((p) => (
-              <TableRow key={String(p.id)}>
-                <TableCell className="font-medium text-foreground">{loc(p.title, lang) || '—'}</TableCell>
-                <TableCell className="text-muted-foreground">/{p.slug}</TableCell>
-                <TableCell>
-                  <span
-                    className={
-                      p._status === 'published'
-                        ? 'inline-flex rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700'
-                        : 'inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700'
-                    }
-                  >
-                    {p._status === 'published' ? t('pages.status.published') : t('pages.status.draft')}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard/pages/${p.id}/edit`)}>
-                    <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                    {t('pages.edit')}
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {pages.length === 0 && (
-          <div className="py-12 text-center text-muted-foreground">{t('pages.empty')}</div>
-        )}
-      </div>
+      {pages.length === 0 ? (
+        <div className="rounded-lg border bg-card py-16 text-center text-muted-foreground">{t('pages.empty')}</div>
+      ) : (
+        <div className="divide-y rounded-lg border bg-card">
+          {pages.map((p) => (
+            <div key={String(p.id)} className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <FileText className="h-4 w-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium text-foreground">{loc(p.title, lang) || '—'}</div>
+                <div className="truncate text-xs text-muted-foreground">/{p.slug}</div>
+              </div>
+              <PublishStatusBadge
+                status={p._status}
+                labels={{ published: t('pages.status.published'), draft: t('pages.status.draft') }}
+              />
+              <Button variant="outline" size="sm" onClick={() => router.push(`/dashboard/pages/${p.id}/edit`)}>
+                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                {t('pages.edit')}
+              </Button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
