@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ImageIcon } from 'lucide-react';
 import { RichTextEditor } from '@/components/lexical/rich-text-editor';
+import { MediaPicker } from '@/components/blog/media-picker';
+import { slugify } from '@/lib/slugify';
 import { api } from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
 
@@ -41,9 +42,6 @@ interface HeroMedia {
   sizes?: Record<string, { url?: string | null }> | null;
 }
 
-function slugify(s: string): string {
-  return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
 function catId(c: { id: number | string } | number | string): number | string {
   return typeof c === 'object' ? c.id : c;
 }
@@ -54,6 +52,15 @@ function mediaId(m: EditablePost['heroImage']): number | string | null {
 function mediaUrl(m: EditablePost['heroImage']): string | null {
   if (m && typeof m === 'object') return m.sizes?.thumbnail?.url || m.thumbnailURL || m.url || null;
   return null;
+}
+/** Does a Lexical value contain any non-empty text? (for required validation) */
+function hasText(rt: unknown): boolean {
+  const walk = (n: { type?: string; text?: string; children?: unknown[] } | null): boolean => {
+    if (!n || typeof n !== 'object') return false;
+    if (n.type === 'text' && (n.text || '').trim()) return true;
+    return Array.isArray(n.children) && n.children.some((c) => walk(c as never));
+  };
+  return walk((rt as { root?: { children?: unknown[] } } | null)?.root ?? null);
 }
 
 export function PostForm({ post, categories }: { post?: EditablePost | null; categories: CategoryOpt[] }) {
@@ -75,7 +82,6 @@ export function PostForm({ post, categories }: { post?: EditablePost | null; cat
   const [catIds, setCatIds] = useState<Array<number | string>>((post?.categories || []).map(catId));
   const [heroId, setHeroId] = useState<number | string | null>(mediaId(post?.heroImage));
   const [heroUrl, setHeroUrl] = useState<string | null>(mediaUrl(post?.heroImage));
-  const [heroUploading, setHeroUploading] = useState(false);
   const [status, setStatus] = useState(post?._status === 'published' ? 'published' : 'draft');
   const [saving, setSaving] = useState(false);
 
@@ -83,32 +89,16 @@ export function PostForm({ post, categories }: { post?: EditablePost | null; cat
     setTitlePl(v);
     if (!slugTouched) setSlug(slugify(v));
   };
-
-  const onHero = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setHeroUploading(true);
-    try {
-      const token = await getToken();
-      if (!token) return;
-      const r = await api.blog.uploadMedia(f, titlePl || f.name, token);
-      setHeroId(r.doc.id);
-      setHeroUrl(r.doc.thumbnailURL || r.doc.url || null);
-    } catch (err) {
-      showError(err instanceof Error ? err.message : t('blogPost.errors.saveFailed'));
-    } finally {
-      setHeroUploading(false);
-      e.target.value = '';
-    }
-  };
   const toggleCat = (id: number | string) =>
     setCatIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   const save = async (publish?: boolean) => {
-    if (!titlePl.trim()) {
-      showError(t('blogPost.errors.titleRequired'));
-      return;
-    }
+    // Both locales are mandatory.
+    if (!titlePl.trim()) { setLocale('pl'); showError(t('blogPost.errors.titleRequiredPl')); return; }
+    if (!titleUk.trim()) { setLocale('uk'); showError(t('blogPost.errors.titleRequiredUk')); return; }
+    if (!hasText(contentPl)) { setLocale('pl'); showError(t('blogPost.errors.contentRequiredPl')); return; }
+    if (!hasText(contentUk)) { setLocale('uk'); showError(t('blogPost.errors.contentRequiredUk')); return; }
+
     const st = publish !== undefined ? (publish ? 'published' : 'draft') : status;
     setSaving(true);
     try {
@@ -121,29 +111,24 @@ export function PostForm({ post, categories }: { post?: EditablePost | null; cat
         _status: st,
         categories: catIds,
         heroImage: heroId,
+        content: contentPl,
         meta: { title: metaTitlePl || undefined, description: metaDescPl || undefined },
       };
-      if (contentPl) plData.content = contentPl;
 
       const ukData: Record<string, unknown> = {
-        title: titleUk || undefined,
+        title: titleUk,
+        content: contentUk,
         meta: { title: metaTitleUk || undefined, description: metaDescUk || undefined },
       };
-      if (contentUk) ukData.content = contentUk;
 
       let id = post?.id;
       if (id != null) {
         await api.blog.update('posts', id, plData, { locale: 'pl' }, token);
       } else {
-        if (!contentPl) {
-          showError(t('blogPost.errors.contentRequired'));
-          setSaving(false);
-          return;
-        }
         const created = await api.blog.create<{ id: number | string }>('posts', plData, { locale: 'pl' }, token);
         id = created.doc.id;
       }
-      if (id != null && (titleUk.trim() || contentUk)) {
+      if (id != null) {
         await api.blog.update('posts', id, ukData, { locale: 'uk' }, token);
       }
 
@@ -207,25 +192,12 @@ export function PostForm({ post, categories }: { post?: EditablePost | null; cat
 
         <div className="grid gap-1.5">
           <Label>{t('blogPost.fields.hero')}</Label>
-          <div className="flex items-center gap-3">
-            {heroUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={heroUrl} alt="" className="h-16 w-24 rounded border object-cover" />
-            ) : (
-              <div className="flex h-16 w-24 items-center justify-center rounded border bg-muted text-muted-foreground">
-                <ImageIcon className="h-5 w-5" />
-              </div>
-            )}
-            <label className="cursor-pointer rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
-              {heroUploading ? t('blogPost.fields.heroUploading') : t('blogPost.fields.heroUpload')}
-              <input type="file" accept="image/*" className="hidden" onChange={onHero} disabled={heroUploading} />
-            </label>
-            {heroId != null && (
-              <Button variant="ghost" size="sm" onClick={() => { setHeroId(null); setHeroUrl(null); }}>
-                {t('blogPost.fields.heroRemove')}
-              </Button>
-            )}
-          </div>
+          <MediaPicker
+            value={heroId}
+            valueUrl={heroUrl}
+            onChange={(id, url) => { setHeroId(id); setHeroUrl(url); }}
+            aspect={16 / 9}
+          />
         </div>
 
         <div className="grid gap-1.5">

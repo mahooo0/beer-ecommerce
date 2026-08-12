@@ -466,7 +466,17 @@ export const uk: Resources = {
       heroUploading: "Завантаження…",
       heroRemove: "Прибрати",
     },
-    errors: { titleRequired: "Назва (PL) обов'язкова", contentRequired: "Контент (PL) обов'язковий", saveFailed: "Не вдалося зберегти пост" },
+    errors: { titleRequiredPl: "Назва (PL) обов'язкова", titleRequiredUk: "Назва (UK) обов'язкова", contentRequiredPl: "Контент (PL) обов'язковий", contentRequiredUk: "Контент (UK) обов'язковий", saveFailed: "Не вдалося зберегти пост" },
+  },
+  mediaPicker: {
+    title: "Медіатека",
+    choose: "Вибрати з медіа",
+    upload: "Завантажити",
+    uploading: "Завантаження…",
+    remove: "Прибрати",
+    search: "Пошук…",
+    empty: "Медіа ще немає.",
+    errors: { load: "Не вдалося завантажити медіа", upload: "Не вдалося завантажити" },
   },
   blogMedia: {
     title: "Медіатека",
@@ -488,7 +498,7 @@ export const uk: Resources = {
     sheet: { createTitle: "Нова категорія", editTitle: "Редагувати категорію", description: "Назва PL/UK та slug URL." },
     form: { titlePl: "Назва (PL)", titleUk: "Назва (UK)", slug: "Slug", cancel: "Скасувати", saving: "Збереження…", create: "Створити", update: "Зберегти" },
     actions: { edit: "Редагувати", delete: "Видалити", deleteConfirm: "Видалити цю категорію?" },
-    errors: { titleRequired: "Назва (PL) обов'язкова", saveFailed: "Не вдалося зберегти категорію", deleteFailed: "Не вдалося видалити категорію" },
+    errors: { titleRequired: "Назва (PL) обов'язкова", titleRequiredUk: "Назва (UK) обов'язкова", saveFailed: "Не вдалося зберегти категорію", deleteFailed: "Не вдалося видалити категорію" },
   },
   promoBanners: {
     title: "Промо-банери",

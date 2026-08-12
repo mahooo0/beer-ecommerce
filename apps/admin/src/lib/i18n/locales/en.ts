@@ -464,7 +464,17 @@ export const en = {
       heroUploading: "Uploading…",
       heroRemove: "Remove",
     },
-    errors: { titleRequired: "Title (PL) is required", contentRequired: "Content (PL) is required", saveFailed: "Failed to save post" },
+    errors: { titleRequiredPl: "Title (PL) is required", titleRequiredUk: "Title (UK) is required", contentRequiredPl: "Content (PL) is required", contentRequiredUk: "Content (UK) is required", saveFailed: "Failed to save post" },
+  },
+  mediaPicker: {
+    title: "Media library",
+    choose: "Choose from media",
+    upload: "Upload",
+    uploading: "Uploading…",
+    remove: "Remove",
+    search: "Search…",
+    empty: "No media yet.",
+    errors: { load: "Failed to load media", upload: "Upload failed" },
   },
   blogMedia: {
     title: "Media Library",
@@ -486,7 +496,7 @@ export const en = {
     sheet: { createTitle: "New Category", editTitle: "Edit Category", description: "Title in PL/UK and a URL slug." },
     form: { titlePl: "Title (PL)", titleUk: "Title (UK)", slug: "Slug", cancel: "Cancel", saving: "Saving…", create: "Create", update: "Update" },
     actions: { edit: "Edit", delete: "Delete", deleteConfirm: "Delete this category?" },
-    errors: { titleRequired: "Title (PL) is required", saveFailed: "Failed to save category", deleteFailed: "Failed to delete category" },
+    errors: { titleRequired: "Title (PL) is required", titleRequiredUk: "Title (UK) is required", saveFailed: "Failed to save category", deleteFailed: "Failed to delete category" },
   },
   promoBanners: {
     title: "Promo Banners",

@@ -8,7 +8,7 @@
  * be layered on later.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
@@ -34,6 +34,9 @@ import {
   Bold, Italic, Underline, Strikethrough, Heading1, Heading2, Heading3,
   Pilcrow, List, ListOrdered, Quote, Link2,
 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 
 const theme = {
   paragraph: 'mb-2 leading-relaxed',
@@ -89,29 +92,49 @@ function Toolbar() {
     });
   const heading = (tag: HeadingTagType) => setBlock(() => $createHeadingNode(tag));
 
-  const addLink = () => {
-    // eslint-disable-next-line no-alert
-    const url = window.prompt('URL');
-    editor.dispatchCommand(TOGGLE_LINK_COMMAND, url && url.trim() ? url.trim() : null);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState('');
+  const applyLink = () => {
+    editor.dispatchCommand(TOGGLE_LINK_COMMAND, linkUrl.trim() ? linkUrl.trim() : null);
+    setLinkOpen(false);
+    setLinkUrl('');
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 border-b p-1">
-      <TB title="Bold" onClick={() => fmt('bold')}><Bold className="h-4 w-4" /></TB>
-      <TB title="Italic" onClick={() => fmt('italic')}><Italic className="h-4 w-4" /></TB>
-      <TB title="Underline" onClick={() => fmt('underline')}><Underline className="h-4 w-4" /></TB>
-      <TB title="Strikethrough" onClick={() => fmt('strikethrough')}><Strikethrough className="h-4 w-4" /></TB>
-      <Divider />
-      <TB title="Heading 1" onClick={() => heading('h1')}><Heading1 className="h-4 w-4" /></TB>
-      <TB title="Heading 2" onClick={() => heading('h2')}><Heading2 className="h-4 w-4" /></TB>
-      <TB title="Heading 3" onClick={() => heading('h3')}><Heading3 className="h-4 w-4" /></TB>
-      <TB title="Paragraph" onClick={() => setBlock(() => $createParagraphNode())}><Pilcrow className="h-4 w-4" /></TB>
-      <TB title="Quote" onClick={() => setBlock(() => $createQuoteNode())}><Quote className="h-4 w-4" /></TB>
-      <Divider />
-      <TB title="Bulleted list" onClick={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)}><List className="h-4 w-4" /></TB>
-      <TB title="Numbered list" onClick={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)}><ListOrdered className="h-4 w-4" /></TB>
-      <TB title="Link" onClick={addLink}><Link2 className="h-4 w-4" /></TB>
-    </div>
+    <>
+      <div className="flex flex-wrap items-center gap-0.5 border-b p-1">
+        <TB title="Bold" onClick={() => fmt('bold')}><Bold className="h-4 w-4" /></TB>
+        <TB title="Italic" onClick={() => fmt('italic')}><Italic className="h-4 w-4" /></TB>
+        <TB title="Underline" onClick={() => fmt('underline')}><Underline className="h-4 w-4" /></TB>
+        <TB title="Strikethrough" onClick={() => fmt('strikethrough')}><Strikethrough className="h-4 w-4" /></TB>
+        <Divider />
+        <TB title="Heading 1" onClick={() => heading('h1')}><Heading1 className="h-4 w-4" /></TB>
+        <TB title="Heading 2" onClick={() => heading('h2')}><Heading2 className="h-4 w-4" /></TB>
+        <TB title="Heading 3" onClick={() => heading('h3')}><Heading3 className="h-4 w-4" /></TB>
+        <TB title="Paragraph" onClick={() => setBlock(() => $createParagraphNode())}><Pilcrow className="h-4 w-4" /></TB>
+        <TB title="Quote" onClick={() => setBlock(() => $createQuoteNode())}><Quote className="h-4 w-4" /></TB>
+        <Divider />
+        <TB title="Bulleted list" onClick={() => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)}><List className="h-4 w-4" /></TB>
+        <TB title="Numbered list" onClick={() => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)}><ListOrdered className="h-4 w-4" /></TB>
+        <TB title="Link" onClick={() => { setLinkUrl(''); setLinkOpen(true); }}><Link2 className="h-4 w-4" /></TB>
+      </div>
+      <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Link</DialogTitle></DialogHeader>
+          <Input
+            autoFocus
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            placeholder="https://…"
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyLink(); } }}
+          />
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setLinkOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={applyLink}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

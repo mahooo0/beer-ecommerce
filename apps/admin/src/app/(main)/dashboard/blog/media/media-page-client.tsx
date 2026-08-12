@@ -7,6 +7,7 @@ import { useAuth } from '@clerk/nextjs';
 import { Trash2, UploadCloud, ImageIcon } from 'lucide-react';
 import { api } from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
+import { useConfirm } from '@/hooks/use-confirm';
 
 export interface AdminMedia {
   id: number | string;
@@ -26,6 +27,7 @@ export function MediaPageClient({ media }: { media: AdminMedia[] }) {
   const router = useRouter();
   const { getToken } = useAuth();
   const [uploading, setUploading] = useState(false);
+  const [ConfirmDialog, confirm] = useConfirm();
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -48,8 +50,8 @@ export function MediaPageClient({ media }: { media: AdminMedia[] }) {
   };
 
   const del = async (id: number | string) => {
-    // eslint-disable-next-line no-alert
-    if (!window.confirm(t('blogMedia.deleteConfirm'))) return;
+    const ok = await confirm({ description: t('blogMedia.deleteConfirm'), variant: 'destructive' });
+    if (!ok) return;
     try {
       const token = await getToken();
       if (!token) return;
@@ -100,6 +102,7 @@ export function MediaPageClient({ media }: { media: AdminMedia[] }) {
           ))}
         </div>
       )}
+      <ConfirmDialog />
     </div>
   );
 }

@@ -8,16 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { api } from '@/lib/api';
+import { slugify } from '@/lib/slugify';
 import { showError, showSuccess } from '@/lib/toast';
 import { locTitle, type AdminCategory } from './categories-page-client';
-
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
 
 export function CategorySheet({
   open,
@@ -56,6 +49,10 @@ export function CategorySheet({
   const submit = async () => {
     if (!titlePl.trim()) {
       showError(t('blogCategories.errors.titleRequired'));
+      return;
+    }
+    if (!titleUk.trim()) {
+      showError(t('blogCategories.errors.titleRequiredUk'));
       return;
     }
     setSaving(true);

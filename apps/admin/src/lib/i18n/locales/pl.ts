@@ -466,7 +466,17 @@ export const pl: Resources = {
       heroUploading: "Wgrywanie…",
       heroRemove: "Usuń",
     },
-    errors: { titleRequired: "Tytuł (PL) jest wymagany", contentRequired: "Treść (PL) jest wymagana", saveFailed: "Nie udało się zapisać wpisu" },
+    errors: { titleRequiredPl: "Tytuł (PL) jest wymagany", titleRequiredUk: "Tytuł (UK) jest wymagany", contentRequiredPl: "Treść (PL) jest wymagana", contentRequiredUk: "Treść (UK) jest wymagana", saveFailed: "Nie udało się zapisać wpisu" },
+  },
+  mediaPicker: {
+    title: "Biblioteka mediów",
+    choose: "Wybierz z mediów",
+    upload: "Wgraj",
+    uploading: "Wgrywanie…",
+    remove: "Usuń",
+    search: "Szukaj…",
+    empty: "Brak mediów.",
+    errors: { load: "Nie udało się wczytać mediów", upload: "Nie udało się wgrać" },
   },
   blogMedia: {
     title: "Biblioteka mediów",
@@ -488,7 +498,7 @@ export const pl: Resources = {
     sheet: { createTitle: "Nowa kategoria", editTitle: "Edytuj kategorię", description: "Tytuł w PL/UK oraz slug URL." },
     form: { titlePl: "Tytuł (PL)", titleUk: "Tytuł (UK)", slug: "Slug", cancel: "Anuluj", saving: "Zapisywanie…", create: "Utwórz", update: "Zapisz" },
     actions: { edit: "Edytuj", delete: "Usuń", deleteConfirm: "Usunąć tę kategorię?" },
-    errors: { titleRequired: "Tytuł (PL) jest wymagany", saveFailed: "Nie udało się zapisać kategorii", deleteFailed: "Nie udało się usunąć kategorii" },
+    errors: { titleRequired: "Tytuł (PL) jest wymagany", titleRequiredUk: "Tytuł (UK) jest wymagany", saveFailed: "Nie udało się zapisać kategorii", deleteFailed: "Nie udało się usunąć kategorii" },
   },
   promoBanners: {
     title: "Banery promo",
