@@ -11,6 +11,7 @@ import {
   Forklift,
   Gauge,
   GraduationCap,
+  Images,
   Inbox,
   Kanban,
   Layers,
@@ -96,6 +97,7 @@ export const sidebarItems: NavGroup[] = [
         subItems: [
           { title: "nav.blogPosts", url: "/dashboard/blog", icon: Newspaper },
           { title: "nav.blogCategories", url: "/dashboard/blog/categories", icon: FolderTree },
+          { title: "nav.blogMedia", url: "/dashboard/blog/media", icon: Images },
         ],
       },
       {

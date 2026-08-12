@@ -81,4 +81,16 @@ export const blogService = {
       headers: authHeaders(),
     });
   },
+  /**
+   * Forward a raw multipart body straight to Payload's media upload endpoint.
+   * We keep the original Content-Type (with its boundary) so Payload re-parses
+   * the same multipart the browser sent.
+   */
+  uploadMedia(contentType: string, body: Buffer, query: string) {
+    return pfetch(`/api/media${query ? `?${query}` : ''}`, {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': contentType }),
+      body: body as unknown as BodyInit,
+    });
+  },
 };

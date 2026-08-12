@@ -545,6 +545,27 @@ export const api = {
         method: 'DELETE',
         token,
       }),
+    // Multipart upload → Payload media (via the server proxy). Do NOT set
+    // Content-Type — the browser adds the multipart boundary.
+    uploadMedia: async (
+      file: File,
+      alt: string | undefined,
+      token: string,
+    ): Promise<PayloadMutation<{ id: number | string; url?: string; thumbnailURL?: string | null; alt?: string | null; filename?: string }>> => {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('_payload', JSON.stringify({ alt: alt || undefined }));
+      const res = await fetch(`${API_URL}/blog/media/upload`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd,
+      });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error((e as { error?: string }).error || 'Upload failed');
+      }
+      return res.json();
+    },
   },
   tags: {
     getAll: (params?: { type?: string; token?: string } | string) => {

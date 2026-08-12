@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageIcon } from 'lucide-react';
 import { RichTextEditor } from '@/components/lexical/rich-text-editor';
 import { api } from '@/lib/api';
 import { showError, showSuccess } from '@/lib/toast';
@@ -29,7 +30,15 @@ export interface EditablePost {
     uk?: { title?: string | null; description?: string | null } | null;
   } | null;
   categories?: Array<{ id: number | string } | number | string> | null;
+  heroImage?: HeroMedia | number | string | null;
   _status?: string | null;
+}
+
+interface HeroMedia {
+  id: number | string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  sizes?: Record<string, { url?: string | null }> | null;
 }
 
 function slugify(s: string): string {
@@ -37,6 +46,14 @@ function slugify(s: string): string {
 }
 function catId(c: { id: number | string } | number | string): number | string {
   return typeof c === 'object' ? c.id : c;
+}
+function mediaId(m: EditablePost['heroImage']): number | string | null {
+  if (m == null) return null;
+  return typeof m === 'object' ? m.id : m;
+}
+function mediaUrl(m: EditablePost['heroImage']): string | null {
+  if (m && typeof m === 'object') return m.sizes?.thumbnail?.url || m.thumbnailURL || m.url || null;
+  return null;
 }
 
 export function PostForm({ post, categories }: { post?: EditablePost | null; categories: CategoryOpt[] }) {
@@ -56,12 +73,33 @@ export function PostForm({ post, categories }: { post?: EditablePost | null; cat
   const [metaDescPl, setMetaDescPl] = useState(post?.meta?.pl?.description || '');
   const [metaDescUk, setMetaDescUk] = useState(post?.meta?.uk?.description || '');
   const [catIds, setCatIds] = useState<Array<number | string>>((post?.categories || []).map(catId));
+  const [heroId, setHeroId] = useState<number | string | null>(mediaId(post?.heroImage));
+  const [heroUrl, setHeroUrl] = useState<string | null>(mediaUrl(post?.heroImage));
+  const [heroUploading, setHeroUploading] = useState(false);
   const [status, setStatus] = useState(post?._status === 'published' ? 'published' : 'draft');
   const [saving, setSaving] = useState(false);
 
   const onTitlePl = (v: string) => {
     setTitlePl(v);
     if (!slugTouched) setSlug(slugify(v));
+  };
+
+  const onHero = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setHeroUploading(true);
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const r = await api.blog.uploadMedia(f, titlePl || f.name, token);
+      setHeroId(r.doc.id);
+      setHeroUrl(r.doc.thumbnailURL || r.doc.url || null);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : t('blogPost.errors.saveFailed'));
+    } finally {
+      setHeroUploading(false);
+      e.target.value = '';
+    }
   };
   const toggleCat = (id: number | string) =>
     setCatIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -82,6 +120,7 @@ export function PostForm({ post, categories }: { post?: EditablePost | null; cat
         slug: slug || undefined,
         _status: st,
         categories: catIds,
+        heroImage: heroId,
         meta: { title: metaTitlePl || undefined, description: metaDescPl || undefined },
       };
       if (contentPl) plData.content = contentPl;
@@ -164,6 +203,29 @@ export function PostForm({ post, categories }: { post?: EditablePost | null; cat
         <div className="grid gap-1.5">
           <Label>{t('blogPost.fields.slug')}</Label>
           <Input value={slug} onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }} placeholder="slug" />
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>{t('blogPost.fields.hero')}</Label>
+          <div className="flex items-center gap-3">
+            {heroUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={heroUrl} alt="" className="h-16 w-24 rounded border object-cover" />
+            ) : (
+              <div className="flex h-16 w-24 items-center justify-center rounded border bg-muted text-muted-foreground">
+                <ImageIcon className="h-5 w-5" />
+              </div>
+            )}
+            <label className="cursor-pointer rounded-md border px-3 py-1.5 text-sm hover:bg-muted">
+              {heroUploading ? t('blogPost.fields.heroUploading') : t('blogPost.fields.heroUpload')}
+              <input type="file" accept="image/*" className="hidden" onChange={onHero} disabled={heroUploading} />
+            </label>
+            {heroId != null && (
+              <Button variant="ghost" size="sm" onClick={() => { setHeroId(null); setHeroUrl(null); }}>
+                {t('blogPost.fields.heroRemove')}
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="grid gap-1.5">

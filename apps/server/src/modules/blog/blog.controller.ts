@@ -61,6 +61,12 @@ class BlogController {
     if (!c) return;
     await relay(res, next, blogService.remove(c, req.params.id as string, qs(req)));
   }
+
+  async uploadMedia(req: Request, res: Response, next: NextFunction) {
+    const contentType = (req.headers['content-type'] as string) || 'multipart/form-data';
+    const body = req.body as Buffer;
+    await relay(res, next, blogService.uploadMedia(contentType, body, qs(req)));
+  }
 }
 
 export const blogController = new BlogController();
