@@ -1,26 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useWishlistStore } from '@/stores/wishlist-store';
-import { WishlistButton } from '@/components/product/wishlist-button';
+import { CatalogCard, type CatalogProduct } from '@/components/taranka/catalog-card';
+import { toCatalogProduct } from '@/lib/product-mapper';
 import { api } from '@/lib/api';
 import type { Product } from '@repo/types';
-
-interface WishlistProduct {
-  productId: string;
-  priceAtAdd: number;
-  product?: Product;
-}
-
-const formatPrice = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 export function WishlistPageClient() {
   const { t } = useTranslation('misc');
   const storeItems = useWishlistStore((s) => s.items);
   const [mounted, setMounted] = useState(false);
-  const [wishlistItems, setWishlistItems] = useState<WishlistProduct[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,49 +22,46 @@ export function WishlistPageClient() {
 
   useEffect(() => {
     if (!mounted || storeItems.length === 0) {
-      setWishlistItems([]);
+      setProducts([]);
       setLoading(false);
       return;
     }
 
     setLoading(true);
     const ids = storeItems.map((item) => item.productId);
-    api.products.getByIds(ids)
-      .then((res) => {
-        const productMap = new Map((res.data ?? []).map((p) => [p.id, p]));
-        setWishlistItems(
-          storeItems.map((item) => ({
-            ...item,
-            product: productMap.get(item.productId),
-          })),
-        );
-      })
-      .catch(() => {
-        setWishlistItems(storeItems.map((item) => ({ ...item })));
-      })
+    api.products
+      .getByIds(ids)
+      .then((res) => setProducts(res.data ?? []))
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, [mounted, storeItems]);
 
+  // Keep the favorites' own order (most-recent first as stored) and drop any
+  // ids the catalog couldn't resolve.
+  const cards: CatalogProduct[] = useMemo(() => {
+    const byId = new Map(products.map((p) => [String(p.id), p]));
+    return storeItems
+      .map((item) => byId.get(String(item.productId)))
+      .filter((p): p is Product => Boolean(p))
+      .map(toCatalogProduct);
+  }, [storeItems, products]);
+
   if (!mounted || loading) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <h1 className="text-2xl font-bold mb-6">{t('wishlist.title')}</h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <h1 className="mb-6 text-2xl font-bold">{t('wishlist.title')}</h1>
+        <div className="flex flex-wrap gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="rounded-lg border border-border-secondary p-4 animate-pulse">
-              <div className="bg-secondary_subtle h-48 rounded mb-3" />
-              <div className="bg-secondary_subtle h-4 rounded mb-2" />
-              <div className="bg-secondary_subtle h-4 rounded w-1/2" />
-            </div>
+            <div key={i} className="h-[372px] w-[282px] animate-pulse rounded-[20px] bg-[#E2DFD4]" />
           ))}
         </div>
       </div>
     );
   }
 
-  if (wishlistItems.length === 0) {
+  if (cards.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-6 py-16 text-center">
+      <div className="mx-auto max-w-7xl px-6 py-16 text-center">
         <div className="mb-4 text-fg-quaternary">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -88,11 +78,11 @@ export function WishlistPageClient() {
             />
           </svg>
         </div>
-        <h2 className="text-xl font-semibold text-secondary mb-2">{t('wishlist.empty.title')}</h2>
-        <p className="text-tertiary mb-6">{t('wishlist.empty.subtitle')}</p>
+        <h2 className="mb-2 text-xl font-semibold text-secondary">{t('wishlist.empty.title')}</h2>
+        <p className="mb-6 text-tertiary">{t('wishlist.empty.subtitle')}</p>
         <Link
           href="/products"
-          className="inline-block bg-primary-solid text-white px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-primary-solid_hover transition-colors"
+          className="inline-block rounded-lg bg-primary-solid px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-solid_hover"
         >
           {t('wishlist.empty.browse')}
         </Link>
@@ -101,70 +91,15 @@ export function WishlistPageClient() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      <h1 className="text-2xl font-bold mb-6">
+    <div className="mx-auto max-w-7xl px-6 py-8">
+      <h1 className="mb-6 text-2xl font-bold">
         {t('wishlist.title')}{' '}
-        <span className="text-quaternary text-lg font-normal">({wishlistItems.length})</span>
+        <span className="text-lg font-normal text-quaternary">({cards.length})</span>
       </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {wishlistItems.map((item) => {
-          const product = item.product;
-          const currentPrice = product?.price ?? item.priceAtAdd;
-          const productName = product?.name ?? item.productId;
-          const productImage = product?.images?.[0] ?? '';
-          const productSlug = product?.slug ?? item.productId;
-
-          return (
-            <div
-              key={item.productId}
-              className="rounded-lg border border-border-secondary overflow-hidden hover:shadow-md transition-shadow"
-            >
-              {/* Product image */}
-              <div className="relative">
-                <Link href={`/products/${productSlug}`}>
-                  {productImage ? (
-                    <img
-                      src={productImage}
-                      alt={productName}
-                      className="w-full h-48 object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-48 bg-secondary_subtle flex items-center justify-center">
-                      <span className="text-quaternary text-sm">{t('wishlist.noImage')}</span>
-                    </div>
-                  )}
-                </Link>
-                <div className="absolute top-2 right-2">
-                  <WishlistButton
-                    productId={item.productId}
-                    price={currentPrice}
-                    size="sm"
-                  />
-                </div>
-              </div>
-
-              {/* Product info */}
-              <div className="p-4">
-                <Link href={`/products/${productSlug}`} className="hover:underline">
-                  <h3 className="font-medium text-primary text-sm line-clamp-2 mb-1">
-                    {productName}
-                  </h3>
-                </Link>
-
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="font-semibold text-primary">{formatPrice(currentPrice)}</span>
-                </div>
-
-                {/* Price drop indicator */}
-                {item.priceAtAdd > currentPrice && (
-                  <p className="text-xs text-utility-success-700 font-medium mb-2">
-                    {t('wishlist.priceDropped', { price: formatPrice(item.priceAtAdd) })}
-                  </p>
-                )}
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex flex-wrap gap-6">
+        {cards.map((p) => (
+          <CatalogCard key={p.id} product={p} />
+        ))}
       </div>
     </div>
   );
