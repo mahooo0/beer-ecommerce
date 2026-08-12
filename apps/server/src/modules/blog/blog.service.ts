@@ -18,7 +18,7 @@ const CMS_URL = (
 const API_KEY = process.env.PAYLOAD_API_KEY || '';
 
 /** Collections the admin is allowed to manage through this proxy. */
-export const BLOG_COLLECTIONS = ['posts', 'categories', 'media', 'forms', 'form-submissions'] as const;
+export const BLOG_COLLECTIONS = ['posts', 'categories', 'media', 'forms', 'form-submissions', 'pages'] as const;
 export type BlogCollection = (typeof BLOG_COLLECTIONS)[number];
 
 export function isBlogCollection(x: string): x is BlogCollection {
