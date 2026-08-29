@@ -23,6 +23,7 @@ import {
   type LucideIcon,
   Mail,
   Megaphone,
+  BadgePercent,
   MessageSquare,
   Newspaper,
   Package,
@@ -84,6 +85,7 @@ export const sidebarItems: NavGroup[] = [
           { title: "nav.collections", url: "/dashboard/collections", icon: Layers },
           { title: "nav.brands", url: "/dashboard/brands", icon: Award },
           { title: "nav.promoBanners", url: "/dashboard/promo-banners", icon: Megaphone },
+          { title: "nav.loyaltyTiers", url: "/dashboard/loyalty-tiers", icon: BadgePercent },
         ],
       },
       {

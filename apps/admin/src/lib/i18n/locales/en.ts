@@ -15,6 +15,7 @@ export const en = {
     collections: "Collections",
     brands: "Brands",
     promoBanners: "Promo Banners",
+    loyaltyTiers: "Loyalty Tiers",
     users: "Users",
   },
   language: {
@@ -564,6 +565,35 @@ export const en = {
       notAuth: "Not authenticated",
       saveFailed: "Failed to save banner",
       deleteFailed: "Failed to delete banner",
+    },
+  },
+  loyaltyTiers: {
+    title: "Loyalty Tiers",
+    add: "Add Tier",
+    hint: "Retail customers get the highest reached tier's discount off the order subtotal once their lifetime paid spend passes its threshold. Wholesale is not affected.",
+    empty: "No loyalty tiers yet. Add one to get started.",
+    columns: { minSpend: "Min. spend", percent: "Discount", position: "Position", status: "Status", actions: "Actions" },
+    status: { active: "Active", inactive: "Inactive" },
+    sheet: {
+      createTitle: "Create Loyalty Tier",
+      editTitle: "Edit Loyalty Tier",
+      createDescription: "Set the spend threshold (in zł) and the discount percent.",
+      editDescription: "Update the loyalty tier below.",
+    },
+    form: {
+      minSpend: "Min. spend (zł)",
+      percent: "Discount (%)",
+      active: "Active",
+      position: "Position",
+      saving: "Saving…",
+      create: "Create",
+      update: "Update",
+    },
+    actions: { edit: "Edit", delete: "Delete", deleteConfirm: "Delete this loyalty tier?" },
+    errors: {
+      notAuth: "Not authenticated",
+      saveFailed: "Failed to save tier",
+      deleteFailed: "Failed to delete tier",
     },
   },
   brands: {

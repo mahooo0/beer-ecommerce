@@ -476,6 +476,20 @@ export interface PromoBanner {
   updatedAt?: string;
 }
 
+/**
+ * A loyalty discount tier (admin-managed). RETAIL customers whose lifetime
+ * cumulative paid spend reaches `minSpendCents` get `percent` off the subtotal.
+ */
+export interface LoyaltyTier {
+  id: string;
+  minSpendCents: number;
+  percent: number;
+  active: boolean;
+  position: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export const TagType = {
   PRODUCT: 'PRODUCT',
   COLLECTION: 'COLLECTION',

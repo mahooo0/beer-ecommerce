@@ -49,9 +49,10 @@
     "empty": "Немає прайс-листів, що відповідають пошуку."
   },
   "znizki": {
-    "currentDiscount": "Ваша знижка зараз становить 3%",
+    "currentDiscount": "Ваша знижка зараз становить {{percent}}%",
     "howItWorks": "Як працюють знижки?",
-    "tierDesc": "для щомісячних покупок на суму {{amount}} PLN або більше",
+    "tierDesc": "для загальної суми покупок від {{amount}} PLN",
+    "tierLevel": "Рівень {{level}}",
     "tiers": {
       "small": { "title": "Малий опт" },
       "medium": { "title": "Середній опт" },

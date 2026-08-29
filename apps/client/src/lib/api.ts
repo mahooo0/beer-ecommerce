@@ -1,4 +1,4 @@
-import type { ApiResponse, PaginatedResponse, Product, Order, Category, Collection, Brand, CartItem, PromoBanner } from '@repo/types';
+import type { ApiResponse, PaginatedResponse, Product, Order, Category, Collection, Brand, CartItem, PromoBanner, LoyaltyTier } from '@repo/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -150,6 +150,14 @@ export const api = {
         ...(token ? { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } } : {}),
         body: JSON.stringify(data),
       }),
+    getUserSpend: (userId: string, token?: string) =>
+      fetcher<ApiResponse<{ spentCents: number }>>(`/orders/user/${userId}/spend`, {
+        ...(token ? { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } } : {}),
+      }),
+  },
+  loyaltyTiers: {
+    // Public: active tiers, cheapest threshold first — for the cabinet discount board.
+    getActive: () => fetcher<ApiResponse<LoyaltyTier[]>>('/loyalty-tiers/active'),
   },
   payments: {
     // Amount is derived server-side from the order; guests (no token) may pay too.

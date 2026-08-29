@@ -6,6 +6,7 @@ const router = Router();
 
 router.get('/stats', requireAdmin, (req, res, next) => orderController.getStats(req, res, next));
 router.get('/', requireAdmin, (req, res, next) => orderController.getAll(req, res, next));
+router.get('/user/:userId/spend', requireAuth, (req, res, next) => orderController.getUserSpend(req, res, next));
 router.get('/user/:userId', requireAuth, (req, res, next) => orderController.getByUserId(req, res, next));
 // Public: guests need to read their confirmation by order id (id is an unguessable ObjectId).
 router.get('/:id', (req, res, next) => orderController.getById(req, res, next));

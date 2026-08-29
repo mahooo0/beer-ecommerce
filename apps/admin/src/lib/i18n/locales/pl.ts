@@ -17,6 +17,7 @@ export const pl: Resources = {
     collections: "Kolekcje",
     brands: "Marki",
     promoBanners: "Banery promo",
+    loyaltyTiers: "Poziomy lojalności",
     users: "Użytkownicy",
   },
   language: {
@@ -566,6 +567,35 @@ export const pl: Resources = {
       notAuth: "Brak autoryzacji",
       saveFailed: "Nie udało się zapisać baneru",
       deleteFailed: "Nie udało się usunąć baneru",
+    },
+  },
+  loyaltyTiers: {
+    title: "Poziomy lojalnościowe",
+    add: "Dodaj poziom",
+    hint: "Klienci detaliczni otrzymują rabat najwyższego osiągniętego poziomu od sumy zamówienia, gdy ich łączne opłacone zakupy przekroczą próg. Hurt nie jest objęty.",
+    empty: "Brak poziomów lojalnościowych. Dodaj pierwszy.",
+    columns: { minSpend: "Min. kwota", percent: "Rabat", position: "Pozycja", status: "Status", actions: "Akcje" },
+    status: { active: "Aktywny", inactive: "Nieaktywny" },
+    sheet: {
+      createTitle: "Nowy poziom lojalnościowy",
+      editTitle: "Edytuj poziom lojalnościowy",
+      createDescription: "Ustaw próg kwoty (w zł) i procent rabatu.",
+      editDescription: "Zaktualizuj poziom poniżej.",
+    },
+    form: {
+      minSpend: "Min. kwota (zł)",
+      percent: "Rabat (%)",
+      active: "Aktywny",
+      position: "Pozycja",
+      saving: "Zapisywanie…",
+      create: "Utwórz",
+      update: "Zapisz",
+    },
+    actions: { edit: "Edytuj", delete: "Usuń", deleteConfirm: "Usunąć ten poziom?" },
+    errors: {
+      notAuth: "Brak autoryzacji",
+      saveFailed: "Nie udało się zapisać poziomu",
+      deleteFailed: "Nie udało się usunąć poziomu",
     },
   },
   brands: {

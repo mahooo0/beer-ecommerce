@@ -49,9 +49,10 @@
     "empty": "Brak cenników pasujących do wyszukiwania."
   },
   "znizki": {
-    "currentDiscount": "Twój rabat wynosi teraz 3%",
+    "currentDiscount": "Twój rabat wynosi teraz {{percent}}%",
     "howItWorks": "Jak działają zniżki?",
-    "tierDesc": "dla miesięcznych zakupów na kwotę {{amount}} PLN lub wyższą",
+    "tierDesc": "dla łącznej sumy zakupów od {{amount}} PLN",
+    "tierLevel": "Poziom {{level}}",
     "tiers": {
       "small": { "title": "Mała Hurtownia" },
       "medium": { "title": "Średni Hurt" },

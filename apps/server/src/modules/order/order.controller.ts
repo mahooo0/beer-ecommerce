@@ -34,6 +34,15 @@ export class OrderController {
     }
   }
 
+  async getUserSpend(req: Request, res: Response, next: NextFunction) {
+    try {
+      const spentCents = await orderService.getUserSpend(req.params.userId as string);
+      res.json({ success: true, data: { spentCents } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const order = await orderService.getById(req.params.id as string);

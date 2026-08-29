@@ -17,6 +17,7 @@ export const uk: Resources = {
     collections: "Колекції",
     brands: "Бренди",
     promoBanners: "Промо-банери",
+    loyaltyTiers: "Рівні лояльності",
     users: "Користувачі",
   },
   language: {
@@ -566,6 +567,35 @@ export const uk: Resources = {
       notAuth: "Не авторизовано",
       saveFailed: "Не вдалося зберегти банер",
       deleteFailed: "Не вдалося видалити банер",
+    },
+  },
+  loyaltyTiers: {
+    title: "Рівні лояльності",
+    add: "Додати рівень",
+    hint: "Роздрібні клієнти отримують знижку найвищого досягнутого рівня від суми замовлення, коли їхні сукупні оплачені покупки перевищують поріг. Опт не враховується.",
+    empty: "Рівнів лояльності ще немає. Додайте перший.",
+    columns: { minSpend: "Мін. сума", percent: "Знижка", position: "Позиція", status: "Статус", actions: "Дії" },
+    status: { active: "Активний", inactive: "Неактивний" },
+    sheet: {
+      createTitle: "Новий рівень лояльності",
+      editTitle: "Редагувати рівень лояльності",
+      createDescription: "Задайте поріг суми (у zł) та відсоток знижки.",
+      editDescription: "Оновіть рівень нижче.",
+    },
+    form: {
+      minSpend: "Мін. сума (zł)",
+      percent: "Знижка (%)",
+      active: "Активний",
+      position: "Позиція",
+      saving: "Збереження…",
+      create: "Створити",
+      update: "Зберегти",
+    },
+    actions: { edit: "Редагувати", delete: "Видалити", deleteConfirm: "Видалити цей рівень?" },
+    errors: {
+      notAuth: "Не авторизовано",
+      saveFailed: "Не вдалося зберегти рівень",
+      deleteFailed: "Не вдалося видалити рівень",
     },
   },
   brands: {

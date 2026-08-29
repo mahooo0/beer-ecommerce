@@ -762,6 +762,24 @@ model PromoBanner {
   @@map("promo_banners")
 }
 
+// Loyalty discount tiers (N rows, admin-managed). Applied only to RETAIL
+// customers: the highest active tier whose `minSpendCents` the customer's
+// lifetime cumulative PAID spend reaches grants `percent` off the goods
+// subtotal at checkout. Wholesale customers use quantity tiers instead.
+model LoyaltyTier {
+  id            String   @id @default(cuid())
+  minSpendCents Int      // lifetime cumulative paid spend (cents) to reach this tier
+  percent       Int      // discount percent (0–100) applied to the goods subtotal
+  active        Boolean  @default(true)
+  position      Int      @default(0) // display / sort order
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([active, minSpendCents])
+  @@map("loyalty_tiers")
+}
+
 enum TagType {
   PRODUCT
   COLLECTION

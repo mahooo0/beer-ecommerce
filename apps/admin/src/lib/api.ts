@@ -10,6 +10,7 @@ import type {
   CategoryAttribute,
   Brand,
   PromoBanner,
+  LoyaltyTier,
   Tag,
   Collection,
   Attribute,
@@ -517,6 +518,18 @@ export const api = {
       fetcher<ApiResponse<PromoBanner>>(`/promo-banners/${id}`, { method: 'PUT', body: JSON.stringify(data), token }),
     delete: (id: string, token?: string) =>
       fetcher<ApiResponse<void>>(`/promo-banners/${id}`, { method: 'DELETE', token }),
+  },
+  loyaltyTiers: {
+    getAll: (params?: { token?: string }) =>
+      fetcher<ApiResponse<LoyaltyTier[]>>('/loyalty-tiers', { token: params?.token }),
+    getById: (id: string, token?: string) =>
+      fetcher<ApiResponse<LoyaltyTier>>(`/loyalty-tiers/${id}`, { token }),
+    create: (data: Record<string, unknown>, token?: string) =>
+      fetcher<ApiResponse<LoyaltyTier>>('/loyalty-tiers', { method: 'POST', body: JSON.stringify(data), token }),
+    update: (id: string, data: Record<string, unknown>, token?: string) =>
+      fetcher<ApiResponse<LoyaltyTier>>(`/loyalty-tiers/${id}`, { method: 'PUT', body: JSON.stringify(data), token }),
+    delete: (id: string, token?: string) =>
+      fetcher<ApiResponse<void>>(`/loyalty-tiers/${id}`, { method: 'DELETE', token }),
   },
   // ==========================================================================
   // Blog / content (Payload CMS) via the server proxy at /api/blog/:collection.

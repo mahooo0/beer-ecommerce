@@ -1,5 +1,6 @@
 import { OrderModel, prisma, type IOrder } from '@repo/db';
 import { resolveWholesaleUnitPrice, type WholesaleTier } from '@repo/types/product-schemas';
+import { loyaltyTierService } from '../loyalty-tier/loyalty-tier.service.js';
 import { eventBus } from '../../common/events/event-bus.js';
 import { AppError } from '../../common/middleware/error-handler.js';
 import { paymentService } from '../payment/payment.service.js';
@@ -96,6 +97,15 @@ export class OrderService {
     };
   }
 
+  /** Lifetime cumulative PAID spend for a user (cents). Drives loyalty tiers. */
+  async getUserSpend(userId: string): Promise<number> {
+    const res = await OrderModel.aggregate([
+      { $match: { userId, status: { $in: ['paid', 'processing', 'shipped', 'delivered'] } } },
+      { $group: { _id: null, total: { $sum: '$totalAmount' } } },
+    ]);
+    return res[0]?.total ?? 0;
+  }
+
   async getById(id: string) {
     const order = await OrderModel.findById(id).lean();
     if (!order) throw new AppError(404, 'Order not found');
@@ -183,7 +193,17 @@ export class OrderService {
 
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
     const shippingCost = Math.max(0, Math.round(Number(input.shipping?.cost) || 0));
-    const discountAmount = 0; // loyalty (phase 2) / coupons are out of scope here
+
+    // Loyalty discount: signed-in RETAIL customers only. The tier is resolved
+    // from lifetime cumulative paid spend (this pending order not yet counted),
+    // and applies to the goods subtotal. Guests and wholesale get nothing.
+    let discountAmount = 0;
+    if (userId && !isWholesale) {
+      const spent = await this.getUserSpend(userId);
+      const percent = await loyaltyTierService.resolvePercent(spent);
+      discountAmount = Math.round((subtotal * percent) / 100);
+    }
+
     const taxAmount = 0; // catalog prices are VAT-inclusive
     const totalAmount = subtotal + shippingCost - discountAmount;
 
