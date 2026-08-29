@@ -113,7 +113,7 @@ const OrderItemSchema = new Schema<IOrderItem>({
   sku: { type: String, required: true },
   price: { type: Number, required: true },
   quantity: { type: Number, required: true },
-  imageUrl: { type: String, required: true },
+  imageUrl: { type: String, default: '' }, // optional: catalog products may have no image
   attributes: { type: Schema.Types.Mixed },
 });
 
