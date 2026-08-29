@@ -19,6 +19,7 @@ import type {
   CategoryFilter,
   CategoryFilterOption,
   CartAnalyticsSummary,
+  Notification,
 } from '@repo/types';
 
 // ============================================================================
@@ -546,6 +547,24 @@ export const api = {
         { token: params?.token },
       );
     },
+  },
+  // ==========================================================================
+  // Admin bell notifications (order events, low stock). All admin-only.
+  // ==========================================================================
+  notifications: {
+    list: (params?: { limit?: number; unreadOnly?: boolean; token?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.limit) qs.set('limit', String(params.limit));
+      if (params?.unreadOnly) qs.set('unreadOnly', 'true');
+      const q = qs.toString();
+      return fetcher<ApiResponse<Notification[]>>(`/notifications${q ? `?${q}` : ''}`, { token: params?.token });
+    },
+    unreadCount: (token?: string) =>
+      fetcher<ApiResponse<{ count: number }>>('/notifications/unread-count', { token }),
+    markRead: (id: string, token?: string) =>
+      fetcher<ApiResponse<Notification>>(`/notifications/${id}/read`, { method: 'PATCH', token }),
+    markAllRead: (token?: string) =>
+      fetcher<ApiResponse<{ count: number }>>('/notifications/read-all', { method: 'POST', token }),
   },
   // ==========================================================================
   // Blog / content (Payload CMS) via the server proxy at /api/blog/:collection.

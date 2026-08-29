@@ -561,6 +561,29 @@ export interface CartAnalyticsSummary {
   abandonedCartRows: AbandonedCartRow[];
 }
 
+// ============================================================================
+// NOTIFICATIONS (admin bell feed)
+// ============================================================================
+
+export const NotificationType = {
+  ORDER_CREATED: 'order.created',
+  ORDER_SHIPPED: 'order.shipped',
+  LOW_STOCK: 'inventory.lowStock',
+} as const;
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
+
+export interface Notification {
+  id: string;
+  type: string;
+  level: 'info' | 'success' | 'warning';
+  title: string;
+  body?: string | null;
+  orderId?: string | null;
+  productId?: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
 export const TagType = {
   PRODUCT: 'PRODUCT',
   COLLECTION: 'COLLECTION',

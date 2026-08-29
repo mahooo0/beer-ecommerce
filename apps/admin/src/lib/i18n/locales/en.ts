@@ -567,6 +567,16 @@ export const en = {
       deleteFailed: "Failed to delete banner",
     },
   },
+  notifications: {
+    title: "Notifications",
+    markAllRead: "Mark all read",
+    empty: "No notifications yet.",
+    kind: {
+      orderCreated: "New order",
+      orderShipped: "Order shipped",
+      lowStock: "Low stock",
+    },
+  },
   orders: {
     title: "Orders",
     totalCount: "{{count}} total orders",

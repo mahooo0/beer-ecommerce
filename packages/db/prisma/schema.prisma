@@ -809,6 +809,25 @@ model AnalyticsEvent {
   @@map("analytics_events")
 }
 
+// Store-wide admin notifications (not per-user): the bell in the admin shell.
+// Written server-side from domain events (new order, order shipped, low stock).
+// `read` is a shared flag across the admin team — good enough for a small shop.
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // order.created | order.shipped | inventory.lowStock
+  level     String   @default("info") // info | success | warning
+  title     String
+  body      String?
+  orderId   String?  // Mongo order id, for order-related notifications
+  productId String?  // for inventory notifications
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([read, createdAt])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
 enum TagType {
   PRODUCT
   COLLECTION

@@ -23,8 +23,10 @@ import { startReservationCleanup } from './modules/inventory/reservation.cleanup
 import { wishlistRoutes } from './modules/wishlist/wishlist.routes.js';
 import { cartRoutes } from './modules/cart/cart.routes.js';
 import { analyticsRoutes } from './modules/analytics/analytics.routes.js';
+import { notificationRoutes } from './modules/notification/notification.routes.js';
 import { registerWishlistEventListeners } from './modules/wishlist/wishlist.events.js';
 import { registerAnalyticsEventListeners } from './modules/analytics/analytics.events.js';
+import { registerNotificationEventListeners } from './modules/notification/notification.events.js';
 import { searchService } from './modules/search/search.service.js';
 import './modules/search/sync.service.js'; // Side-effect import: registers event listeners
 import './modules/payment/payment.events.js'; // Side-effect import: registers payment event listeners
@@ -62,6 +64,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
@@ -96,6 +99,7 @@ async function start() {
   startReservationCleanup();
   registerWishlistEventListeners();
   registerAnalyticsEventListeners();
+  registerNotificationEventListeners();
 
   app.listen(config.port, () => {
     console.log(`Server running on http://localhost:${config.port}`);

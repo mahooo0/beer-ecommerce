@@ -569,6 +569,16 @@ export const pl: Resources = {
       deleteFailed: "Nie udało się usunąć baneru",
     },
   },
+  notifications: {
+    title: "Powiadomienia",
+    markAllRead: "Oznacz wszystkie",
+    empty: "Brak powiadomień.",
+    kind: {
+      orderCreated: "Nowe zamówienie",
+      orderShipped: "Zamówienie wysłane",
+      lowStock: "Niski stan magazynowy",
+    },
+  },
   orders: {
     title: "Zamówienia",
     totalCount: "{{count}} zamówień łącznie",

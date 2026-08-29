@@ -569,6 +569,16 @@ export const uk: Resources = {
       deleteFailed: "Не вдалося видалити банер",
     },
   },
+  notifications: {
+    title: "Сповіщення",
+    markAllRead: "Позначити всі",
+    empty: "Сповіщень немає.",
+    kind: {
+      orderCreated: "Нове замовлення",
+      orderShipped: "Замовлення відправлено",
+      lowStock: "Низький залишок",
+    },
+  },
   orders: {
     title: "Замовлення",
     totalCount: "{{count}} замовлень усього",
