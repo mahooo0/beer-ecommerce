@@ -1,8 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Info, FileDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useAuth, useUser } from "@clerk/nextjs";
+import type { Order } from "@repo/types";
+import { api } from "@/lib/api";
+import { formatZl, PRODUCT_IMAGE_FALLBACK } from "@/lib/product-mapper";
 import {
   Accordion,
   AccordionContent,
@@ -11,52 +15,74 @@ import {
 } from "@/components/shadcn/accordion";
 import { Separator } from "@/components/shadcn/separator";
 
-interface OrderItem {
-  id: number;
-  name: string;
-  weight: string;
-  qty: number;
-  price: number;
-  image: string;
-}
+const PAGE_SIZE = 10;
 
-interface Order {
-  id: string;
-  date: string;
-  status: "Dostarczone" | "W trakcie" | "Anulowane";
-  amount: number;
-  items: OrderItem[];
-  shipping: number;
-}
-
-const sampleItems: OrderItem[] = Array.from({ length: 4 }, (_, i) => ({
-  id: i,
-  name: "Chrupiąca mieszanka orzeszków ziemnych",
-  weight: "1 kg",
-  qty: 10,
-  price: 1234,
-  image: "/categories/product-chrupki.png",
-}));
-
-const orders: Order[] = Array.from({ length: 5 }, (_, i) => ({
-  id: `12234${i + 5}`,
-  date: "10.10.2024",
-  status: "Dostarczone",
-  amount: 1234,
-  items: sampleItems,
-  shipping: 150,
-}));
-
-const statusKeyMap: Record<Order["status"], string> = {
-  Dostarczone: "delivered",
-  "W trakcie": "inProgress",
-  Anulowane: "cancelled",
+// Order statuses (lowercase, from the server) → i18n key under `orders.status`.
+const STATUS_KEY: Record<string, string> = {
+  pending: "pending",
+  paid: "paid",
+  processing: "processing",
+  shipped: "shipped",
+  delivered: "delivered",
+  cancelled: "cancelled",
+  returned: "returned",
+  refund_requested: "refundRequested",
 };
+
+function statusColor(status: string): string {
+  if (["delivered", "paid", "shipped"].includes(status)) return "#188E55"; // green
+  if (["cancelled", "returned", "refund_requested"].includes(status)) return "#AA3C37"; // red
+  return "#C9A227"; // amber — pending / processing
+}
+
+function formatDate(value: string | Date): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(d);
+}
+
+// Orders come back as lean Mongo docs, so the id lives on `_id`.
+function orderId(order: Order): string {
+  return (order as unknown as { _id?: string })._id ?? order.id;
+}
 
 export function ProfileOrders() {
   const { t } = useTranslation("profile");
+  const { user } = useUser();
+  const { getToken } = useAuth();
+
+  const [orders, setOrders] = useState<Order[]>([]);
   const [page, setPage] = useState(1);
-  const totalPages = 10;
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.id) return;
+      setLoading(true);
+      try {
+        const token = (await getToken()) ?? undefined;
+        const res = await api.orders.getByUser(user.id, { page, limit: PAGE_SIZE }, token);
+        if (cancelled) return;
+        if (res.success && res.data) {
+          setOrders(res.data);
+          setTotalPages(res.totalPages || 1);
+        }
+      } catch {
+        if (!cancelled) setOrders([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, page, getToken]);
 
   return (
     <div className="flex-1 rounded-[20px] bg-white p-8 font-taranka-body">
@@ -70,50 +96,75 @@ export function ProfileOrders() {
         </div>
       </div>
 
-      <Accordion type="single" collapsible defaultValue={orders[0]?.id} className="mt-8 space-y-3">
-        {orders.map((order) => (
-          <OrderAccordion key={order.id} order={order} />
-        ))}
-      </Accordion>
+      {loading ? (
+        <div className="mt-8 space-y-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-[75px] animate-pulse rounded-xl bg-cream-100" />
+          ))}
+        </div>
+      ) : orders.length === 0 ? (
+        <p className="mt-8 text-base text-[#9E9B90]">{t("orders.empty")}</p>
+      ) : (
+        <>
+          <Accordion
+            type="single"
+            collapsible
+            defaultValue={orders[0] ? orderId(orders[0]) : undefined}
+            className="mt-8 space-y-3"
+          >
+            {orders.map((order) => (
+              <OrderAccordion key={orderId(order)} order={order} />
+            ))}
+          </Accordion>
 
-      <Pagination page={page} setPage={setPage} totalPages={totalPages} />
+          {totalPages > 1 && <Pagination page={page} setPage={setPage} totalPages={totalPages} />}
+        </>
+      )}
     </div>
   );
 }
 
 function OrderAccordion({ order }: { order: Order }) {
   const { t } = useTranslation("profile");
-  const total = order.items.reduce((s, it) => s + it.price * 0 + it.price, 0) * order.items.length + order.shipping;
-  const grand = 21150;
+  const statusKey = STATUS_KEY[order.status] ?? order.status;
+  const tracking = order.shipping?.trackingNumber;
 
   return (
     <AccordionItem
-      value={order.id}
+      value={orderId(order)}
       className="rounded-xl border-0 bg-white transition-colors data-[state=open]:bg-[#F7F5EE]"
     >
       <AccordionTrigger className="px-4 py-3 hover:no-underline [&>svg]:size-5 [&>svg]:text-ink-900">
         <div className="flex w-full items-center gap-4 pr-4">
-          <span className="h-[51px] w-1 shrink-0 rounded bg-[#188E55]" />
+          <span
+            className="h-[51px] w-1 shrink-0 rounded"
+            style={{ backgroundColor: statusColor(order.status) }}
+          />
           <div className="flex-1 min-w-0">
             <p className="text-base text-ink-900">
-              {t("orders.orderNumber", { id: order.id, date: order.date })}
+              {t("orders.orderNumber", {
+                id: order.orderNumber,
+                date: formatDate(order.createdAt),
+              })}
             </p>
-            <p className="mt-1 text-sm text-[#5B5D5D]">
-              {t(`orders.status.${statusKeyMap[order.status]}`)}
-            </p>
+            <p className="mt-1 text-sm text-[#5B5D5D]">{t(`orders.status.${statusKey}`)}</p>
           </div>
           <div className="text-right">
             <p className="text-sm text-[#9E9B90]">{t("orders.amount")}</p>
-            <p className="mt-1 text-sm font-semibold text-ink-900">{order.amount} EUR</p>
+            <p className="mt-1 text-sm font-semibold text-ink-900">{formatZl(order.totalAmount)}</p>
           </div>
           <div className="flex items-center gap-2">
-            {order.items.slice(0, 3).map((it) => (
+            {order.items.slice(0, 3).map((it, idx) => (
               <span
-                key={it.id}
+                key={idx}
                 className="flex size-[60px] items-center justify-center rounded-md bg-cream-100"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={it.image} alt="" className="h-12 w-auto object-contain" />
+                <img
+                  src={it.imageUrl || PRODUCT_IMAGE_FALLBACK}
+                  alt=""
+                  className="h-12 w-auto object-contain"
+                />
               </span>
             ))}
             {order.items.length > 3 && (
@@ -127,21 +178,22 @@ function OrderAccordion({ order }: { order: Order }) {
 
       <AccordionContent className="px-4 pb-4">
         <ul className="space-y-3 pl-5">
-          {order.items.map((it) => (
-            <li key={it.id} className="flex items-center gap-4 rounded-md bg-white p-3">
+          {order.items.map((it, idx) => (
+            <li key={idx} className="flex items-center gap-4 rounded-md bg-white p-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={it.image}
+                src={it.imageUrl || PRODUCT_IMAGE_FALLBACK}
                 alt={it.name}
                 className="size-[60px] shrink-0 object-contain"
               />
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-base text-ink-900">{it.name}</p>
-                <p className="mt-1 text-sm text-[#5B5D5D]">{it.weight}</p>
               </div>
-              <p className="text-base text-ink-900 tabular-nums">{it.qty} {t("orders.pieces")}</p>
-              <p className="w-[100px] text-right text-base font-semibold text-ink-900 tabular-nums">
-                {it.price} EUR
+              <p className="text-base text-ink-900 tabular-nums">
+                {it.quantity} {t("orders.pieces")}
+              </p>
+              <p className="w-[110px] text-right text-base font-semibold text-ink-900 tabular-nums">
+                {formatZl(it.price)}
               </p>
             </li>
           ))}
@@ -150,12 +202,20 @@ function OrderAccordion({ order }: { order: Order }) {
         <Separator className="my-4" />
         <div className="flex items-center justify-between px-3">
           <p className="text-base font-semibold text-ink-900">{t("orders.shipping")}</p>
-          <p className="text-base font-semibold text-ink-900">{order.shipping} EUR</p>
+          <p className="text-base font-semibold text-ink-900">{formatZl(order.shippingCost)}</p>
         </div>
+
+        {tracking && (
+          <div className="mt-2 flex items-center justify-between px-3">
+            <p className="text-base text-ink-900">{t("orders.tracking")}</p>
+            <p className="font-mono text-base text-ink-900">{tracking}</p>
+          </div>
+        )}
+
         <Separator className="my-4" />
         <div className="flex items-center justify-between px-3">
           <p className="text-base font-bold text-ink-900">{t("orders.total")}</p>
-          <p className="text-base font-bold text-ink-900">{grand} EUR</p>
+          <p className="text-base font-bold text-ink-900">{formatZl(order.totalAmount)}</p>
         </div>
 
         <div className="mt-6 flex items-center justify-center gap-6">

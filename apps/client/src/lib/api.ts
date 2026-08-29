@@ -152,10 +152,14 @@ export const api = {
       }),
   },
   payments: {
-    createIntent: (data: { amount: number; orderId: string }, token: string) =>
+    // Amount is derived server-side from the order; guests (no token) may pay too.
+    createIntent: (data: { orderId: string }, token?: string) =>
       fetcher<ApiResponse<{ clientSecret: string; paymentIntentId: string }>>('/payments/create-intent', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(data),
       }),
   },

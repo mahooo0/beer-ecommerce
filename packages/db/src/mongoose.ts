@@ -57,7 +57,7 @@ export interface IOrderStatusChange {
 
 export interface IOrder extends Document {
   orderNumber: string;
-  userId: string;
+  userId?: string; // absent for guest orders (guestEmail identifies them instead)
   guestEmail?: string;
   items: IOrderItem[];
   status: 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'refund_requested';
@@ -129,7 +129,7 @@ const ShippingInfoSchema = new Schema<IShippingInfo>({
 
 const PaymentInfoSchema = new Schema<IPaymentInfo>({
   provider: { type: String, required: true, default: 'stripe' },
-  paymentIntentId: { type: String, required: true },
+  paymentIntentId: { type: String, default: '' }, // set once the Stripe intent exists
   status: {
     type: String,
     required: true,
@@ -145,8 +145,8 @@ const OrderAddressSchema = new Schema<IOrderAddress>({
   lastName: { type: String, required: true },
   street: { type: String, required: true },
   city: { type: String, required: true },
-  state: { type: String, required: true },
-  zipCode: { type: String, required: true },
+  state: { type: String }, // optional: PL/UA addresses often have no voivodeship/oblast
+  zipCode: { type: String }, // optional: locker / self-pickup deliveries have no postal code
   country: { type: String, required: true },
   phone: { type: String },
 });
@@ -162,7 +162,7 @@ const OrderStatusChangeSchema = new Schema<IOrderStatusChange>({
 const OrderSchema = new Schema<IOrder>(
   {
     orderNumber: { type: String, required: true, unique: true },
-    userId: { type: String, required: true },
+    userId: { type: String }, // absent for guest orders — see pre-validate below
     guestEmail: { type: String },
     items: { type: [OrderItemSchema], required: true },
     status: {
@@ -192,6 +192,15 @@ OrderSchema.index({ status: 1 });
 OrderSchema.index({ createdAt: -1 });
 OrderSchema.index({ userId: 1, status: 1 });
 OrderSchema.index({ userId: 1, createdAt: -1 });
+
+// Pre-validate: an order belongs to either a signed-in user or a guest email.
+OrderSchema.pre('validate', function (next) {
+  if (!this.userId && !this.guestEmail) {
+    next(new Error('Order must have either userId or guestEmail'));
+  } else {
+    next();
+  }
+});
 
 export const OrderModel = (mongoose.models.Order ??
   mongoose.model<IOrder>('Order', OrderSchema)) as mongoose.Model<IOrder>;

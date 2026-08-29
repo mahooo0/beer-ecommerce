@@ -72,10 +72,18 @@
     "total": "Разом",
     "repeatOrder": "повторити замовлення",
     "saveResult": "зберегти результат",
+    "empty": "У вас ще немає замовлень.",
+    "tracking": "Номер відправлення",
     "status": {
+      "pending": "Очікує оплати",
+      "paid": "Оплачено",
+      "processing": "В обробці",
+      "shipped": "Відправлено",
       "delivered": "Доставлено",
-      "inProgress": "В процесі",
-      "cancelled": "Скасовано"
+      "cancelled": "Скасовано",
+      "returned": "Повернено",
+      "refundRequested": "Запит на повернення",
+      "inProgress": "В процесі"
     }
   },
   "ordersDetail": {

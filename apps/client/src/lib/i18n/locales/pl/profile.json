@@ -72,10 +72,18 @@
     "total": "Całkowity",
     "repeatOrder": "powtórzenie zamówienia",
     "saveResult": "utrzymywać wynik",
+    "empty": "Nie masz jeszcze zamówień.",
+    "tracking": "Numer przesyłki",
     "status": {
+      "pending": "Oczekuje na płatność",
+      "paid": "Opłacone",
+      "processing": "W realizacji",
+      "shipped": "Wysłane",
       "delivered": "Dostarczone",
-      "inProgress": "W trakcie",
-      "cancelled": "Anulowane"
+      "cancelled": "Anulowane",
+      "returned": "Zwrócone",
+      "refundRequested": "Wniosek o zwrot",
+      "inProgress": "W trakcie"
     }
   },
   "ordersDetail": {

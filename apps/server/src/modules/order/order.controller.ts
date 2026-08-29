@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { getAuth } from '@clerk/express';
 import { orderService } from './order.service.js';
 
 export class OrderController {
@@ -44,7 +45,17 @@ export class OrderController {
 
   async create(req: Request, res: Response, next: NextFunction) {
     try {
-      const order = await orderService.create(req.body);
+      // Optional auth: signed-in → Clerk userId; guest → undefined (identified by email).
+      const { userId } = getAuth(req);
+      const { items, shippingAddress, billingAddress, shipping, guestEmail } = req.body ?? {};
+      const order = await orderService.create({
+        userId,
+        guestEmail,
+        items,
+        shippingAddress,
+        billingAddress,
+        shipping,
+      });
       res.status(201).json({ success: true, data: order });
     } catch (error) {
       next(error);

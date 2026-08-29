@@ -1,12 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { format, isSameDay, set, startOfDay } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { MapPin, Calendar as CalendarIcon, Check } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
-import { useCart } from '@/lib/cart-store';
+import { useAuth, useUser } from '@clerk/nextjs';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import type { CartItem } from '@repo/types';
+import { useCheckoutItems } from '@/lib/checkout-cart';
+import { formatZl } from '@/lib/product-mapper';
+import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
 import { LockerMapLoader } from './locker-map-loader';
 import { Button } from '@/components/shadcn/button';
@@ -23,21 +28,31 @@ import {
   SelectValue,
 } from '@/components/shadcn/select';
 
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
 type DeliveryTab = 'kurier' | 'wlasna' | 'poczta';
+
+// Flat delivery fees (cents). Placeholder pricing until a shipping-rate service lands.
+const DELIVERY_COST: Record<DeliveryTab, number> = {
+  kurier: 1500,
+  wlasna: 0,
+  poczta: 1200,
+};
+
+interface DeliveryForm {
+  city: string;
+  street: string;
+  house: string;
+  apartment: string;
+  postOffice: string;
+}
+
+const emptyDelivery: DeliveryForm = { city: '', street: '', house: '', apartment: '', postOffice: '' };
 
 const steps = [
   { id: 1, key: 'delivery' },
   { id: 2, key: 'contact' },
   { id: 3, key: 'payment' },
-];
-
-const payments = [
-  { id: 'blik-1', label: 'BLIK' },
-  { id: 'blik-2', label: 'BLIK' },
-  { id: 'blik-3', label: 'BLIK' },
-  { id: 'blik-4', label: 'BLIK' },
-  { id: 'blik-5', label: 'BLIK' },
-  { id: 'blik-6', label: 'BLIK' },
 ];
 
 const lockerCoords: [number, number][] = [
@@ -73,40 +88,114 @@ const pillSelect =
   'h-12 w-full max-w-[280px] rounded-full border-[#B5B2A7] bg-white px-5 text-sm text-ink-900 shadow-none data-[placeholder]:text-[#9E9B90] focus:ring-0 focus:border-ink-900';
 
 export function CheckoutFlow() {
-  const router = useRouter();
-  const clear = useCart((s) => s.clear);
+  const { t } = useTranslation('checkout');
+  const { isSignedIn, getToken } = useAuth();
+  const { user } = useUser();
+  const items = useCheckoutItems();
+
   const [step, setStep] = useState(1);
   const [tab, setTab] = useState<DeliveryTab>('kurier');
   const [selectedLocker, setSelectedLocker] = useState<number | null>(null);
-  const [payment, setPayment] = useState<string>(payments[0]!.id);
+  const [delivery, setDelivery] = useState<DeliveryForm>(emptyDelivery);
   const [contact, setContact] = useState({ name: '', company: '', email: '' });
+  // Order + Stripe intent, created once and kept across step navigation so
+  // stepping back and forth never spawns duplicate pending orders.
+  const [intent, setIntent] = useState<{ orderId: string; clientSecret: string } | null>(null);
+
+  // Prefill the email for signed-in customers (guests type their own).
+  useEffect(() => {
+    const email = user?.primaryEmailAddress?.emailAddress;
+    if (email) setContact((c) => (c.email ? c : { ...c, email }));
+  }, [user]);
+
+  const subtotal = useMemo(() => items.reduce((s, i) => s + i.price * i.quantity, 0), [items]);
+  const shippingCost = DELIVERY_COST[tab];
+  const total = subtotal + shippingCost;
 
   const next = () => setStep((s) => Math.min(3, s + 1));
-  const placeOrder = () => {
-    clear();
-    router.push('/checkout/success');
+
+  // Assemble the order payload from the delivery + contact forms. Only product
+  // ids and quantities are sent for pricing — the server rebuilds the rest.
+  const buildOrderPayload = () => {
+    const parts = contact.name.trim().split(/\s+/).filter(Boolean);
+    const firstName = parts[0] || '—';
+    const lastName = parts.slice(1).join(' ') || '—';
+
+    let street = '';
+    if (tab === 'kurier') {
+      street =
+        [delivery.street, delivery.house].filter(Boolean).join(' ') +
+        (delivery.apartment ? `/${delivery.apartment}` : '');
+    } else if (tab === 'wlasna') {
+      street = delivery.postOffice;
+    } else if (tab === 'poczta' && selectedLocker != null) {
+      street = lockers[selectedLocker]?.name ?? '';
+    }
+
+    return {
+      items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+      guestEmail: contact.email || undefined,
+      shippingAddress: {
+        firstName,
+        lastName,
+        street: street || '—',
+        city: delivery.city || '—',
+        state: '',
+        zipCode: '',
+        country: 'PL',
+        phone: '',
+      },
+      shipping: { method: tab, cost: shippingCost },
+    };
   };
+
+  if (items.length === 0) {
+    return (
+      <div className="rounded-[20px] bg-white p-12 text-center">
+        <p className="text-base text-[#9E9B90]">{t('error.emptyCart')}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="font-taranka-body">
       <Stepper current={step} />
 
-      <div className="mt-8">
-        {step === 1 && (
-          <DeliveryStep
-            tab={tab}
-            onTabChange={setTab}
-            selectedLocker={selectedLocker}
-            onLockerSelect={setSelectedLocker}
-            onContinue={next}
-          />
-        )}
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="min-w-0">
+          {step === 1 && (
+            <DeliveryStep
+              tab={tab}
+              onTabChange={setTab}
+              delivery={delivery}
+              onDeliveryChange={setDelivery}
+              selectedLocker={selectedLocker}
+              onLockerSelect={setSelectedLocker}
+              onContinue={next}
+            />
+          )}
 
-        {step === 2 && <ContactStep contact={contact} onChange={setContact} onContinue={next} />}
+          {step === 2 && (
+            <ContactStep
+              contact={contact}
+              onChange={setContact}
+              onContinue={next}
+              requireEmail={!isSignedIn}
+            />
+          )}
 
-        {step === 3 && (
-          <PaymentStep selected={payment} onSelect={setPayment} onSubmit={placeOrder} />
-        )}
+          {step === 3 && (
+            <PaymentStep
+              buildOrderPayload={buildOrderPayload}
+              getToken={getToken}
+              isSignedIn={!!isSignedIn}
+              intent={intent}
+              onReady={setIntent}
+            />
+          )}
+        </div>
+
+        <OrderSummary items={items} subtotal={subtotal} shippingCost={shippingCost} total={total} />
       </div>
     </div>
   );
@@ -151,15 +240,76 @@ function Stepper({ current }: { current: number }) {
   );
 }
 
+function OrderSummary({
+  items,
+  subtotal,
+  shippingCost,
+  total,
+}: {
+  items: CartItem[];
+  subtotal: number;
+  shippingCost: number;
+  total: number;
+}) {
+  const { t } = useTranslation('checkout');
+  return (
+    <aside className="h-fit rounded-[20px] bg-white p-6">
+      <h2 className="font-taranka-display text-xl font-extrabold uppercase tracking-wide text-ink-900">
+        {t('summary.heading')}
+      </h2>
+
+      <ul className="mt-5 space-y-3">
+        {items.map((it) => (
+          <li key={it.productId} className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={it.imageUrl || '/categories/product-chrupki.png'}
+              alt={it.name}
+              className="size-10 shrink-0 object-contain"
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm text-ink-900">{it.name}</p>
+              <p className="text-xs text-[#9E9B90]">× {it.quantity}</p>
+            </div>
+            <span className="whitespace-nowrap text-sm font-semibold text-ink-900">
+              {formatZl(it.price * it.quantity)}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="mt-5 space-y-2 border-t border-cream-200 pt-4 text-sm">
+        <div className="flex justify-between text-ink-900">
+          <span>{t('summary.subtotal')}</span>
+          <span>{formatZl(subtotal)}</span>
+        </div>
+        <div className="flex justify-between text-ink-900">
+          <span>{t('summary.shipping')}</span>
+          <span>{shippingCost === 0 ? t('summary.free') : formatZl(shippingCost)}</span>
+        </div>
+      </div>
+
+      <div className="mt-4 flex items-baseline justify-between border-t border-cream-200 pt-4 text-base font-bold text-ink-900">
+        <span>{t('summary.total')}</span>
+        <span>{formatZl(total)}</span>
+      </div>
+    </aside>
+  );
+}
+
 function DeliveryStep({
   tab,
   onTabChange,
+  delivery,
+  onDeliveryChange,
   selectedLocker,
   onLockerSelect,
   onContinue,
 }: {
   tab: DeliveryTab;
   onTabChange: (t: DeliveryTab) => void;
+  delivery: DeliveryForm;
+  onDeliveryChange: (d: DeliveryForm) => void;
   selectedLocker: number | null;
   onLockerSelect: (id: number) => void;
   onContinue: () => void;
@@ -170,10 +320,16 @@ function DeliveryStep({
         <div className="space-y-6">
           <DeliveryTabs current={tab} onChange={onTabChange} />
 
-          {tab === 'kurier' && <KurierForm onContinue={onContinue} />}
-          {tab === 'wlasna' && <WlasnaForm onContinue={onContinue} />}
+          {tab === 'kurier' && (
+            <KurierForm delivery={delivery} onDeliveryChange={onDeliveryChange} onContinue={onContinue} />
+          )}
+          {tab === 'wlasna' && (
+            <WlasnaForm delivery={delivery} onDeliveryChange={onDeliveryChange} onContinue={onContinue} />
+          )}
           {tab === 'poczta' && (
             <PocztaForm
+              delivery={delivery}
+              onDeliveryChange={onDeliveryChange}
               selected={selectedLocker}
               onSelect={onLockerSelect}
               onContinue={onContinue}
@@ -201,11 +357,7 @@ function DeliveryTabs({
   onChange: (t: DeliveryTab) => void;
 }) {
   const { t } = useTranslation('checkout');
-  const tabs: { id: DeliveryTab }[] = [
-    { id: 'kurier' },
-    { id: 'wlasna' },
-    { id: 'poczta' },
-  ];
+  const tabs: { id: DeliveryTab }[] = [{ id: 'kurier' }, { id: 'wlasna' }, { id: 'poczta' }];
   return (
     <div className="flex items-center gap-8 border-b border-cream-300">
       {tabs.map((tab) => {
@@ -232,11 +384,11 @@ function DeliveryTabs({
   );
 }
 
-function CityField() {
+function CityField({ value, onChange }: { value: string; onChange: (city: string) => void }) {
   const { t } = useTranslation('checkout');
   return (
     <Field label={t('form.city')}>
-      <Select>
+      <Select value={value || undefined} onValueChange={onChange}>
         <SelectTrigger className={pillSelect + ' !h-12 !min-h-12'}>
           <SelectValue placeholder="—" />
         </SelectTrigger>
@@ -367,62 +519,105 @@ function PrimaryButton({
   );
 }
 
-function KurierForm({ onContinue }: { onContinue: () => void }) {
+function KurierForm({
+  delivery,
+  onDeliveryChange,
+  onContinue,
+}: {
+  delivery: DeliveryForm;
+  onDeliveryChange: (d: DeliveryForm) => void;
+  onContinue: () => void;
+}) {
   const { t } = useTranslation('checkout');
+  const valid = delivery.city && delivery.street.trim() && delivery.house.trim();
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <CityField />
+        <CityField value={delivery.city} onChange={(city) => onDeliveryChange({ ...delivery, city })} />
         <Field label={t('form.street')}>
-          <Input className={pillInput} />
+          <Input
+            className={pillInput}
+            value={delivery.street}
+            onChange={(e) => onDeliveryChange({ ...delivery, street: e.target.value })}
+          />
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="  flex flex-row gap-2 items-center">
           <Field label={t('form.house')}>
-            <Input className={pillInput} />
+            <Input
+              className={pillInput}
+              value={delivery.house}
+              onChange={(e) => onDeliveryChange({ ...delivery, house: e.target.value })}
+            />
           </Field>
           <Field label={t('form.apartment')}>
-            <Input className={pillInput} />
+            <Input
+              className={pillInput}
+              value={delivery.apartment}
+              onChange={(e) => onDeliveryChange({ ...delivery, apartment: e.target.value })}
+            />
           </Field>
         </div>
         <DateField label={t('form.dateTime')} />
       </div>
       <div className="pt-2">
-        <PrimaryButton onClick={onContinue}>{t('button.continue')}</PrimaryButton>
+        <PrimaryButton onClick={onContinue} disabled={!valid}>
+          {t('button.continue')}
+        </PrimaryButton>
       </div>
     </div>
   );
 }
 
-function WlasnaForm({ onContinue }: { onContinue: () => void }) {
+function WlasnaForm({
+  delivery,
+  onDeliveryChange,
+  onContinue,
+}: {
+  delivery: DeliveryForm;
+  onDeliveryChange: (d: DeliveryForm) => void;
+  onContinue: () => void;
+}) {
   const { t } = useTranslation('checkout');
+  const valid = delivery.city && delivery.postOffice.trim();
   return (
     <div className="space-y-4">
-      <CityField />
+      <CityField value={delivery.city} onChange={(city) => onDeliveryChange({ ...delivery, city })} />
       <Field label={t('form.postOfficeNumber')}>
-        <Input className={pillInput} />
+        <Input
+          className={pillInput}
+          value={delivery.postOffice}
+          onChange={(e) => onDeliveryChange({ ...delivery, postOffice: e.target.value })}
+        />
       </Field>
       <div className="pt-2">
-        <PrimaryButton onClick={onContinue}>{t('button.continue')}</PrimaryButton>
+        <PrimaryButton onClick={onContinue} disabled={!valid}>
+          {t('button.continue')}
+        </PrimaryButton>
       </div>
     </div>
   );
 }
 
 function PocztaForm({
+  delivery,
+  onDeliveryChange,
   selected,
   onSelect,
   onContinue,
 }: {
+  delivery: DeliveryForm;
+  onDeliveryChange: (d: DeliveryForm) => void;
   selected: number | null;
   onSelect: (id: number) => void;
   onContinue: () => void;
 }) {
   const { t } = useTranslation('checkout');
+  const valid = delivery.city && selected !== null;
   return (
     <div>
-      <CityField />
+      <CityField value={delivery.city} onChange={(city) => onDeliveryChange({ ...delivery, city })} />
 
       <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4">
         {lockers.map((l) => (
@@ -448,7 +643,7 @@ function PocztaForm({
       </ul>
 
       <div className="mt-6">
-        <PrimaryButton onClick={onContinue} disabled={selected === null}>
+        <PrimaryButton onClick={onContinue} disabled={!valid}>
           {t('button.continue')}
         </PrimaryButton>
       </div>
@@ -460,13 +655,15 @@ function ContactStep({
   contact,
   onChange,
   onContinue,
+  requireEmail,
 }: {
   contact: { name: string; company: string; email: string };
   onChange: (c: { name: string; company: string; email: string }) => void;
   onContinue: () => void;
+  requireEmail: boolean;
 }) {
   const { t } = useTranslation('checkout');
-  const isValid = contact.name.trim() && contact.email.trim();
+  const isValid = contact.name.trim() && (!requireEmail || contact.email.trim());
   return (
     <div className="w-fit rounded-[20px] bg-white p-6 flex flex-col mx-auto">
       <div className="space-y-4 flex flex-col gap-4 ">
@@ -506,55 +703,133 @@ function ContactStep({
 }
 
 function PaymentStep({
-  selected,
-  onSelect,
-  onSubmit,
+  buildOrderPayload,
+  getToken,
+  isSignedIn,
+  intent,
+  onReady,
 }: {
-  selected: string;
-  onSelect: (id: string) => void;
-  onSubmit: () => void;
+  buildOrderPayload: () => Record<string, unknown>;
+  getToken: () => Promise<string | null>;
+  isSignedIn: boolean;
+  intent: { orderId: string; clientSecret: string } | null;
+  onReady: (intent: { orderId: string; clientSecret: string }) => void;
 }) {
   const { t } = useTranslation('checkout');
-  return (
-    <div>
-      <div className="rounded-[20px] bg-white p-6">
-        <ul className="grid grid-cols-3 gap-6">
-          {payments.map((p) => {
-            const active = selected === p.id;
-            return (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  onClick={() => onSelect(p.id)}
-                  className={`flex h-[88px] w-full items-center justify-between rounded-3xl border bg-white px-6 transition-colors ${
-                    active ? 'border-brand-red-500' : 'border-cream-300 hover:border-ink-900'
-                  }`}
-                >
-                  <span
-                    className={`flex size-5 items-center justify-center rounded-full border-2 ${
-                      active ? 'border-brand-red-500' : 'border-[#9E9B90]'
-                    }`}
-                  >
-                    {active && <span className="size-2.5 rounded-full bg-brand-red-500" />}
-                  </span>
-                  <span className="flex h-12 items-center rounded bg-black px-4 font-taranka-display text-base font-bold uppercase text-white">
-                    <span className="text-[#E91E63]">b</span>lik
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+  const [loading, setLoading] = useState(!intent);
+  const [error, setError] = useState('');
 
-      <div className="mt-6 flex justify-end">
+  // Create the pending order + Stripe intent once. The charge amount is fixed
+  // server-side from the order, so nothing sent from here is trusted.
+  useEffect(() => {
+    if (intent) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = isSignedIn ? (await getToken()) ?? undefined : undefined;
+        const orderRes = await api.orders.create(buildOrderPayload() as never, token);
+        if (!orderRes.success || !orderRes.data) throw new Error('order');
+        const oid =
+          (orderRes.data as { _id?: string; id?: string })._id ||
+          (orderRes.data as { id?: string }).id;
+        if (!oid) throw new Error('order-id');
+
+        const intentRes = await api.payments.createIntent({ orderId: oid }, token);
+        if (!intentRes.success || !intentRes.data) throw new Error('intent');
+
+        if (cancelled) return;
+        onReady({ orderId: oid, clientSecret: intentRes.data.clientSecret });
+      } catch {
+        if (!cancelled) setError(t('error.payment'));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="rounded-[20px] bg-white p-6">
+        <div className="h-48 animate-pulse rounded-2xl bg-cream-200" />
+      </div>
+    );
+  }
+
+  if (error || !intent) {
+    return (
+      <div className="rounded-[20px] bg-white p-6">
+        <p className="text-sm text-brand-red-500">{error || t('error.payment')}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[20px] bg-white p-6">
+      <Elements
+        stripe={stripePromise}
+        options={{
+          clientSecret: intent.clientSecret,
+          locale: 'pl',
+          appearance: {
+            theme: 'flat',
+            variables: {
+              colorPrimary: '#AA3C37',
+              borderRadius: '12px',
+              fontFamily: 'inherit',
+            },
+          },
+        }}
+      >
+        <StripeForm orderId={intent.orderId} />
+      </Elements>
+    </div>
+  );
+}
+
+function StripeForm({ orderId }: { orderId: string }) {
+  const { t } = useTranslation('checkout');
+  const stripe = useStripe();
+  const elements = useElements();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handlePay = async () => {
+    if (!stripe || !elements) return;
+    setSubmitting(true);
+    setError('');
+    const { error: confirmError } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: `${window.location.origin}/checkout/success?orderId=${orderId}`,
+      },
+    });
+    // On success Stripe redirects to return_url; only errors return here.
+    if (confirmError) {
+      setError(confirmError.message || t('error.generic'));
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <PaymentElement />
+      {error && <p className="text-sm text-brand-red-500">{error}</p>}
+      <div className="flex justify-end">
         <button
           type="button"
-          onClick={onSubmit}
-          className="inline-flex h-12 items-center gap-3 rounded-full bg-brand-red-500 px-9 text-base font-medium text-cream-50 shadow-[0_0_0_0_rgba(170,60,55,0.4)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-red-700 hover:shadow-[0_8px_24px_-4px_rgba(170,60,55,0.5)]"
+          onClick={handlePay}
+          disabled={!stripe || submitting}
+          className="inline-flex h-12 items-center gap-3 rounded-full bg-brand-red-500 px-9 text-base font-medium text-cream-50 shadow-[0_0_0_0_rgba(170,60,55,0.4)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-red-700 hover:shadow-[0_8px_24px_-4px_rgba(170,60,55,0.5)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
         >
-          {t('button.payAndOrder')}
-          <Check className="size-4" strokeWidth={2.5} />
+          {submitting ? t('error.processing') : t('button.payAndOrder')}
+          {!submitting && <Check className="size-4" strokeWidth={2.5} />}
         </button>
       </div>
     </div>

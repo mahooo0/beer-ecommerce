@@ -43,3 +43,4 @@ packages/db/src/generated/
 .claude/
 skills-lock.json
 .agents/
+.camp/

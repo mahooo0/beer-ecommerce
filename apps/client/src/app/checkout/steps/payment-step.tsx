@@ -148,7 +148,7 @@ export function PaymentStep() {
 
         // 2. Create payment intent
         const paymentRes = await api.payments.createIntent(
-          { amount: totalAmount, orderId },
+          { orderId },
           token,
         );
 

@@ -1,15 +1,32 @@
 import Stripe from 'stripe';
+import { OrderModel } from '@repo/db';
 import { config } from '../../config/index.js';
 import { eventBus } from '../../common/events/event-bus.js';
+import { AppError } from '../../common/middleware/error-handler.js';
 
 const stripe = new Stripe(config.stripeSecretKey);
 
 export class PaymentService {
-  async createPaymentIntent(data: { amount: number; orderId: string }) {
+  /**
+   * Create a Stripe payment intent for an order. The charge amount is read from
+   * the (server-computed) order total — never from the client — so a tampered
+   * client amount cannot change what the customer is charged.
+   */
+  async createPaymentIntent(data: { orderId: string }) {
+    const order = await OrderModel.findById(data.orderId);
+    if (!order) throw new AppError(404, 'Order not found');
+
     const paymentIntent = await stripe.paymentIntents.create({
-      amount: data.amount,
-      currency: 'usd',
+      amount: order.totalAmount,
+      currency: 'pln',
+      // Let Stripe surface every method enabled on the account (card, BLIK, …).
+      automatic_payment_methods: { enabled: true },
       metadata: { orderId: data.orderId },
+    });
+
+    // Record the intent id on the order so refunds work even before the webhook.
+    await OrderModel.findByIdAndUpdate(data.orderId, {
+      'payment.paymentIntentId': paymentIntent.id,
     });
 
     return {

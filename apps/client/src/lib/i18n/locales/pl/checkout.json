@@ -53,5 +53,19 @@
     "viewOrderDetails": "Zobacz szczegóły zamówienia",
     "viewAllOrders": "Zobacz wszystkie zamówienia",
     "continueShopping": "Kontynuuj zakupy"
+  },
+  "summary": {
+    "heading": "Twoje zamówienie",
+    "items": "Produkty",
+    "subtotal": "Suma częściowa",
+    "shipping": "Dostawa",
+    "free": "Za darmo",
+    "total": "Razem do zapłaty"
+  },
+  "error": {
+    "generic": "Coś poszło nie tak. Spróbuj ponownie.",
+    "emptyCart": "Twój koszyk jest pusty.",
+    "payment": "Nie udało się zainicjować płatności.",
+    "processing": "Przetwarzanie…"
   }
 }

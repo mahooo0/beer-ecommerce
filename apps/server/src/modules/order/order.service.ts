@@ -1,7 +1,23 @@
-import { OrderModel, type IOrder } from '@repo/db';
+import { OrderModel, prisma, type IOrder } from '@repo/db';
+import { resolveWholesaleUnitPrice, type WholesaleTier } from '@repo/types/product-schemas';
 import { eventBus } from '../../common/events/event-bus.js';
 import { AppError } from '../../common/middleware/error-handler.js';
 import { paymentService } from '../payment/payment.service.js';
+
+/** Human-readable, collision-resistant order number, e.g. TAR-LXY2K9-4F7A. */
+function generateOrderNumber(): string {
+  const stamp = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `TAR-${stamp}-${rand}`;
+}
+
+/** Line as submitted by the client — only identity + quantity are trusted. */
+interface OrderLineInput {
+  productId: string;
+  quantity: number;
+  variantId?: string;
+  attributes?: Record<string, string>;
+}
 
 interface GetAllParams {
   page?: number;
@@ -86,21 +102,118 @@ export class OrderService {
     return order;
   }
 
-  async create(data: {
-    userId: string;
-    items: IOrder['items'];
+  /**
+   * Create an order with SERVER-AUTHORITATIVE pricing. The client only supplies
+   * product ids + quantities; every price, name, sku and the totals are rebuilt
+   * from the Prisma catalog here — client-sent money is never trusted. Wholesale
+   * tier pricing applies only to signed-in WHOLESALE customers; guests are retail.
+   */
+  async create(input: {
+    userId?: string | null;
+    guestEmail?: string;
+    items: OrderLineInput[];
     shippingAddress: IOrder['shippingAddress'];
-    totalAmount: number;
-  } & Record<string, any>) {
+    billingAddress?: IOrder['billingAddress'];
+    shipping?: { method: string; cost: number };
+  }) {
+    const userId = input.userId || undefined;
+    const guestEmail = input.guestEmail?.trim() || undefined;
+
+    if (!userId && !guestEmail) {
+      throw new AppError(400, 'Sign in or provide an email to place an order');
+    }
+    if (!input.shippingAddress) {
+      throw new AppError(400, 'Shipping address is required');
+    }
+    if (!Array.isArray(input.items) || input.items.length === 0) {
+      throw new AppError(400, 'Order must contain at least one item');
+    }
+
+    // Wholesale pricing is a signed-in WHOLESALE privilege; everyone else is retail.
+    let isWholesale = false;
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { clerkId: userId },
+        select: { customerType: true },
+      });
+      isWholesale = user?.customerType === 'WHOLESALE';
+    }
+
+    const productIds = [...new Set(input.items.map((i) => i.productId))];
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        price: true,
+        salePrice: true,
+        images: true,
+        wholesaleTiers: true,
+        isActive: true,
+      },
+    });
+    const byId = new Map(products.map((p) => [p.id, p]));
+
+    // Rebuild every line from the catalog — this is where price authority lives.
+    const items = input.items.map((line) => {
+      const product = byId.get(line.productId);
+      if (!product || !product.isActive) {
+        throw new AppError(400, `Product not available: ${line.productId}`);
+      }
+      const quantity = Math.max(1, Math.floor(Number(line.quantity) || 1));
+      const basePrice = product.salePrice ?? product.price; // retail unit price (cents)
+      const price = resolveWholesaleUnitPrice({
+        basePrice,
+        tiers: (product.wholesaleTiers as WholesaleTier[] | null) ?? undefined,
+        quantity,
+        isWholesale,
+      });
+      return {
+        productId: product.id,
+        variantId: line.variantId,
+        name: product.name,
+        sku: product.sku,
+        price,
+        quantity,
+        imageUrl: product.images[0] ?? '',
+        attributes: line.attributes ?? {},
+      };
+    });
+
+    const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const shippingCost = Math.max(0, Math.round(Number(input.shipping?.cost) || 0));
+    const discountAmount = 0; // loyalty (phase 2) / coupons are out of scope here
+    const taxAmount = 0; // catalog prices are VAT-inclusive
+    const totalAmount = subtotal + shippingCost - discountAmount;
+
     const order = await OrderModel.create({
-      ...data,
-      status: data.status || 'pending',
+      orderNumber: generateOrderNumber(),
+      userId,
+      guestEmail,
+      items,
+      status: 'pending',
+      subtotal,
+      taxAmount,
+      shippingCost,
+      discountAmount,
+      totalAmount,
+      shippingAddress: input.shippingAddress,
+      billingAddress: input.billingAddress,
+      shipping: input.shipping ? { method: input.shipping.method, cost: shippingCost } : undefined,
+      payment: {
+        provider: 'stripe',
+        paymentIntentId: '',
+        status: 'pending',
+        amount: totalAmount,
+        refundedAmount: 0,
+      },
     });
 
     eventBus.emit('order.created', {
       orderId: order.id as string,
-      userId: data.userId,
-      totalAmount: data.totalAmount,
+      userId: userId ?? '',
+      totalAmount,
     });
 
     return order;

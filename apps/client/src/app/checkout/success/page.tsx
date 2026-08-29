@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Check } from "lucide-react";
 import { TarankaFooter } from "@/components/taranka/footer";
+import { CheckoutSuccessClear } from "@/components/taranka/checkout-success-clear";
 import { getServerT } from "@/lib/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -15,6 +16,7 @@ export default async function CheckoutSuccessPage() {
   const t = await getServerT("checkout");
   return (
     <>
+      <CheckoutSuccessClear />
       <div className="mx-auto max-w-[1440px] px-[120px] py-16 font-taranka-body">
         <div className="rounded-[20px] bg-white p-12 text-center">
           <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-brand-red-500 text-cream-50">

@@ -5,11 +5,12 @@ import { AppError } from '../../common/middleware/error-handler.js';
 export class PaymentController {
   async createPaymentIntent(req: Request, res: Response, next: NextFunction) {
     try {
-      const { amount, orderId } = req.body;
-      if (!amount || !orderId) {
-        throw new AppError(400, 'amount and orderId are required');
+      const { orderId } = req.body;
+      if (!orderId) {
+        throw new AppError(400, 'orderId is required');
       }
-      const result = await paymentService.createPaymentIntent({ amount, orderId });
+      // Amount is derived server-side from the order total, not taken from the client.
+      const result = await paymentService.createPaymentIntent({ orderId });
       res.json({
         success: true,
         data: { clientSecret: result.clientSecret, paymentIntentId: result.id },
