@@ -75,8 +75,8 @@ export function RevenueTab({ orders }: RevenueTabProps) {
             <AreaChart accessibilityLayer data={chartData}>
               <CartesianGrid vertical={false} />
               <XAxis dataKey="label" tickLine={false} tickMargin={10} axisLine={false} />
-              <YAxis tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(v) => `$${v}`} />
-              <ChartTooltip content={<ChartTooltipContent formatter={(value) => `$${Number(value).toFixed(2)}`} />} />
+              <YAxis tickLine={false} tickMargin={10} axisLine={false} tickFormatter={(v) => `${v} zł`} />
+              <ChartTooltip content={<ChartTooltipContent formatter={(value) => `${Number(value).toFixed(2)} zł`} />} />
               <defs>
                 <linearGradient id="fillRevenueAnalytics" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.8} />

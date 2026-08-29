@@ -94,7 +94,7 @@ export function computeTopProducts(orders: Order[], limit = 5): TopProduct[] {
 }
 
 export function formatCurrency(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `${(cents / 100).toFixed(2)} zł`;
 }
 
 export function formatDate(date: Date | string): string {

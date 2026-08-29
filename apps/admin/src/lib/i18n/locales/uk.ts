@@ -569,6 +569,14 @@ export const uk: Resources = {
       deleteFailed: "Не вдалося видалити банер",
     },
   },
+  analyticsKpi: {
+    revenue: "Дохід",
+    orders: "Замовлення",
+    aov: "Середній чек",
+    conversion: "Коефіцієнт конверсії",
+    abandoned: "Покинуті кошики",
+    vsPrevious: "vs попередній період",
+  },
   notifications: {
     title: "Сповіщення",
     markAllRead: "Позначити всі",

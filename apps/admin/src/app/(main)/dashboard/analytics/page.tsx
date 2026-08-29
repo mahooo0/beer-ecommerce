@@ -11,6 +11,7 @@ import { RevenueTab } from '@/components/analytics/revenue-tab';
 import { OrdersTab } from '@/components/analytics/orders-tab';
 import { ProductsTab } from '@/components/analytics/products-tab';
 import { CartsTab } from '@/components/analytics/carts-tab';
+import { AnalyticsKpiStrip } from '@/components/analytics/kpi-strip';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AnalyticsPage() {
@@ -37,6 +38,8 @@ export default function AnalyticsPage() {
           <Skeleton className="h-[400px] w-full" />
         </div>
       ) : (
+        <>
+        <AnalyticsKpiStrip orders={orders} cartSummary={cartSummary} dateRange={dateRange} />
         <Tabs defaultValue="revenue">
           <TabsList>
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
@@ -66,6 +69,7 @@ export default function AnalyticsPage() {
             )}
           </TabsContent>
         </Tabs>
+        </>
       )}
     </div>
   );

@@ -567,6 +567,14 @@ export const en = {
       deleteFailed: "Failed to delete banner",
     },
   },
+  analyticsKpi: {
+    revenue: "Revenue",
+    orders: "Orders",
+    aov: "Avg. order value",
+    conversion: "Conversion rate",
+    abandoned: "Abandoned carts",
+    vsPrevious: "vs previous period",
+  },
   notifications: {
     title: "Notifications",
     markAllRead: "Mark all read",

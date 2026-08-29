@@ -569,6 +569,14 @@ export const pl: Resources = {
       deleteFailed: "Nie udało się usunąć baneru",
     },
   },
+  analyticsKpi: {
+    revenue: "Przychód",
+    orders: "Zamówienia",
+    aov: "Śr. wartość zamówienia",
+    conversion: "Współczynnik konwersji",
+    abandoned: "Porzucone koszyki",
+    vsPrevious: "vs poprzedni okres",
+  },
   notifications: {
     title: "Powiadomienia",
     markAllRead: "Oznacz wszystkie",
