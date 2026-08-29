@@ -18,6 +18,7 @@ import {
   Layers,
   LayoutDashboard,
   LayoutGrid,
+  List,
   ListTodo,
   Lock,
   type LucideIcon,
@@ -26,7 +27,6 @@ import {
   BadgePercent,
   MessageSquare,
   Newspaper,
-  Package,
   PackagePlus,
   PackageSearch,
   ReceiptText,
@@ -74,25 +74,65 @@ export const sidebarItems: NavGroup[] = [
         url: "/dashboard",
         icon: LayoutDashboard,
       },
+    ],
+  },
+  {
+    id: 2,
+    label: "nav.section.sales",
+    items: [
       {
-        title: "nav.catalog",
-        url: "/dashboard/products",
-        icon: Package,
+        title: "nav.orders",
+        url: "/dashboard/orders",
+        icon: ShoppingCart,
         subItems: [
-          { title: "nav.allProducts", url: "/dashboard/products", icon: PackageSearch },
-          { title: "nav.addProduct", url: "/dashboard/products/new", icon: PackagePlus },
-          { title: "nav.categories", url: "/dashboard/categories", icon: FolderTree },
-          { title: "nav.collections", url: "/dashboard/collections", icon: Layers },
-          { title: "nav.brands", url: "/dashboard/brands", icon: Award },
-          { title: "nav.promoBanners", url: "/dashboard/promo-banners", icon: Megaphone },
-          { title: "nav.loyaltyTiers", url: "/dashboard/loyalty-tiers", icon: BadgePercent },
+          { title: "nav.ordersList", url: "/dashboard/orders", icon: List },
+          { title: "nav.ordersBoard", url: "/dashboard/orders?view=board", icon: Kanban },
         ],
       },
       {
-        title: "nav.users",
-        url: "/dashboard/users",
-        icon: Users,
+        title: "nav.analytics",
+        url: "/dashboard/analytics",
+        icon: BarChart3,
       },
+    ],
+  },
+  {
+    id: 3,
+    label: "nav.catalog",
+    items: [
+      { title: "nav.allProducts", url: "/dashboard/products", icon: PackageSearch },
+      { title: "nav.addProduct", url: "/dashboard/products/new", icon: PackagePlus },
+      { title: "nav.categories", url: "/dashboard/categories", icon: FolderTree },
+      { title: "nav.collections", url: "/dashboard/collections", icon: Layers },
+      { title: "nav.brands", url: "/dashboard/brands", icon: Award },
+      { title: "nav.tags", url: "/dashboard/tags", icon: Tags },
+      {
+        title: "nav.inventory",
+        url: "/dashboard/inventory",
+        icon: Boxes,
+        subItems: [
+          { title: "nav.inventoryOverview", url: "/dashboard/inventory" },
+          { title: "nav.warehouses", url: "/dashboard/inventory/warehouses" },
+          { title: "nav.movements", url: "/dashboard/inventory/movements" },
+          { title: "nav.adjustments", url: "/dashboard/inventory/adjustments" },
+        ],
+      },
+      { title: "nav.promoBanners", url: "/dashboard/promo-banners", icon: Megaphone },
+    ],
+  },
+  {
+    id: 4,
+    label: "nav.section.customers",
+    items: [
+      { title: "nav.users", url: "/dashboard/users", icon: Users },
+      { title: "nav.loyaltyTiers", url: "/dashboard/loyalty-tiers", icon: BadgePercent },
+      { title: "nav.leads", url: "/dashboard/leads", icon: Inbox },
+    ],
+  },
+  {
+    id: 5,
+    label: "nav.section.content",
+    items: [
       {
         title: "nav.blog",
         url: "/dashboard/blog",
@@ -103,62 +143,19 @@ export const sidebarItems: NavGroup[] = [
           { title: "nav.blogMedia", url: "/dashboard/blog/media", icon: Images },
         ],
       },
-      {
-        title: "nav.leads",
-        url: "/dashboard/leads",
-        icon: Inbox,
-      },
-      {
-        title: "nav.pages",
-        url: "/dashboard/pages",
-        icon: FileText,
-      },
+      { title: "nav.pages", url: "/dashboard/pages", icon: FileText },
     ],
   },
   {
-    id: 2,
-    label: "Template",
+    id: 6,
+    label: "nav.section.ops",
     items: [
-      {
-        title: "Orders",
-        url: "/dashboard/orders",
-        icon: ShoppingCart,
-      },
-      {
-        title: "Inventory",
-        url: "/dashboard/inventory",
-        icon: Boxes,
-        subItems: [
-          { title: "Overview", url: "/dashboard/inventory" },
-          { title: "Warehouses", url: "/dashboard/inventory/warehouses" },
-          { title: "Movements", url: "/dashboard/inventory/movements" },
-          { title: "Adjustments", url: "/dashboard/inventory/adjustments" },
-        ],
-      },
-      {
-        title: "Shipping",
-        url: "/dashboard/shipping/zones",
-        icon: Truck,
-      },
-      {
-        title: "Tags",
-        url: "/dashboard/tags",
-        icon: Tags,
-      },
-      {
-        title: "Analytics",
-        url: "/dashboard/analytics",
-        icon: BarChart3,
-      },
-      {
-        title: "Search",
-        url: "/dashboard/search",
-        icon: Search,
-      },
+      { title: "nav.shipping", url: "/dashboard/shipping/zones", icon: Truck },
+      { title: "nav.search", url: "/dashboard/search", icon: Search },
     ],
   },
   {
-    id: 3,
+    id: 7,
     label: "Template · Dashboards",
     items: [
       {
@@ -213,7 +210,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 4,
+    id: 8,
     label: "Template · Pages",
     items: [
       {
@@ -271,7 +268,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 5,
+    id: 9,
     label: "Template · Legacy",
     items: [
       {
@@ -287,7 +284,7 @@ export const sidebarItems: NavGroup[] = [
     ],
   },
   {
-    id: 6,
+    id: 10,
     label: "Template · Misc",
     items: [
       {

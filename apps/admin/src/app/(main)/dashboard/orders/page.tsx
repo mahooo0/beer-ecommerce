@@ -72,7 +72,20 @@ export default function OrdersPage() {
   const { t } = useTranslation();
   const page = Number(searchParams.get('page')) || 1;
 
-  const [view, setView] = useState<'list' | 'board'>('list');
+  const [view, setView] = useState<'list' | 'board'>(
+    searchParams.get('view') === 'board' ? 'board' : 'list',
+  );
+
+  // Keep the view in sync with the URL so the sidebar "Board" link works and
+  // the toggle is shareable/back-button friendly.
+  useEffect(() => {
+    setView(searchParams.get('view') === 'board' ? 'board' : 'list');
+  }, [searchParams]);
+
+  const changeView = (v: 'list' | 'board') => {
+    setView(v);
+    router.replace(v === 'board' ? '/dashboard/orders?view=board' : '/dashboard/orders');
+  };
   const [orders, setOrders] = useState<Order[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -215,7 +228,7 @@ export default function OrdersPage() {
           <div className="inline-flex items-center rounded-lg border bg-card p-0.5">
             <button
               type="button"
-              onClick={() => setView('list')}
+              onClick={() => changeView('list')}
               className={cn(
                 'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm transition-colors',
                 view === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
@@ -226,7 +239,7 @@ export default function OrdersPage() {
             </button>
             <button
               type="button"
-              onClick={() => setView('board')}
+              onClick={() => changeView('board')}
               className={cn(
                 'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm transition-colors',
                 view === 'board' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
