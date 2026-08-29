@@ -490,6 +490,77 @@ export interface LoyaltyTier {
   updatedAt?: string;
 }
 
+// ============================================================================
+// ANALYTICS (behavioral events + admin reports)
+// ============================================================================
+
+export const AnalyticsEventType = {
+  PRODUCT_VIEW: 'product_view',
+  ADD_TO_CART: 'add_to_cart',
+  REMOVE_FROM_CART: 'remove_from_cart',
+  CHECKOUT_STARTED: 'checkout_started',
+  SEARCH: 'search',
+  PURCHASED: 'purchased',
+} as const;
+export type AnalyticsEventType = (typeof AnalyticsEventType)[keyof typeof AnalyticsEventType];
+
+/** Payload the storefront beacons send to POST /api/analytics/track. */
+export interface AnalyticsTrackInput {
+  type: AnalyticsEventType;
+  sessionId: string;
+  userId?: string | null;
+  isWholesale?: boolean;
+  productId?: string;
+  quantity?: number;
+  itemCount?: number;
+  valueCents?: number;
+  query?: string;
+  orderId?: string;
+  email?: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface AnalyticsFunnel {
+  productViews: number;
+  addToCart: number;
+  checkoutStarted: number;
+  purchased: number;
+}
+
+/** One abandoned cart / checkout, ready for the admin recovery list. */
+export interface AbandonedCartRow {
+  sessionId: string;
+  userId: string | null;
+  email: string | null;
+  itemCount: number;
+  valueCents: number;
+  lastActivityAt: string;
+  reachedCheckout: boolean;
+}
+
+export interface AnalyticsTopProduct {
+  productId: string;
+  name: string;
+  count: number;
+}
+
+export interface AnalyticsTopSearch {
+  query: string;
+  count: number;
+}
+
+/** Everything the admin "Carts" tab needs, in one response. */
+export interface CartAnalyticsSummary {
+  funnel: AnalyticsFunnel;
+  conversionRate: number; // purchased / addToCart, 0..1
+  abandonedCheckouts: { count: number; valueCents: number };
+  abandonedCarts: { count: number; valueCents: number };
+  topViewed: AnalyticsTopProduct[];
+  topSearches: AnalyticsTopSearch[];
+  abandonedCheckoutRows: AbandonedCartRow[];
+  abandonedCartRows: AbandonedCartRow[];
+}
+
 export const TagType = {
   PRODUCT: 'PRODUCT',
   COLLECTION: 'COLLECTION',

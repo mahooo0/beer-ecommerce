@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { resolveWholesaleUnitPrice, type WholesaleTier } from "@repo/types";
+import { track, AnalyticsEventType } from "@/lib/analytics";
 
 export interface CartItem {
   id: string;
@@ -67,7 +68,7 @@ export const useCart = create<CartState>()(
           })),
         })),
 
-      addItem: (product, qty = 1) =>
+      addItem: (product, qty = 1) => {
         set((state) => {
           const wholesale = state.isWholesale;
           const existing = state.items.find((it) => it.id === product.id);
@@ -88,10 +89,27 @@ export const useCart = create<CartState>()(
               { ...product, qty, newPrice: unitPrice(product, qty, wholesale) },
             ],
           };
-        }),
+        });
+        const s = get();
+        track(AnalyticsEventType.ADD_TO_CART, {
+          productId: product.id,
+          quantity: qty,
+          itemCount: s.count(),
+          valueCents: Math.round(s.total() * 100),
+        });
+      },
 
-      removeItem: (id) =>
-        set((state) => ({ items: state.items.filter((it) => it.id !== id) })),
+      removeItem: (id) => {
+        const removedQty = get().items.find((it) => it.id === id)?.qty;
+        set((state) => ({ items: state.items.filter((it) => it.id !== id) }));
+        const s = get();
+        track(AnalyticsEventType.REMOVE_FROM_CART, {
+          productId: id,
+          quantity: removedQty,
+          itemCount: s.count(),
+          valueCents: Math.round(s.total() * 100),
+        });
+      },
 
       updateQty: (id, delta) =>
         set((state) => ({

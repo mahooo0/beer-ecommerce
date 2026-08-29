@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { track, AnalyticsEventType } from "@/lib/analytics";
 
 /**
  * Header search. Submits to the working catalog search (`/products?search=`),
@@ -16,6 +17,7 @@ export function HeaderSearch() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const term = q.trim();
+    if (term) track(AnalyticsEventType.SEARCH, { query: term });
     router.push(term ? `/products?search=${encodeURIComponent(term)}` : "/products");
   };
 

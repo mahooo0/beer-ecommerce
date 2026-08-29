@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useUser } from "@clerk/nextjs";
 import { resolveWholesaleUnitPrice, sortedWholesaleTiers, type WholesaleTier } from "@repo/types";
 import { useCart } from "@/lib/cart-store";
+import { track, AnalyticsEventType } from "@/lib/analytics";
 
 export interface ProductDetailData {
   id: string;
@@ -57,6 +58,12 @@ export function TarankaProductDetail({ product }: { product: ProductDetailData }
   useEffect(() => {
     setWholesale(isWholesale);
   }, [isWholesale, setWholesale]);
+
+  // Funnel: one product_view per detail page (re-fires when navigating between
+  // products since the id changes).
+  useEffect(() => {
+    track(AnalyticsEventType.PRODUCT_VIEW, { productId: product.id });
+  }, [product.id]);
 
   const handleAddToCart = () => {
     addItem(

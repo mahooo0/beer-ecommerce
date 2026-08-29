@@ -1,19 +1,24 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAnalyticsData } from '@/hooks/use-analytics-data';
+import { useCartAnalytics } from '@/hooks/use-cart-analytics';
 import { getDefaultDateRange } from '@/lib/analytics-utils';
 import { DateRangeFilter } from '@/components/dashboard/date-range-filter';
 import { RevenueTab } from '@/components/analytics/revenue-tab';
 import { OrdersTab } from '@/components/analytics/orders-tab';
 import { ProductsTab } from '@/components/analytics/products-tab';
+import { CartsTab } from '@/components/analytics/carts-tab';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AnalyticsPage() {
+  const { t } = useTranslation();
   const [dateRange, setDateRange] = useState(getDefaultDateRange);
   const { orders, products, categories, brands, orderStats, loading, error } =
     useAnalyticsData(dateRange);
+  const { summary: cartSummary, loading: cartLoading, error: cartError } = useCartAnalytics(dateRange);
 
   return (
     <div className="space-y-6">
@@ -37,6 +42,7 @@ export default function AnalyticsPage() {
             <TabsTrigger value="revenue">Revenue</TabsTrigger>
             <TabsTrigger value="orders">Orders</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="carts">{t('cartAnalytics.tab')}</TabsTrigger>
           </TabsList>
           <TabsContent value="revenue" className="mt-6">
             <RevenueTab orders={orders} />
@@ -46,6 +52,18 @@ export default function AnalyticsPage() {
           </TabsContent>
           <TabsContent value="products" className="mt-6">
             <ProductsTab orders={orders} products={products} categories={categories} brands={brands} />
+          </TabsContent>
+          <TabsContent value="carts" className="mt-6">
+            {cartError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4">
+                {cartError}
+              </div>
+            )}
+            {cartLoading ? (
+              <Skeleton className="h-[400px] w-full" />
+            ) : (
+              <CartsTab summary={cartSummary} />
+            )}
           </TabsContent>
         </Tabs>
       )}

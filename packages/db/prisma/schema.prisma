@@ -780,6 +780,35 @@ model LoyaltyTier {
   @@map("loyalty_tiers")
 }
 
+// Lightweight, append-only behavioral event log powering the admin funnel +
+// abandoned-cart reports. Guests are tracked by an anonymous browser `sessionId`
+// (client localStorage); signed-in users additionally carry `userId` (Clerk id,
+// best-effort attribution — NOT a security boundary). Money is in cents.
+model AnalyticsEvent {
+  id          String   @id @default(cuid())
+  type        String   // product_view | add_to_cart | remove_from_cart | checkout_started | search | purchased
+  sessionId   String   // anonymous browser session id (always present)
+  userId      String?  // Clerk id when signed in (best-effort)
+  isWholesale Boolean  @default(false)
+
+  productId   String?  // product_view / add_to_cart / remove_from_cart
+  quantity    Int?     // add_to_cart / remove_from_cart line quantity
+  itemCount   Int?     // cart size snapshot at event time
+  valueCents  Int?     // cart subtotal (add_to_cart / checkout_started) or order total (purchased)
+  query       String?  // search term
+  orderId     String?  // purchased — links the Mongo order id
+  email       String?  // guest email captured at checkout (for recovery lists)
+  meta        Json?    // extensible bag
+
+  createdAt   DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([sessionId, createdAt])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
+
 enum TagType {
   PRODUCT
   COLLECTION

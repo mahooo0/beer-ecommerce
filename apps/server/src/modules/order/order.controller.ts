@@ -56,10 +56,11 @@ export class OrderController {
     try {
       // Optional auth: signed-in → Clerk userId; guest → undefined (identified by email).
       const { userId } = getAuth(req);
-      const { items, shippingAddress, billingAddress, shipping, guestEmail } = req.body ?? {};
+      const { items, shippingAddress, billingAddress, shipping, guestEmail, sessionId } = req.body ?? {};
       const order = await orderService.create({
         userId,
         guestEmail,
+        sessionId,
         items,
         shippingAddress,
         billingAddress,

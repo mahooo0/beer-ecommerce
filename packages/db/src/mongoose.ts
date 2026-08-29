@@ -59,6 +59,7 @@ export interface IOrder extends Document {
   orderNumber: string;
   userId?: string; // absent for guest orders (guestEmail identifies them instead)
   guestEmail?: string;
+  sessionId?: string; // anonymous browser session id — links the order to funnel analytics
   items: IOrderItem[];
   status: 'pending' | 'paid' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'returned' | 'refund_requested';
   statusHistory: IOrderStatusChange[];
@@ -164,6 +165,7 @@ const OrderSchema = new Schema<IOrder>(
     orderNumber: { type: String, required: true, unique: true },
     userId: { type: String }, // absent for guest orders — see pre-validate below
     guestEmail: { type: String },
+    sessionId: { type: String }, // anonymous browser session id (analytics attribution)
     items: { type: [OrderItemSchema], required: true },
     status: {
       type: String,

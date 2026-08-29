@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { format, isSameDay, set, startOfDay } from 'date-fns';
 import { pl } from 'date-fns/locale';
 import { MapPin, Calendar as CalendarIcon, Check } from 'lucide-react';
@@ -12,6 +12,7 @@ import type { CartItem } from '@repo/types';
 import { useCheckoutItems } from '@/lib/checkout-cart';
 import { formatZl } from '@/lib/product-mapper';
 import { api } from '@/lib/api';
+import { track, getSessionId, AnalyticsEventType } from '@/lib/analytics';
 import { cn } from '@/lib/utils';
 import { LockerMapLoader } from './locker-map-loader';
 import { Button } from '@/components/shadcn/button';
@@ -112,6 +113,20 @@ export function CheckoutFlow() {
   const shippingCost = DELIVERY_COST[tab];
   const total = subtotal + shippingCost;
 
+  // Funnel: fire checkout_started once, when the shopper actually reaches
+  // checkout with items in the cart. The server compares this against paid
+  // orders (same sessionId) to surface abandoned checkouts.
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (checkoutTracked.current || items.length === 0) return;
+    checkoutTracked.current = true;
+    track(AnalyticsEventType.CHECKOUT_STARTED, {
+      itemCount: items.reduce((n, i) => n + i.quantity, 0),
+      valueCents: items.reduce((s, i) => s + i.price * i.quantity, 0),
+      email: contact.email || undefined,
+    });
+  }, [items, contact.email]);
+
   const next = () => setStep((s) => Math.min(3, s + 1));
 
   // Assemble the order payload from the delivery + contact forms. Only product
@@ -135,6 +150,7 @@ export function CheckoutFlow() {
     return {
       items: items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
       guestEmail: contact.email || undefined,
+      sessionId: getSessionId(), // links the paid order back to the funnel session
       shippingAddress: {
         firstName,
         lastName,

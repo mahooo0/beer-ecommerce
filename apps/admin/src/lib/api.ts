@@ -18,6 +18,7 @@ import type {
   ProductAttributeValue,
   CategoryFilter,
   CategoryFilterOption,
+  CartAnalyticsSummary,
 } from '@repo/types';
 
 // ============================================================================
@@ -530,6 +531,21 @@ export const api = {
       fetcher<ApiResponse<LoyaltyTier>>(`/loyalty-tiers/${id}`, { method: 'PUT', body: JSON.stringify(data), token }),
     delete: (id: string, token?: string) =>
       fetcher<ApiResponse<void>>(`/loyalty-tiers/${id}`, { method: 'DELETE', token }),
+  },
+  // ==========================================================================
+  // Behavioral analytics (funnel + abandoned carts) for the analytics screen.
+  // ==========================================================================
+  analytics: {
+    getSummary: (params?: { from?: string; to?: string; token?: string }) => {
+      const qs = new URLSearchParams();
+      if (params?.from) qs.set('from', params.from);
+      if (params?.to) qs.set('to', params.to);
+      const q = qs.toString();
+      return fetcher<ApiResponse<CartAnalyticsSummary>>(
+        `/analytics/summary${q ? `?${q}` : ''}`,
+        { token: params?.token },
+      );
+    },
   },
   // ==========================================================================
   // Blog / content (Payload CMS) via the server proxy at /api/blog/:collection.

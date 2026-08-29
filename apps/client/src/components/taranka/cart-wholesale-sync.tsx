@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useCart } from "@/lib/cart-store";
+import { setAnalyticsIdentity } from "@/lib/analytics";
 
 /**
  * Keeps the Taranka cart's `isWholesale` flag in sync with the signed-in user's
@@ -18,7 +19,11 @@ export function CartWholesaleSync() {
     const customerType =
       (user?.publicMetadata?.customerType as string | undefined) ??
       (user?.unsafeMetadata?.customerType as string | undefined);
-    setWholesale(Boolean(isSignedIn) && customerType === "WHOLESALE");
+    const isWholesale = Boolean(isSignedIn) && customerType === "WHOLESALE";
+    setWholesale(isWholesale);
+    // Feed the same identity to analytics so cart-store beacons can attribute
+    // events to the signed-in user (best-effort; not an auth signal).
+    setAnalyticsIdentity({ userId: isSignedIn ? user?.id ?? null : null, isWholesale });
   }, [isSignedIn, user, setWholesale]);
 
   return null;

@@ -121,6 +121,7 @@ export class OrderService {
   async create(input: {
     userId?: string | null;
     guestEmail?: string;
+    sessionId?: string;
     items: OrderLineInput[];
     shippingAddress: IOrder['shippingAddress'];
     billingAddress?: IOrder['billingAddress'];
@@ -128,6 +129,7 @@ export class OrderService {
   }) {
     const userId = input.userId || undefined;
     const guestEmail = input.guestEmail?.trim() || undefined;
+    const sessionId = input.sessionId?.trim() || undefined;
 
     if (!userId && !guestEmail) {
       throw new AppError(400, 'Sign in or provide an email to place an order');
@@ -211,6 +213,7 @@ export class OrderService {
       orderNumber: generateOrderNumber(),
       userId,
       guestEmail,
+      sessionId,
       items,
       status: 'pending',
       subtotal,
