@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
+import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import type { Order } from '@repo/types';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,9 @@ import {
 } from '@/components/ui/table';
 import { DataTableRowActions } from '@/components/DataTableRowActions';
 import { DataTableFilters, type FilterConfig } from '@/components/DataTableFilters';
-import { Eye, DollarSign, ShoppingCart, Clock, TrendingUp } from 'lucide-react';
+import { Eye, DollarSign, ShoppingCart, Clock, TrendingUp, LayoutGrid, List } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { OrdersBoard } from './_components/orders-board';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400',
@@ -37,16 +39,23 @@ const statusColors: Record<string, string> = {
   refund_requested: 'bg-pink-500/15 text-pink-600 dark:text-pink-400',
 };
 
+const ALL_STATUSES = [
+  'pending',
+  'paid',
+  'processing',
+  'shipped',
+  'delivered',
+  'cancelled',
+  'returned',
+  'refund_requested',
+] as const;
+
 function formatCurrency(cents: number) {
-  return `$${(cents / 100).toFixed(2)}`;
+  return `${(cents / 100).toFixed(2)} zł`;
 }
 
 function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
+  return new Date(date).toLocaleDateString();
 }
 
 interface OrderStats {
@@ -56,33 +65,14 @@ interface OrderStats {
   byStatus: Record<string, number>;
 }
 
-const orderFilterConfigs: FilterConfig[] = [
-  { key: 'search', label: 'Search', type: 'search', placeholder: 'Order # or customer name...' },
-  {
-    key: 'status',
-    label: 'Status',
-    type: 'select',
-    placeholder: 'All Statuses',
-    options: [
-      { value: 'pending', label: 'Pending' },
-      { value: 'paid', label: 'Paid' },
-      { value: 'processing', label: 'Processing' },
-      { value: 'shipped', label: 'Shipped' },
-      { value: 'delivered', label: 'Delivered' },
-      { value: 'cancelled', label: 'Cancelled' },
-      { value: 'returned', label: 'Returned' },
-    ],
-  },
-  { key: 'date', label: 'Date Range', type: 'date-range', placeholder: 'Filter by date...' },
-  { key: 'amount', label: 'Amount', type: 'number-range', prefix: '$' },
-];
-
 export default function OrdersPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { getToken } = useAuth();
+  const { t } = useTranslation();
   const page = Number(searchParams.get('page')) || 1;
 
+  const [view, setView] = useState<'list' | 'board'>('list');
   const [orders, setOrders] = useState<Order[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -91,13 +81,25 @@ export default function OrdersPage() {
   const [stats, setStats] = useState<OrderStats | null>(null);
   const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
 
-  // Filter state
   const [filterValues, setFilterValues] = useState<Record<string, any>>({
     search: '',
     status: '',
     date: { from: undefined, to: undefined },
     amount: { min: undefined, max: undefined },
   });
+
+  const orderFilterConfigs: FilterConfig[] = [
+    { key: 'search', label: t('orders.filters.search'), type: 'search', placeholder: t('orders.filters.searchPlaceholder') },
+    {
+      key: 'status',
+      label: t('orders.filters.status'),
+      type: 'select',
+      placeholder: t('orders.filters.allStatuses'),
+      options: ALL_STATUSES.filter((s) => s !== 'refund_requested').map((s) => ({ value: s, label: t(`orders.status.${s}`) })),
+    },
+    { key: 'date', label: t('orders.filters.dateRange'), type: 'date-range', placeholder: t('orders.filters.datePlaceholder') },
+    { key: 'amount', label: t('orders.filters.amount'), type: 'number-range', prefix: 'zł' },
+  ];
 
   const handleFilterChange = (key: string, value: any) => {
     setFilterValues((prev) => ({ ...prev, [key]: value }));
@@ -134,7 +136,7 @@ export default function OrdersPage() {
       setTotalPages(response.totalPages || 1);
       setTotal(response.total || 0);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load orders');
+      setError(err instanceof Error ? err.message : t('orders.errors.load'));
     } finally {
       setLoading(false);
     }
@@ -167,7 +169,7 @@ export default function OrdersPage() {
       fetchOrders();
       fetchStats();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update status');
+      setError(err instanceof Error ? err.message : t('orders.errors.updateStatus'));
     }
   };
 
@@ -205,9 +207,36 @@ export default function OrdersPage() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Orders</h1>
-        <span className="text-sm text-muted-foreground">{total} total orders</span>
+      <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
+        <h1 className="text-2xl font-bold">{t('orders.title')}</h1>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground">{t('orders.totalCount', { count: total })}</span>
+          {/* List / Board view toggle */}
+          <div className="inline-flex items-center rounded-lg border bg-card p-0.5">
+            <button
+              type="button"
+              onClick={() => setView('list')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm transition-colors',
+                view === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <List className="size-4" />
+              {t('orders.view.list')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('board')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-sm transition-colors',
+                view === 'board' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <LayoutGrid className="size-4" />
+              {t('orders.view.board')}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Stats cards */}
@@ -219,7 +248,7 @@ export default function OrdersPage() {
                 <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Orders</p>
+                <p className="text-sm text-muted-foreground">{t('orders.stats.totalOrders')}</p>
                 <p className="text-xl font-bold">{stats.totalOrders}</p>
               </div>
             </div>
@@ -230,7 +259,7 @@ export default function OrdersPage() {
                 <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Revenue</p>
+                <p className="text-sm text-muted-foreground">{t('orders.stats.revenue')}</p>
                 <p className="text-xl font-bold">{formatCurrency(stats.revenue)}</p>
               </div>
             </div>
@@ -241,7 +270,7 @@ export default function OrdersPage() {
                 <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-sm text-muted-foreground">{t('orders.stats.pending')}</p>
                 <p className="text-xl font-bold">{stats.byStatus['pending'] || 0}</p>
               </div>
             </div>
@@ -252,7 +281,7 @@ export default function OrdersPage() {
                 <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Avg. Order Value</p>
+                <p className="text-sm text-muted-foreground">{t('orders.stats.avgOrderValue')}</p>
                 <p className="text-xl font-bold">{formatCurrency(stats.avgOrderValue)}</p>
               </div>
             </div>
@@ -260,159 +289,162 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Filter bar */}
-      <div className="mb-4">
-        <DataTableFilters
-          filters={orderFilterConfigs}
-          values={filterValues}
-          onChange={handleFilterChange}
-          onReset={handleFilterReset}
-        />
-      </div>
-
-      {/* Bulk actions */}
-      {selectedOrders.size > 0 && (
-        <div className="flex items-center gap-3 mb-4 p-3 bg-muted/50 rounded-lg">
-          <span className="text-sm text-muted-foreground">{selectedOrders.size} selected</span>
-          <Select onValueChange={handleBulkStatusUpdate}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Bulk action..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="processing">Mark Processing</SelectItem>
-              <SelectItem value="shipped">Mark Shipped</SelectItem>
-              <SelectItem value="delivered">Mark Delivered</SelectItem>
-              <SelectItem value="cancelled">Cancel</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive mb-4">{error}</div>
-      )}
-
-      {/* Orders table */}
-      <div className="rounded-lg border bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-10">
-                <input
-                  type="checkbox"
-                  checked={orders.length > 0 && selectedOrders.size === orders.length}
-                  onChange={toggleAllOrders}
-                  className="size-4 rounded border-input"
-                />
-              </TableHead>
-              <TableHead>Order</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Items</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={8}>
-                    <div className="h-12 animate-pulse bg-muted rounded" />
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              orders.map((order: Order) => {
-                const orderId = (order as any)._id || order.orderNumber;
-                return (
-                  <TableRow key={orderId}>
-                    <TableCell>
-                      <input
-                        type="checkbox"
-                        checked={selectedOrders.has(orderId)}
-                        onChange={() => toggleOrderSelection(orderId)}
-                        className="size-4 rounded border-input"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm font-medium text-foreground font-mono">
-                        {order.orderNumber}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {order.shippingAddress
-                        ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`
-                        : order.guestEmail || order.userId}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {order.items?.length || 0} items
-                    </TableCell>
-                    <TableCell className="text-sm font-medium text-foreground">
-                      {formatCurrency(order.totalAmount)}
-                    </TableCell>
-                    <TableCell>
-                      <Select value={order.status} onValueChange={(v) => handleStatusChange(orderId, v)}>
-                        <SelectTrigger className={`w-[155px] h-8 text-xs font-semibold ${statusColors[order.status] || ''}`}>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="paid">Paid</SelectItem>
-                          <SelectItem value="processing">Processing</SelectItem>
-                          <SelectItem value="shipped">Shipped</SelectItem>
-                          <SelectItem value="delivered">Delivered</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                          <SelectItem value="returned">Returned</SelectItem>
-                          <SelectItem value="refund_requested">Refund Requested</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(order.createdAt)}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      <DataTableRowActions actions={[
-                        { label: 'View', href: `/dashboard/orders/${orderId}`, icon: <Eye className="h-4 w-4" /> },
-                      ]} />
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-        {!loading && orders.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No orders found.
+      {view === 'board' ? (
+        <OrdersBoard />
+      ) : (
+        <>
+          {/* Filter bar */}
+          <div className="mb-4">
+            <DataTableFilters
+              filters={orderFilterConfigs}
+              values={filterValues}
+              onChange={handleFilterChange}
+              onReset={handleFilterReset}
+            />
           </div>
-        )}
-      </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 mt-6">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/dashboard/orders?page=${page - 1}`)}
-            disabled={page <= 1}
-          >
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/dashboard/orders?page=${page + 1}`)}
-            disabled={page >= totalPages}
-          >
-            Next
-          </Button>
-        </div>
+          {/* Bulk actions */}
+          {selectedOrders.size > 0 && (
+            <div className="flex items-center gap-3 mb-4 p-3 bg-muted/50 rounded-lg">
+              <span className="text-sm text-muted-foreground">
+                {t('orders.bulk.selected', { count: selectedOrders.size })}
+              </span>
+              <Select onValueChange={handleBulkStatusUpdate}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder={t('orders.bulk.placeholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="processing">{t('orders.bulk.markProcessing')}</SelectItem>
+                  <SelectItem value="shipped">{t('orders.bulk.markShipped')}</SelectItem>
+                  <SelectItem value="delivered">{t('orders.bulk.markDelivered')}</SelectItem>
+                  <SelectItem value="cancelled">{t('orders.bulk.cancel')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 text-destructive mb-4">{error}</div>
+          )}
+
+          {/* Orders table */}
+          <div className="rounded-lg border bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-10">
+                    <input
+                      type="checkbox"
+                      checked={orders.length > 0 && selectedOrders.size === orders.length}
+                      onChange={toggleAllOrders}
+                      className="size-4 rounded border-input"
+                    />
+                  </TableHead>
+                  <TableHead>{t('orders.columns.order')}</TableHead>
+                  <TableHead>{t('orders.columns.customer')}</TableHead>
+                  <TableHead>{t('orders.columns.items')}</TableHead>
+                  <TableHead>{t('orders.columns.total')}</TableHead>
+                  <TableHead>{t('orders.columns.status')}</TableHead>
+                  <TableHead>{t('orders.columns.date')}</TableHead>
+                  <TableHead>{t('orders.columns.actions')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={8}>
+                        <div className="h-12 animate-pulse bg-muted rounded" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  orders.map((order: Order) => {
+                    const orderId = (order as any)._id || order.orderNumber;
+                    return (
+                      <TableRow key={orderId}>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            checked={selectedOrders.has(orderId)}
+                            onChange={() => toggleOrderSelection(orderId)}
+                            className="size-4 rounded border-input"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm font-medium text-foreground font-mono">
+                            {order.orderNumber}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {order.shippingAddress
+                            ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`
+                            : order.guestEmail || order.userId}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {t('orders.itemsCount', { count: order.items?.length || 0 })}
+                        </TableCell>
+                        <TableCell className="text-sm font-medium text-foreground">
+                          {formatCurrency(order.totalAmount)}
+                        </TableCell>
+                        <TableCell>
+                          <Select value={order.status} onValueChange={(v) => handleStatusChange(orderId, v)}>
+                            <SelectTrigger className={`w-[155px] h-8 text-xs font-semibold ${statusColors[order.status] || ''}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ALL_STATUSES.map((s) => (
+                                <SelectItem key={s} value={s}>{t(`orders.status.${s}`)}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {formatDate(order.createdAt)}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          <DataTableRowActions actions={[
+                            { label: t('orders.actions.view'), href: `/dashboard/orders/${orderId}`, icon: <Eye className="h-4 w-4" /> },
+                          ]} />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+            {!loading && orders.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground">
+                {t('orders.empty')}
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/dashboard/orders?page=${page - 1}`)}
+                disabled={page <= 1}
+              >
+                {t('orders.pagination.previous')}
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {t('orders.pagination.page', { page, total: totalPages })}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push(`/dashboard/orders?page=${page + 1}`)}
+                disabled={page >= totalPages}
+              >
+                {t('orders.pagination.next')}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
