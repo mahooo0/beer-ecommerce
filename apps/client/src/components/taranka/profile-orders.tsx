@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Info, FileDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth, useUser } from "@clerk/nextjs";
-import type { Order } from "@repo/types";
+import type { Order, LoyaltyTier } from "@repo/types";
 import { api } from "@/lib/api";
 import { formatZl, PRODUCT_IMAGE_FALLBACK } from "@/lib/product-mapper";
 import {
@@ -59,6 +59,35 @@ export function ProfileOrders() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
+  // The customer's current loyalty tier %, resolved from lifetime paid spend vs.
+  // the active tiers (same rule as the server / the "znizki" page). 0 → no badge.
+  const [discountPercent, setDiscountPercent] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = (await getToken()) ?? undefined;
+        const [spendRes, tiersRes] = await Promise.all([
+          api.orders.getUserSpend(user.id, token),
+          api.loyaltyTiers.getActive(),
+        ]);
+        if (cancelled) return;
+        const spent = spendRes.success && spendRes.data ? spendRes.data.spentCents : 0;
+        const tiers: LoyaltyTier[] = tiersRes.success && tiersRes.data ? tiersRes.data : [];
+        const active = [...tiers]
+          .sort((a, b) => b.minSpendCents - a.minSpendCents)
+          .find((tier) => spent >= tier.minSpendCents);
+        setDiscountPercent(active?.percent ?? 0);
+      } catch {
+        if (!cancelled) setDiscountPercent(0);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, getToken]);
 
   useEffect(() => {
     let cancelled = false;
@@ -90,10 +119,12 @@ export function ProfileOrders() {
         <h1 className="font-taranka-display text-2xl font-extrabold uppercase tracking-wide text-ink-900">
           {t("orders.title")}
         </h1>
-        <div className="flex items-center gap-2 font-taranka-display text-base text-brand-red-500">
-          <Info className="size-4" strokeWidth={1.75} />
-          {t("orders.discountBadge")}
-        </div>
+        {discountPercent > 0 && (
+          <div className="flex items-center gap-2 font-taranka-display text-base text-brand-red-500">
+            <Info className="size-4" strokeWidth={1.75} />
+            {t("orders.discountBadge", { percent: discountPercent })}
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -200,9 +231,26 @@ function OrderAccordion({ order }: { order: Order }) {
         </ul>
 
         <Separator className="my-4" />
-        <div className="flex items-center justify-between px-3">
-          <p className="text-base font-semibold text-ink-900">{t("orders.shipping")}</p>
-          <p className="text-base font-semibold text-ink-900">{formatZl(order.shippingCost)}</p>
+        <div className="space-y-2 px-3">
+          <div className="flex items-center justify-between">
+            <p className="text-base text-ink-900">{t("orders.subtotal")}</p>
+            <p className="text-base text-ink-900">{formatZl(order.subtotal)}</p>
+          </div>
+          {(order.discountAmount ?? 0) > 0 && (
+            <div className="flex items-center justify-between font-semibold text-[#188E55]">
+              <p className="text-base">
+                {t("orders.discount")}
+                {order.subtotal > 0
+                  ? ` (${Math.round((order.discountAmount / order.subtotal) * 100)}%)`
+                  : ""}
+              </p>
+              <p className="text-base tabular-nums">−{formatZl(order.discountAmount)}</p>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <p className="text-base text-ink-900">{t("orders.shipping")}</p>
+            <p className="text-base text-ink-900">{formatZl(order.shippingCost)}</p>
+          </div>
         </div>
 
         {tracking && (

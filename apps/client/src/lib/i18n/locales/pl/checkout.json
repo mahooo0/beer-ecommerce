@@ -11,13 +11,23 @@
   "tab": {
     "kurier": "Kurier",
     "wlasna": "Dostawa własna",
-    "poczta": "Maszyna pocztowa"
+    "poczta": "Maszyna pocztowa",
+    "pickup": "Odbiór osobisty",
+    "paczkomat": "Paczkomat"
+  },
+  "badge": {
+    "comingSoon": "Wkrótce"
   },
   "form": {
     "city": "Miasto",
     "street": "Ulica",
     "house": "Dom",
     "apartment": "Mieszkanie",
+    "building": "Numer domu",
+    "block": "Blok / klatka",
+    "floor": "Piętro",
+    "door": "Drzwi / nr mieszkania",
+    "phone": "Telefon",
     "dateTime": "Wybierz datę i godzinę",
     "time": "Godzina",
     "postOfficeNumber": "Numer urzędu pocztowego",
@@ -27,6 +37,26 @@
     "namePlaceholder": "Imię i nazwisko",
     "companyPlaceholder": "Nazwa firmy",
     "emailPlaceholder": "Email"
+  },
+  "pickup": {
+    "select": "Wybierz punkt odbioru",
+    "empty": "Brak dostępnych punktów odbioru. Wybierz dostawę kurierem.",
+    "free": "Za darmo"
+  },
+  "phone": {
+    "saved": "Zapisane numery",
+    "other": "Inny numer",
+    "invalid": "Nieprawidłowy numer telefonu"
+  },
+  "payment": {
+    "online": "Płatność online",
+    "onlineDesc": "Karta — zapłać teraz bezpiecznie.",
+    "cod": "Płatność przy odbiorze",
+    "codDesc": "Zapłać gotówką lub kartą przy dostawie.",
+    "blik": "BLIK",
+    "transfer": "Przelew bankowy",
+    "transferDesc": "Otrzymasz dane do przelewu po złożeniu zamówienia.",
+    "placeOrder": "Złóż zamówienie"
   },
   "button": {
     "continue": "kontynuować",
@@ -40,7 +70,15 @@
   "success": {
     "title": "Dziękujemy za zamówienie!",
     "message": "Wysłaliśmy potwierdzenie na podany adres email. Wkrótce skontaktujemy się w sprawie dostawy.",
-    "backToCatalog": "Wróć do katalogu"
+    "backToCatalog": "Wróć do katalogu",
+    "codTitle": "Zamówienie przyjęte!",
+    "codMessage": "Zapłacisz przy odbiorze. Wkrótce skontaktujemy się w sprawie dostawy.",
+    "transferTitle": "Zamówienie przyjęte — opłać przelewem",
+    "transferMessage": "Prosimy o przelew na poniższe dane. Zamówienie realizujemy po zaksięgowaniu wpłaty.",
+    "transferDetailsHeading": "Dane do przelewu",
+    "transferAccountLabel": "Numer konta (IBAN)",
+    "transferRecipientLabel": "Odbiorca",
+    "transferTitleLabel": "Tytuł przelewu"
   },
   "confirmation": {
     "title": "Zamówienie potwierdzone",
@@ -60,7 +98,12 @@
     "subtotal": "Suma częściowa",
     "shipping": "Dostawa",
     "free": "Za darmo",
+    "discount": "Rabat",
+    "wholesaleSavings": "Rabat hurtowy",
     "total": "Razem do zapłaty"
+  },
+  "receipt": {
+    "heading": "Podsumowanie zamówienia"
   },
   "error": {
     "generic": "Coś poszło nie tak. Spróbuj ponownie.",

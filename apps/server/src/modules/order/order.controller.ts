@@ -14,6 +14,7 @@ export class OrderController {
         minAmount: req.query.minAmount ? parseInt(req.query.minAmount as string) : undefined,
         maxAmount: req.query.maxAmount ? parseInt(req.query.maxAmount as string) : undefined,
         search: req.query.search as string,
+        customerType: req.query.customerType as string,
       });
       res.json({ success: true, ...result });
     } catch (error) {
@@ -61,11 +62,32 @@ export class OrderController {
     }
   }
 
+  async quote(req: Request, res: Response, next: NextFunction) {
+    try {
+      // Optional auth: signed-in → wholesale/loyalty pricing; guest → retail.
+      const { userId } = getAuth(req);
+      const { items } = req.body ?? {};
+      const data = await orderService.quote({ userId, items });
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async create(req: Request, res: Response, next: NextFunction) {
     try {
       // Optional auth: signed-in → Clerk userId; guest → undefined (identified by email).
       const { userId } = getAuth(req);
-      const { items, shippingAddress, billingAddress, shipping, guestEmail, sessionId } = req.body ?? {};
+      const {
+        items,
+        shippingAddress,
+        billingAddress,
+        shipping,
+        guestEmail,
+        sessionId,
+        paymentMethod,
+        pickupPointId,
+      } = req.body ?? {};
       const order = await orderService.create({
         userId,
         guestEmail,
@@ -74,6 +96,8 @@ export class OrderController {
         shippingAddress,
         billingAddress,
         shipping,
+        paymentMethod,
+        pickupPointId,
       });
       res.status(201).json({ success: true, data: order });
     } catch (error) {
@@ -84,6 +108,15 @@ export class OrderController {
   async updateStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const order = await orderService.updateStatus(req.params.id as string, req.body.status);
+      res.json({ success: true, data: order });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updatePaymentStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const order = await orderService.updatePaymentStatus(req.params.id as string, req.body.status);
       res.json({ success: true, data: order });
     } catch (error) {
       next(error);

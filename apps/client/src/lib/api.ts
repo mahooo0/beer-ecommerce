@@ -1,4 +1,34 @@
-import type { ApiResponse, PaginatedResponse, Product, Order, Category, Collection, Brand, CartItem, PromoBanner, LoyaltyTier } from '@repo/types';
+import type { ApiResponse, PaginatedResponse, Product, Order, Category, Collection, Brand, CartItem, PromoBanner, LoyaltyTier, PickupPoint } from '@repo/types';
+
+/**
+ * Server-authoritative price preview for a cart (from `POST /api/orders/quote`).
+ * All money is in cents. Shipping is NOT included — it is chosen at checkout;
+ * `total` is goods subtotal − discount.
+ */
+export interface OrderQuote {
+  isWholesale: boolean;
+  subtotal: number; // Σ effective unit × qty
+  retailSubtotal: number; // Σ retail unit × qty (before wholesale tiers)
+  wholesaleSavings: number; // retailSubtotal − subtotal
+  discountPercent: number; // loyalty/personal % applied to the subtotal
+  discountAmount: number; // cents off the subtotal
+  total: number; // subtotal − discountAmount (excludes shipping)
+  lines: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    retailUnitPrice: number;
+    lineTotal: number;
+  }>;
+}
+
+/** A phone number saved on the signed-in account (from `/api/phones`). */
+export interface SavedPhone {
+  id: string;
+  phone: string; // E.164
+  label?: string | null;
+  isPrimary: boolean;
+}
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -154,6 +184,18 @@ export const api = {
       fetcher<ApiResponse<{ spentCents: number }>>(`/orders/user/${userId}/spend`, {
         ...(token ? { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } } : {}),
       }),
+    // Server-authoritative price preview (loyalty + wholesale) for the cart /
+    // checkout summary — mirrors what an order would be charged, no order created.
+    // Signed-in (token) → wholesale/loyalty pricing; guest → retail.
+    quote: (data: { items: Array<{ productId: string; quantity: number }> }, token?: string) =>
+      fetcher<ApiResponse<OrderQuote>>('/orders/quote', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(data),
+      }),
   },
   loyaltyTiers: {
     // Public: active tiers, cheapest threshold first — for the cabinet discount board.
@@ -193,6 +235,23 @@ export const api = {
   promoBanners: {
     // Public: active marketing banners, lowest position first.
     getActive: () => fetcher<ApiResponse<PromoBanner[]>>('/promo-banners/active'),
+  },
+  pickupPoints: {
+    // Public: active pickup points for the checkout delivery selector.
+    getActive: () => fetcher<ApiResponse<PickupPoint[]>>('/pickup-points/active'),
+  },
+  phones: {
+    // Signed-in only: the caller's saved phone numbers.
+    list: (token: string) =>
+      fetcher<ApiResponse<SavedPhone[]>>('/phones', {
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      }),
+    add: (phone: string, token: string, label?: string) =>
+      fetcher<ApiResponse<SavedPhone>>('/phones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ phone, label }),
+      }),
   },
   wishlist: {
     get: (token: string) =>

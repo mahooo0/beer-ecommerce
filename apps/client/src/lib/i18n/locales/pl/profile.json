@@ -65,10 +65,12 @@
   },
   "orders": {
     "title": "Historia zamówień",
-    "discountBadge": "Rabat w wysokości 3%",
+    "discountBadge": "Rabat w wysokości {{percent}}%",
     "orderNumber": "Zamówienie nr {{id}}, {{date}}",
     "amount": "Kwota",
     "pieces": "szt.",
+    "subtotal": "Suma częściowa",
+    "discount": "Rabat",
     "shipping": "Wysyłka",
     "total": "Całkowity",
     "repeatOrder": "powtórzenie zamówienia",

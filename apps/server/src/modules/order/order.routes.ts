@@ -11,9 +11,12 @@ router.get('/user/:userId/spend', requireAuth, (req, res, next) => orderControll
 router.get('/user/:userId', requireAuth, (req, res, next) => orderController.getByUserId(req, res, next));
 // Public: guests need to read their confirmation by order id (id is an unguessable ObjectId).
 router.get('/:id', (req, res, next) => orderController.getById(req, res, next));
+// Optional auth: price preview for the cart/checkout (loyalty + wholesale), no order created.
+router.post('/quote', (req, res, next) => orderController.quote(req, res, next));
 // Optional auth: both signed-in and guest customers place orders (see controller getAuth).
 router.post('/', (req, res, next) => orderController.create(req, res, next));
 router.patch('/:id/status', requireAdmin, (req, res, next) => orderController.updateStatus(req, res, next));
+router.patch('/:id/payment-status', requireAdmin, (req, res, next) => orderController.updatePaymentStatus(req, res, next));
 router.patch('/:id/tracking', requireAdmin, (req, res, next) => orderController.addTracking(req, res, next));
 router.post('/:id/refund', requireAdmin, (req, res, next) => orderController.processRefund(req, res, next));
 

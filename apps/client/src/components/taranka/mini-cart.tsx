@@ -13,21 +13,22 @@ import { Separator } from "@/components/shadcn/separator";
 import { Checkbox } from "@/components/shadcn/checkbox";
 import { useTranslation } from "react-i18next";
 import { useCart } from "@/lib/cart-store";
+import { formatZl } from "@/lib/product-mapper";
+import { wholesaleLineInfo, wholesaleCartSavingsCents } from "@/lib/wholesale";
 
 export function MiniCart({ trigger }: { trigger: ReactNode }) {
   const { t } = useTranslation("cart");
   const [open, setOpen] = useState(false);
   const [accepted, setAccepted] = useState(false);
   const items = useCart((s) => s.items);
+  const isWholesale = useCart((s) => s.isWholesale);
   const updateQty = useCart((s) => s.updateQty);
   const removeItem = useCart((s) => s.removeItem);
 
-  const subtotal = items.reduce((s, it) => s + it.newPrice * it.qty, 0);
-  const shipping = items.length > 0 ? 200 : 0;
-  const discount = items.reduce((s, it) => s + (it.oldPrice - it.newPrice) * it.qty, 0);
-  const total = subtotal + shipping;
-
-  const fmt = (v: number) => v.toFixed(2).replace(".", ",") + " EUR";
+  // Cents throughout (store prices are major units). Wholesale tier savings are
+  // computed locally; the loyalty discount is applied at cart/checkout.
+  const subtotalCents = items.reduce((s, it) => s + Math.round(it.newPrice * 100) * it.qty, 0);
+  const wholesaleSavingsCents = wholesaleCartSavingsCents(items, isWholesale);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -114,14 +115,21 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
                       </button>
                     </div>
 
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-sm font-bold text-[#9E9B90] line-through">
-                        {item.oldPrice.toFixed(2)} EUR
-                      </span>
-                      <span className="text-base font-bold text-[#443029]">
-                        {item.newPrice.toFixed(2)} EUR
-                      </span>
-                    </div>
+                    {(() => {
+                      const info = wholesaleLineInfo(item, isWholesale);
+                      return (
+                        <div className="flex items-baseline gap-3">
+                          {info.showCrossed && (
+                            <span className="text-sm font-bold text-[#9E9B90] line-through">
+                              {formatZl(info.retailUnitCents)}
+                            </span>
+                          )}
+                          <span className="text-base font-bold text-[#443029]">
+                            {formatZl(info.effUnitCents)}
+                          </span>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </li>
               ))}
@@ -132,9 +140,15 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
         <Separator className="bg-cream-300" />
 
         <div className="px-9 pt-5 pb-4">
-          <SummaryRow label={t("miniCart.subtotal")} value={fmt(total)} />
-          <SummaryRow label={t("miniCart.shipping")} value={fmt(shipping)} />
-          <SummaryRow label={t("miniCart.discount")} value={fmt(discount)} />
+          <SummaryRow label={t("miniCart.subtotal")} value={formatZl(subtotalCents)} />
+          {wholesaleSavingsCents > 0 && (
+            <SummaryRow
+              label={t("miniCart.wholesaleSavings")}
+              value={`−${formatZl(wholesaleSavingsCents)}`}
+              tone="save"
+            />
+          )}
+          <p className="pt-1 text-xs text-[#9E9B90]">{t("miniCart.shippingNote")}</p>
         </div>
 
         <div className="flex items-center gap-6 px-9 pb-4">
@@ -175,11 +189,20 @@ export function MiniCart({ trigger }: { trigger: ReactNode }) {
   );
 }
 
-function SummaryRow({ label, value }: { label: string; value: string }) {
+function SummaryRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone?: "save";
+}) {
+  const color = tone === "save" ? "text-[#188E55]" : "text-ink-900";
   return (
     <div className="flex items-baseline justify-between py-1.5">
-      <span className="text-base font-semibold text-ink-900">{label}</span>
-      <span className="text-base font-semibold text-ink-900">{value}</span>
+      <span className={`text-base font-semibold ${color}`}>{label}</span>
+      <span className={`text-base font-semibold tabular-nums ${color}`}>{value}</span>
     </div>
   );
 }

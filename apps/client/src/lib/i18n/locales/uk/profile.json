@@ -65,10 +65,12 @@
   },
   "orders": {
     "title": "Історія замовлень",
-    "discountBadge": "Знижка у розмірі 3%",
+    "discountBadge": "Знижка у розмірі {{percent}}%",
     "orderNumber": "Замовлення № {{id}}, {{date}}",
     "amount": "Сума",
     "pieces": "шт.",
+    "subtotal": "Проміжна сума",
+    "discount": "Знижка",
     "shipping": "Доставка",
     "total": "Разом",
     "repeatOrder": "повторити замовлення",

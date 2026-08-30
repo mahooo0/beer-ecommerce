@@ -54,7 +54,7 @@ export default function OrderDetailPage() {
   };
 
   const formatCurrency = (cents: number) => {
-    return `$${(cents / 100).toFixed(2)}`;
+    return `${((cents ?? 0) / 100).toFixed(2)} zł`;
   };
 
   const getStatusBadgeColor = (status: string) => {
