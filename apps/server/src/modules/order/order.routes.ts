@@ -5,6 +5,7 @@ import { requireAuth, requireAdmin } from '../../common/middleware/auth.middlewa
 const router = Router();
 
 router.get('/stats', requireAdmin, (req, res, next) => orderController.getStats(req, res, next));
+router.get('/aggregate/by-user', requireAdmin, (req, res, next) => orderController.getCustomerAggregates(req, res, next));
 router.get('/', requireAdmin, (req, res, next) => orderController.getAll(req, res, next));
 router.get('/user/:userId/spend', requireAuth, (req, res, next) => orderController.getUserSpend(req, res, next));
 router.get('/user/:userId', requireAuth, (req, res, next) => orderController.getByUserId(req, res, next));

@@ -21,10 +21,13 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { GripVertical, Package, ExternalLink } from 'lucide-react';
 import { api } from '@/lib/api';
-import type { Order } from '@repo/types';
+import type { Order, OrderItem } from '@repo/types';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { cn } from '@/lib/utils';
+import { useCustomerMap, type CustomerLite } from './use-customer-map';
 
 // Fulfillment pipeline, left → right. Cards live in exactly one column (status).
 const BOARD_STATUSES = [
@@ -53,15 +56,104 @@ const statusAccent: Record<string, string> = {
 const zl = (cents: number) => `${(cents / 100).toFixed(2)} zł`;
 const orderKey = (o: Order) => ((o as unknown as { _id?: string })._id ?? o.id) as string;
 
-function customerName(o: Order): string {
+function shippingName(o: Order): string {
   if (o.shippingAddress) return `${o.shippingAddress.firstName} ${o.shippingAddress.lastName}`.trim();
   return o.guestEmail || o.userId || '—';
+}
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?';
+}
+
+function itemUnitPrice(item: OrderItem) {
+  return item.price ?? 0;
+}
+
+function OrderItemsPreview({ order }: { order: Order }) {
+  const { t } = useTranslation();
+  const items = order.items ?? [];
+
+  return (
+    <div className="w-80">
+      <div className="border-b px-3 py-2">
+        <p className="font-medium text-foreground text-sm">{t('orderDetail.itemsTitle')}</p>
+      </div>
+
+      <div className="max-h-64 overflow-y-auto">
+        {items.length === 0 ? (
+          <p className="px-3 py-4 text-muted-foreground text-sm">{t('orders.noItems', { defaultValue: 'No items' })}</p>
+        ) : (
+          <ul className="divide-y">
+            {items.map((item, index) => {
+              const unit = itemUnitPrice(item);
+              const lineTotal = unit * item.quantity;
+              return (
+                <li key={`${item.productId}-${index}`} className="flex gap-3 px-3 py-2.5">
+                  <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
+                    {item.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="size-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Package className="size-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-foreground text-sm">{item.name}</p>
+                    <p className="mt-0.5 text-muted-foreground text-xs tabular-nums">
+                      {item.quantity} × {zl(unit)} ={' '}
+                      <span className="font-medium text-foreground">{zl(lineTotal)}</span>
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <div className="space-y-1.5 border-t px-3 py-2.5 text-xs">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">{t('orderDetail.summary.subtotal')}</span>
+          <span className="tabular-nums">{zl(order.subtotal ?? 0)}</span>
+        </div>
+        {(order.discountAmount ?? 0) > 0 && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{t('orderDetail.summary.discount')}</span>
+            <span className="tabular-nums text-green-600 dark:text-green-400">
+              -{zl(order.discountAmount)}
+            </span>
+          </div>
+        )}
+        {(order.shippingCost ?? 0) > 0 && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{t('orderDetail.summary.shipping')}</span>
+            <span className="tabular-nums">{zl(order.shippingCost)}</span>
+          </div>
+        )}
+        {(order.taxAmount ?? 0) > 0 && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">{t('orderDetail.summary.tax')}</span>
+            <span className="tabular-nums">{zl(order.taxAmount)}</span>
+          </div>
+        )}
+        <div className="flex justify-between border-t pt-1.5 font-semibold text-foreground text-sm">
+          <span>{t('orderDetail.summary.total')}</span>
+          <span className="tabular-nums">{zl(order.totalAmount)}</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ---------------------------------------------------------------------------
 // Card
 // ---------------------------------------------------------------------------
-function OrderCard({ order }: { order: Order }) {
+function OrderCard({ order, customer }: { order: Order; customer?: CustomerLite }) {
   const id = orderKey(order);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
@@ -73,46 +165,68 @@ function OrderCard({ order }: { order: Order }) {
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const name = customer?.name || shippingName(order);
+  const avatar = customer?.avatar || null;
+
   return (
-    <Card
-      ref={setNodeRef}
-      style={style}
-      className="group relative cursor-grab gap-0 rounded-xl p-3 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing"
-    >
-      <button
-        type="button"
-        aria-label="Drag"
-        className="absolute top-3 right-2 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100"
-        {...attributes}
-        {...listeners}
+    <HoverCard open={isDragging ? false : undefined} openDelay={200} closeDelay={100}>
+      <Card
+        ref={setNodeRef}
+        style={style}
+        className="group relative cursor-grab gap-0 rounded-xl border-border/70 p-0 shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing dark:border-white/25 dark:shadow-lg dark:shadow-black/40 dark:hover:border-white/35 dark:hover:shadow-xl dark:hover:shadow-black/50"
       >
-        <GripVertical className="h-4 w-4" />
-      </button>
+        <HoverCardTrigger asChild>
+          <div className="p-3">
+            <button
+              type="button"
+              aria-label="Drag"
+              className="absolute top-3 right-2 z-10 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100"
+              {...attributes}
+              {...listeners}
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
 
-      <div className="flex items-center justify-between pr-6">
-        <span className="font-mono font-medium text-foreground text-sm">{order.orderNumber}</span>
-        <span className="text-foreground text-sm font-semibold tabular-nums">{zl(order.totalAmount)}</span>
-      </div>
-      <p className="mt-1 truncate text-muted-foreground text-xs">{customerName(order)}</p>
+            <div className="flex items-center justify-between pr-6">
+              <span className="font-mono font-medium text-foreground text-sm">{order.orderNumber}</span>
+              <span className="text-foreground text-sm font-semibold tabular-nums">{zl(order.totalAmount)}</span>
+            </div>
 
-      <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Package className="h-3 w-3" />
-          {order.items?.length ?? 0}
-        </span>
-        <span>•</span>
-        <span>{new Date(order.createdAt).toLocaleDateString()}</span>
-        <span className="flex-1" />
-        <Link
-          href={`/dashboard/orders/${id}`}
-          className="rounded p-0.5 text-muted-foreground/50 opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
-          aria-label="Open order"
-          onPointerDown={(e) => e.stopPropagation()}
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Link>
-      </div>
-    </Card>
+            <div className="mt-2 flex items-center gap-2">
+              <Avatar className="size-6 ring-1 ring-foreground/10">
+                {avatar ? <AvatarImage src={avatar} alt={name} /> : null}
+                <AvatarFallback className="text-[9px] font-medium">{initialsOf(name)}</AvatarFallback>
+              </Avatar>
+              <span className="min-w-0 truncate text-muted-foreground text-xs">{name}</span>
+            </div>
+
+            <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Package className="h-3 w-3" />
+                {order.items?.length ?? 0}
+              </span>
+              <span>•</span>
+              <span>{new Date(order.createdAt).toLocaleDateString()}</span>
+              <span className="flex-1" />
+              <Link
+                href={`/dashboard/orders/${id}`}
+                className="rounded p-0.5 text-muted-foreground/50 opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                aria-label="Open order"
+                onPointerDown={(e) => e.stopPropagation()}
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+        </HoverCardTrigger>
+
+        {!isDragging && (
+          <HoverCardContent side="right" align="start" className="w-auto p-0" sideOffset={8}>
+            <OrderItemsPreview order={order} />
+          </HoverCardContent>
+        )}
+      </Card>
+    </HoverCard>
   );
 }
 
@@ -123,14 +237,16 @@ function OrderColumn({
   status,
   title,
   orders,
+  customerMap,
 }: {
   status: BoardStatus;
   title: string;
   orders: Order[];
+  customerMap: Map<string, CustomerLite>;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: status, data: { type: 'column' } });
   return (
-    <div className="flex w-[300px] min-w-[300px] flex-col rounded-xl bg-muted/50 p-3">
+    <div className="flex h-full min-h-0 w-[300px] min-w-[300px] flex-col rounded-xl bg-muted/50 p-3">
       <div className="mb-3 flex items-center justify-between px-1">
         <h3 className="flex items-center gap-2 font-semibold text-foreground text-sm">
           <span className={cn('inline-block size-2 rounded-full', statusAccent[status])} />
@@ -143,13 +259,13 @@ function OrderColumn({
       <div
         ref={setNodeRef}
         className={cn(
-          'flex min-h-[120px] flex-1 flex-col gap-2 rounded-lg p-1 transition-colors',
+          'flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-lg p-1 transition-colors',
           isOver && 'bg-primary/5',
         )}
       >
         <SortableContext items={orders.map(orderKey)} strategy={verticalListSortingStrategy}>
           {orders.map((o) => (
-            <OrderCard key={orderKey(o)} order={o} />
+            <OrderCard key={orderKey(o)} order={o} customer={o.userId ? customerMap.get(o.userId) : undefined} />
           ))}
         </SortableContext>
       </div>
@@ -163,6 +279,7 @@ function OrderColumn({
 export function OrdersBoard() {
   const { getToken } = useAuth();
   const { t } = useTranslation();
+  const customerMap = useCustomerMap();
   const [ordersById, setOrdersById] = React.useState<Record<string, Order>>({});
   const [columns, setColumns] = React.useState<Record<string, string[]>>({});
   const [activeId, setActiveId] = React.useState<string | null>(null);
@@ -271,17 +388,22 @@ export function OrdersBoard() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="-mx-2 flex gap-4 overflow-x-auto px-2 pb-4">
+        <div className="-mx-2 flex h-[calc(100dvh-360px)] min-h-[420px] gap-4 overflow-x-auto px-2 pb-4">
           {BOARD_STATUSES.map((status) => (
             <OrderColumn
               key={status}
               status={status}
               title={t(`orders.status.${status}`)}
               orders={(columns[status] || []).map((id) => ordersById[id]).filter(Boolean) as Order[]}
+              customerMap={customerMap}
             />
           ))}
         </div>
-        <DragOverlay>{activeOrder ? <OrderCard order={activeOrder} /> : null}</DragOverlay>
+        <DragOverlay>
+          {activeOrder ? (
+            <OrderCard order={activeOrder} customer={activeOrder.userId ? customerMap.get(activeOrder.userId) : undefined} />
+          ) : null}
+        </DragOverlay>
       </DndContext>
     </div>
   );

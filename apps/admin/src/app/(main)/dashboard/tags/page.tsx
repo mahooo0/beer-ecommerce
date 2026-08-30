@@ -8,6 +8,7 @@ import { Trash2, Pencil, Tags, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AnalyticsPanel, StatCard, MiniBar } from '@/components/AnalyticsPanel';
+import type { CardTone } from '@/lib/chart-colors';
 import {
   Table,
   TableBody,
@@ -32,6 +33,14 @@ const TAG_TYPE_COLORS: Record<string, string> = {
   COLLECTION: 'bg-purple-100 text-purple-800',
   BLOG: 'bg-green-100 text-green-800',
   CUSTOM: 'bg-orange-100 text-orange-800',
+};
+
+/** Vibrant bar tone per tag type — keeps the mini-bars saturated like the other KPI pages. */
+const TAG_TYPE_TONE: Record<string, CardTone> = {
+  PRODUCT: 'blue',
+  COLLECTION: 'violet',
+  BLOG: 'emerald',
+  CUSTOM: 'amber',
 };
 
 export default function TagsPage() {
@@ -100,13 +109,13 @@ export default function TagsPage() {
       {/* Analytics */}
       <AnalyticsPanel title="Tag Analytics">
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-          <StatCard label="Total Tags" value={tags.length} icon={<Tags className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-          <StatCard label="Product Associations" value={tagStats.totalProducts} icon={<Hash className="h-4 w-4 text-purple-600" />} color="bg-purple-50" />
-          <StatCard label="Tag Types" value={Object.keys(tagStats.byType).length} icon={<Tags className="h-4 w-4 text-green-600" />} color="bg-green-50" />
+          <StatCard label="Total Tags" value={tags.length} icon={<Tags className="h-4 w-4" />} tone="blue" />
+          <StatCard label="Product Associations" value={tagStats.totalProducts} icon={<Hash className="h-4 w-4" />} tone="violet" />
+          <StatCard label="Tag Types" value={Object.keys(tagStats.byType).length} icon={<Tags className="h-4 w-4" />} tone="emerald" />
         </div>
         <div className="space-y-2">
           {Object.entries(tagStats.byType).map(([type, count]) => (
-            <MiniBar key={type} label={type} value={count} max={tags.length} color={TAG_TYPE_COLORS[type]?.split(' ')[0] || 'bg-gray-500'} />
+            <MiniBar key={type} label={type} value={count} max={tags.length} tone={TAG_TYPE_TONE[type] ?? 'blue'} />
           ))}
         </div>
       </AnalyticsPanel>

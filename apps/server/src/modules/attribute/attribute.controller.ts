@@ -1,5 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { attributeService } from './attribute.service.js';
+import { AppError } from '../../common/middleware/error-handler.js';
+
+function routeParam(req: Request, name: string): string {
+  const value = req.params[name];
+  if (typeof value !== 'string') {
+    throw new AppError(400, `Missing route parameter: ${name}`);
+  }
+  return value;
+}
 
 export class AttributeController {
   // ========================================
@@ -8,7 +17,7 @@ export class AttributeController {
 
   async getByCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await attributeService.getByCategory(req.params.categoryId);
+      const data = await attributeService.getByCategory(routeParam(req, 'categoryId'));
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -17,7 +26,7 @@ export class AttributeController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await attributeService.getById(req.params.id);
+      const data = await attributeService.getById(routeParam(req, 'id'));
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -35,7 +44,7 @@ export class AttributeController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await attributeService.update(req.params.id, req.body);
+      const data = await attributeService.update(routeParam(req, 'id'), req.body);
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -44,7 +53,7 @@ export class AttributeController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      await attributeService.delete(req.params.id);
+      await attributeService.delete(routeParam(req, 'id'));
       res.json({ success: true, message: 'Attribute deleted' });
     } catch (error) {
       next(error);
@@ -75,7 +84,7 @@ export class AttributeController {
 
   async updateValue(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await attributeService.updateValue(req.params.id, req.body);
+      const data = await attributeService.updateValue(routeParam(req, 'id'), req.body);
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -84,7 +93,7 @@ export class AttributeController {
 
   async deleteValue(req: Request, res: Response, next: NextFunction) {
     try {
-      await attributeService.deleteValue(req.params.id);
+      await attributeService.deleteValue(routeParam(req, 'id'));
       res.json({ success: true, message: 'Attribute value deleted' });
     } catch (error) {
       next(error);
@@ -106,7 +115,7 @@ export class AttributeController {
 
   async getProductValues(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await attributeService.getProductValues(req.params.productId);
+      const data = await attributeService.getProductValues(routeParam(req, 'productId'));
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -116,7 +125,7 @@ export class AttributeController {
   async setProductValues(req: Request, res: Response, next: NextFunction) {
     try {
       const data = await attributeService.setProductValues(
-        req.params.productId,
+        routeParam(req, 'productId'),
         req.body.values
       );
       res.json({ success: true, data });

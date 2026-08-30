@@ -1,17 +1,17 @@
-import { prisma } from '@repo/db';
+import { prisma, type Prisma, type TagType } from '@repo/db';
 import { AppError } from '../../common/middleware/error-handler.js';
 
 interface GetAllOptions {
   page?: number;
   limit?: number;
-  type?: string;
+  type?: TagType;
 }
 
 class TagService {
   async getAll(options: GetAllOptions = {}) {
     const { page = 1, limit = 50, type } = options;
     const skip = (page - 1) * limit;
-    const where = type ? { type: type as any } : {};
+    const where: Prisma.TagWhereInput = type ? { type } : {};
 
     const [tags, total] = await Promise.all([
       prisma.tag.findMany({
@@ -37,7 +37,7 @@ class TagService {
     };
   }
 
-  async create(data: { name: string; type?: string }) {
+  async create(data: { name: string; type?: TagType }) {
     const slug = await this.generateUniqueSlug(data.name);
 
     return prisma.tag.create({

@@ -43,6 +43,15 @@ export class OrderController {
     }
   }
 
+  async getCustomerAggregates(_req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await orderService.getCustomerAggregates();
+      res.json({ success: true, data });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
       const order = await orderService.getById(req.params.id as string);

@@ -10,11 +10,11 @@ import { LanguageSwitcher } from "./language-switcher";
 import { HeaderSearch } from "./header-search";
 
 const navLinks = [
-  { key: "suggestions", href: "#" },
-  { key: "about", href: "#" },
-  { key: "delivery", href: "#" },
-  { key: "franchise", href: "#" },
-  { key: "contact", href: "#" },
+  { key: "suggestions", href: "/#popular" },
+  { key: "about", href: "/about" },
+  { key: "delivery", href: "/delivery" },
+  { key: "franchise", href: "/franchise" },
+  { key: "contact", href: "/contacts" },
 ] as const;
 
 export function TarankaHeader() {

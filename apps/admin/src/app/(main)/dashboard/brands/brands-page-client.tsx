@@ -59,9 +59,9 @@ export function BrandsPageClient({ brands }: BrandsPageClientProps) {
       <div className="mb-4">
         <AnalyticsPanel title={t('brands.analytics.title')}>
           <div className="grid grid-cols-3 gap-3">
-            <StatCard label={t('brands.analytics.totalBrands')} value={brands.length} icon={<Tag className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-            <StatCard label={t('brands.analytics.withLogos')} value={brandsWithLogos} icon={<Image className="h-4 w-4 text-purple-600" />} color="bg-purple-50" subtitle={`${brands.length > 0 ? Math.round((brandsWithLogos / brands.length) * 100) : 0}%`} />
-            <StatCard label={t('brands.analytics.withWebsites')} value={brandsWithWebsites} icon={<Globe className="h-4 w-4 text-green-600" />} color="bg-green-50" subtitle={`${brands.length > 0 ? Math.round((brandsWithWebsites / brands.length) * 100) : 0}%`} />
+            <StatCard label={t('brands.analytics.totalBrands')} value={brands.length} icon={<Tag className="h-4 w-4" />} tone="blue" />
+            <StatCard label={t('brands.analytics.withLogos')} value={brandsWithLogos} icon={<Image className="h-4 w-4" />} tone="violet" subtitle={`${brands.length > 0 ? Math.round((brandsWithLogos / brands.length) * 100) : 0}%`} />
+            <StatCard label={t('brands.analytics.withWebsites')} value={brandsWithWebsites} icon={<Globe className="h-4 w-4" />} tone="emerald" subtitle={`${brands.length > 0 ? Math.round((brandsWithWebsites / brands.length) * 100) : 0}%`} />
           </div>
         </AnalyticsPanel>
       </div>

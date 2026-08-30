@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { blogService, isBlogCollection, type CmsError } from './blog.service.js';
+import { blogService, isBlogCollection, type BlogCollection, type CmsError } from './blog.service.js';
 
 /** Raw querystring (Payload query language) forwarded verbatim to the CMS. */
 function qs(req: Request): string {
@@ -8,7 +8,7 @@ function qs(req: Request): string {
 }
 
 /** Validate the :collection param against the whitelist; 404 if unknown. */
-function collectionOf(req: Request, res: Response): string | null {
+function collectionOf(req: Request, res: Response): BlogCollection | null {
   const collection = req.params.collection as string;
   if (!isBlogCollection(collection)) {
     res.status(404).json({ success: false, error: `Unknown blog collection: ${collection}` });

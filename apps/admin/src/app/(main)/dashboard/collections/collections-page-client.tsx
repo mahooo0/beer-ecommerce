@@ -62,9 +62,9 @@ export function CollectionsPageClient({ collections }: CollectionsPageClientProp
       {collections.length > 0 && (
         <AnalyticsPanel title={t('collections.analytics.title')}>
           <div className="grid grid-cols-3 gap-3">
-            <StatCard label={t('collections.analytics.total')} value={collections.length} icon={<Layers className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-            <StatCard label={t('collections.analytics.active')} value={collections.filter((c) => c.isActive).length} icon={<CheckCircle className="h-4 w-4 text-green-600" />} color="bg-green-50" />
-            <StatCard label={t('collections.analytics.inactive')} value={collections.filter((c) => !c.isActive).length} icon={<XCircle className="h-4 w-4 text-red-600" />} color="bg-red-50" />
+            <StatCard label={t('collections.analytics.total')} value={collections.length} icon={<Layers className="h-4 w-4" />} tone="blue" />
+            <StatCard label={t('collections.analytics.active')} value={collections.filter((c) => c.isActive).length} icon={<CheckCircle className="h-4 w-4" />} tone="emerald" />
+            <StatCard label={t('collections.analytics.inactive')} value={collections.filter((c) => !c.isActive).length} icon={<XCircle className="h-4 w-4" />} tone="rose" />
           </div>
         </AnalyticsPanel>
       )}

@@ -3,19 +3,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { useTranslation } from 'react-i18next';
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { Wallet, ShoppingCart, Receipt, Percent, ShoppingBag } from 'lucide-react';
 import { api } from '@/lib/api';
 import type { Order, CartAnalyticsSummary } from '@repo/types';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
+import { StatCard } from './stat-card';
+import type { CardTone } from '@/lib/chart-colors';
 
 const zl = (cents: number) => `${(cents / 100).toFixed(2)} zł`;
 const compact = (n: number) => new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
 
-/** Percentage change current-vs-previous; null when there's no basis. */
+/** Percentage change current-vs-previous; null when there's no basis at all. */
 function delta(curr: number, prev: number): number | null {
-  if (prev <= 0) return curr > 0 ? 100 : null;
+  if (prev <= 0) return null; // no prior-period data → don't fake a +100%
   return ((curr - prev) / prev) * 100;
 }
 
@@ -38,17 +37,27 @@ interface KpiStripProps {
   dateRange: { from?: string; to?: string };
 }
 
-/**
- * Store KPIs in the template's KPI-strip visual style, wired to real data:
- * period revenue / orders / AOV (with delta vs the previous equal period) plus
- * conversion + abandoned-cart signals from the behavioral funnel.
- */
+const ICONS: Record<string, React.ReactNode> = {
+  revenue: <Wallet className="size-4" />,
+  orders: <ShoppingCart className="size-4" />,
+  aov: <Receipt className="size-4" />,
+  conversion: <Percent className="size-4" />,
+  abandoned: <ShoppingBag className="size-4" />,
+};
+const TONES: Record<string, CardTone> = {
+  revenue: 'emerald',
+  orders: 'blue',
+  aov: 'violet',
+  conversion: 'amber',
+  abandoned: 'rose',
+};
+
+/** Store KPIs as colourful stat cards with an honest delta vs the previous period. */
 export function AnalyticsKpiStrip({ orders, cartSummary, dateRange }: KpiStripProps) {
   const { getToken } = useAuth();
   const { t } = useTranslation();
   const [prevOrders, setPrevOrders] = useState<Order[]>([]);
 
-  // Fetch the previous equal-length period to compute deltas.
   useEffect(() => {
     const prev = previousRange(dateRange.from, dateRange.to);
     if (!prev.from || !prev.to) {
@@ -78,7 +87,8 @@ export function AnalyticsKpiStrip({ orders, cartSummary, dateRange }: KpiStripPr
     const prevCount = prevOrders.length;
     const prevAov = prevCount > 0 ? Math.round(prevRevenue / prevCount) : 0;
 
-    const conversion = cartSummary ? cartSummary.conversionRate * 100 : 0;
+    // Conversion can exceed 100% in sparse data; clamp the headline.
+    const conversion = cartSummary ? Math.min(100, cartSummary.conversionRate * 100) : 0;
     const abandoned = cartSummary
       ? cartSummary.abandonedCheckouts.count + cartSummary.abandonedCarts.count
       : 0;
@@ -93,41 +103,19 @@ export function AnalyticsKpiStrip({ orders, cartSummary, dateRange }: KpiStripPr
   }, [orders, prevOrders, cartSummary]);
 
   return (
-    <div className="overflow-hidden rounded-xl bg-card shadow-xs ring-1 ring-foreground/10">
-      <div className="grid divide-y md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-5">
-        {kpis.map((kpi) => {
-          const up = kpi.delta !== null && kpi.delta >= 0;
-          // For "good-when-lower" metrics (abandoned), an increase is bad.
-          const positive = kpi.delta === null ? null : kpi.invert ? !up : up;
-          return (
-            <Card key={kpi.key} className="rounded-none border-0 shadow-none ring-0">
-              <CardHeader>
-                <CardTitle className="font-normal text-muted-foreground text-sm">
-                  {t(`analyticsKpi.${kpi.key}`)}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-2xl leading-none tracking-tight tabular-nums">{kpi.value}</div>
-                  {kpi.delta !== null && (
-                    <Badge
-                      className={cn(
-                        positive
-                          ? 'bg-green-500/10 text-green-700 dark:bg-green-500/15 dark:text-green-300'
-                          : 'bg-destructive/10 text-destructive',
-                      )}
-                    >
-                      {up ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
-                      {Math.abs(kpi.delta).toFixed(1)}%
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-muted-foreground text-xs">{t('analyticsKpi.vsPrevious')}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-5">
+      {kpis.map((kpi) => (
+        <StatCard
+          key={kpi.key}
+          tone={TONES[kpi.key]}
+          icon={ICONS[kpi.key]}
+          label={t(`analyticsKpi.${kpi.key}`)}
+          value={kpi.value}
+          delta={kpi.delta}
+          invertDelta={kpi.invert}
+          sub={kpi.delta !== null ? t('analyticsKpi.vsPrevious') : undefined}
+        />
+      ))}
     </div>
   );
 }

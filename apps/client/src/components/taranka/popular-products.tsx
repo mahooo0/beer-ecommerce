@@ -100,7 +100,7 @@ export function TarankaPopularProducts({ products: input }: { products?: Catalog
   const { t } = useTranslation("home");
   const products = input && input.length > 0 ? input : fallbackProducts;
   return (
-    <section className="bg-background py-16">
+    <section id="popular" className="scroll-mt-24 bg-background py-16">
       <div className="mx-auto max-w-[1196px] px-6">
         <h2 className="font-taranka-display text-[48px] font-extrabold uppercase leading-none text-ink-900">
           {t("popularProducts.heading")}

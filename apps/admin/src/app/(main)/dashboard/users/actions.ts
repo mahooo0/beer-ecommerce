@@ -145,6 +145,8 @@ export async function getUserDetail(clerkId: string) {
       ((clerkUser.publicMetadata?.role as string) ||
         dbUser?.role ||
         'CUSTOMER') as 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN',
+    customerType: (dbUser?.customerType ?? 'RETAIL') as 'RETAIL' | 'WHOLESALE',
+    personalDiscountPercent: dbUser?.personalDiscountPercent ?? null,
     avatar: clerkUser.imageUrl || dbUser?.avatar || undefined,
     phone: dbUser?.phone || clerkUser.phoneNumbers?.[0]?.phoneNumber || undefined,
     isActive: dbUser ? dbUser.isActive : !clerkUser.banned,
@@ -200,6 +202,35 @@ export async function setUserRole(
   revalidatePath(`/dashboard/users/${clerkId}`);
 
   return { success: true };
+}
+
+/**
+ * Set a per-customer manual retail discount (percent, 0–100). At checkout the
+ * server applies the greater of this and the loyalty-tier percent for signed-in
+ * RETAIL customers. Pass null (or an empty value) to clear it.
+ */
+export async function setCustomerDiscount(clerkId: string, percent: number | null) {
+  await verifyPermission(PERMISSIONS.USERS_MANAGE);
+
+  const value =
+    percent === null || percent === undefined || Number.isNaN(percent)
+      ? null
+      : Math.min(100, Math.max(0, Math.round(percent)));
+
+  // updateMany no-ops (count 0) instead of throwing when the customer row is not
+  // synced yet — surfaced to the caller as a friendly error.
+  const { count } = await prisma.user.updateMany({
+    where: { clerkId },
+    data: { personalDiscountPercent: value },
+  });
+  if (count === 0) {
+    throw new Error('Customer is not synced to the database yet');
+  }
+
+  revalidatePath('/dashboard/customers');
+  revalidatePath(`/dashboard/customers/${clerkId}`);
+
+  return { success: true, personalDiscountPercent: value };
 }
 
 /**

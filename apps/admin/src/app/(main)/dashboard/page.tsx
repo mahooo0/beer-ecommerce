@@ -15,6 +15,7 @@ import { OrderStatusChart } from '@/components/dashboard/order-status-chart';
 import { RecentOrdersTable } from '@/components/dashboard/recent-orders-table';
 import { LowStockAlerts } from '@/components/dashboard/low-stock-alerts';
 import { TopProducts } from '@/components/dashboard/top-products';
+import { TopCustomers } from '@/components/dashboard/top-customers';
 import { DateRangeFilter } from '@/components/dashboard/date-range-filter';
 
 export default function DashboardPage() {
@@ -70,6 +71,9 @@ export default function DashboardPage() {
           <TopProducts products={topProducts} loading={loading} />
         </div>
       </div>
+
+      {/* Customers */}
+      <TopCustomers />
     </div>
   );
 }

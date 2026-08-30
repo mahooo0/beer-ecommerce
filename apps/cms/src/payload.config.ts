@@ -85,7 +85,15 @@ export default buildConfig({
     },
   }),
   collections: [Pages, Posts, Media, Categories, Users],
-  cors: [getServerSideURL()].filter(Boolean),
+  // Allow the storefront origins to call the CMS from the browser (form
+  // submissions, etc.). The CMS lives on a different subdomain than the shop,
+  // so its own URL alone is not enough. Override via CORS_ORIGINS (comma-sep).
+  cors: [
+    getServerSideURL(),
+    ...(process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(',').map((s) => s.trim())
+      : ['https://taranka.online', 'https://www.taranka.online', 'https://dev.taranka.online']),
+  ].filter(Boolean),
   globals: [Header, Footer],
   plugins: [
     ...plugins,

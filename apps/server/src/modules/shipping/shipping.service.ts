@@ -1,6 +1,6 @@
 import { prisma } from '@repo/db';
 import { AppError } from '../../common/middleware/error-handler.js';
-import type { ShippingRateType } from '@repo/types';
+import type { ShippingRateType } from '@repo/db';
 
 interface CreateZoneData {
   name: string;

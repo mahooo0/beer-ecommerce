@@ -132,9 +132,9 @@ export default function InventoryDashboardPage() {
       {dashboardData && (
         <AnalyticsPanel title="Stock Distribution" defaultOpen={false}>
           <div className="space-y-2">
-            <MiniBar label="SKUs Tracked" value={dashboardData.totalItems} max={dashboardData.totalItems} color="bg-blue-500" />
-            <MiniBar label="Low Stock" value={dashboardData.lowStockCount} max={dashboardData.totalItems} color="bg-amber-500" />
-            <MiniBar label="Healthy Stock" value={dashboardData.totalItems - dashboardData.lowStockCount} max={dashboardData.totalItems} color="bg-green-500" />
+            <MiniBar label="SKUs Tracked" value={dashboardData.totalItems} max={dashboardData.totalItems} tone="blue" />
+            <MiniBar label="Low Stock" value={dashboardData.lowStockCount} max={dashboardData.totalItems} tone="amber" />
+            <MiniBar label="Healthy Stock" value={dashboardData.totalItems - dashboardData.lowStockCount} max={dashboardData.totalItems} tone="emerald" />
           </div>
         </AnalyticsPanel>
       )}

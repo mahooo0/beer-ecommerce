@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { productService } from './product.service.js';
-import type { ProductStatus } from '@repo/types';
+import type { ProductStatus } from '@repo/db';
 import { filterQuerySchema } from './product.schemas.js';
 
 export class ProductController {

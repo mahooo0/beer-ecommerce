@@ -1,11 +1,56 @@
 import { prisma } from '@repo/db';
-import {
-  AnalyticsEventType,
-  type AnalyticsTrackInput,
-  type CartAnalyticsSummary,
-  type AbandonedCartRow,
-} from '@repo/types';
 import { AppError } from '../../common/middleware/error-handler.js';
+
+const AnalyticsEventType = {
+  PRODUCT_VIEW: 'product_view',
+  ADD_TO_CART: 'add_to_cart',
+  REMOVE_FROM_CART: 'remove_from_cart',
+  CHECKOUT_STARTED: 'checkout_started',
+  SEARCH: 'search',
+  PURCHASED: 'purchased',
+} as const;
+type AnalyticsEventType = (typeof AnalyticsEventType)[keyof typeof AnalyticsEventType];
+
+interface AnalyticsTrackInput {
+  type: AnalyticsEventType;
+  sessionId: string;
+  userId?: string | null;
+  isWholesale?: boolean;
+  productId?: string;
+  quantity?: number;
+  itemCount?: number;
+  valueCents?: number;
+  query?: string;
+  orderId?: string;
+  email?: string;
+  meta?: Record<string, unknown>;
+}
+
+interface AbandonedCartRow {
+  sessionId: string;
+  userId: string | null;
+  email: string | null;
+  itemCount: number;
+  valueCents: number;
+  lastActivityAt: string;
+  reachedCheckout: boolean;
+}
+
+interface CartAnalyticsSummary {
+  funnel: {
+    productViews: number;
+    addToCart: number;
+    checkoutStarted: number;
+    purchased: number;
+  };
+  conversionRate: number;
+  abandonedCheckouts: { count: number; valueCents: number };
+  abandonedCarts: { count: number; valueCents: number };
+  topViewed: Array<{ productId: string; name: string; count: number }>;
+  topSearches: Array<{ query: string; count: number }>;
+  abandonedCheckoutRows: AbandonedCartRow[];
+  abandonedCartRows: AbandonedCartRow[];
+}
 
 const VALID_TYPES = new Set<string>(Object.values(AnalyticsEventType));
 

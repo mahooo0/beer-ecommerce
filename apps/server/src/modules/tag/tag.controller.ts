@@ -1,12 +1,18 @@
 import type { Request, Response, NextFunction } from 'express';
+import { TagType, type TagType as TagTypeValue } from '@repo/db';
 import { tagService } from './tag.service.js';
+
+function tagTypeFromQuery(value: unknown): TagTypeValue | undefined {
+  if (typeof value !== 'string') return undefined;
+  return Object.values(TagType).includes(value as TagTypeValue) ? (value as TagTypeValue) : undefined;
+}
 
 class TagController {
   async getAll(req: Request, res: Response, next: NextFunction) {
     try {
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      const type = req.query.type as string | undefined;
+      const type = tagTypeFromQuery(req.query.type);
 
       const result = await tagService.getAll({ page, limit, type });
 

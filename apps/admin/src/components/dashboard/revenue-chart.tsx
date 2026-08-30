@@ -61,12 +61,13 @@ export function RevenueChart({ data, loading }: RevenueChartProps) {
               tickLine={false}
               tickMargin={10}
               axisLine={false}
-              tickFormatter={(v) => `$${v}`}
+              width={52}
+              tickFormatter={(v) => `${v} zł`}
             />
             <ChartTooltip
               content={
                 <ChartTooltipContent
-                  formatter={(value) => `$${Number(value).toFixed(2)}`}
+                  formatter={(value) => `${Number(value).toFixed(2)} zł`}
                 />
               }
             />

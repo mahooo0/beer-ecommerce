@@ -41,7 +41,6 @@ const getUserFilterConfigs = (t: (key: string) => string): FilterConfig[] => [
     type: 'select',
     placeholder: t('users.filters.allRoles'),
     options: [
-      { value: 'CUSTOMER', label: t('users.roles.CUSTOMER') },
       { value: 'ADMIN', label: t('users.roles.ADMIN') },
       { value: 'SUPER_ADMIN', label: t('users.roles.SUPER_ADMIN') },
     ],
@@ -74,10 +73,11 @@ export default function UsersPage() {
     try {
       const token = await getToken();
       const qp = new URLSearchParams();
-      qp.set('page', String(page));
-      qp.set('limit', '20');
+      // Team = staff only, and admins are few — load one wide page and split
+      // out customers client-side (they live on /dashboard/customers now).
+      qp.set('page', '1');
+      qp.set('limit', '200');
       if (filterValues.search) qp.set('search', filterValues.search);
-      if (filterValues.role) qp.set('role', filterValues.role);
 
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
       const res = await fetch(`${API_URL}/auth/users?${qp.toString()}`, {
@@ -87,8 +87,9 @@ export default function UsersPage() {
         },
       });
       const data = await res.json();
-      setUsers(data.data || []);
-      setTotalPages(data.totalPages || 1);
+      const staff = (data.data || []).filter((u: User) => u.role !== 'CUSTOMER');
+      setUsers(staff);
+      setTotalPages(1);
     } catch {
       // Handle error silently
     } finally {
@@ -151,7 +152,10 @@ export default function UsersPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{t('users.title')}</h1>
+        <div>
+          <h1 className="text-2xl font-bold">{t('users.teamTitle')}</h1>
+          <p className="text-sm text-muted-foreground">{t('users.teamSubtitle')}</p>
+        </div>
         {canManageUsers && <CreateUserButton onCreated={fetchUsers} />}
       </div>
 
@@ -159,10 +163,10 @@ export default function UsersPage() {
       {!loading && users.length > 0 && (
         <AnalyticsPanel title={t('users.analytics.title')}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-            <StatCard label={t('users.analytics.totalUsers')} value={users.length} icon={<Users className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-            <StatCard label={t('users.analytics.active')} value={userStats.activeCount} icon={<UserCheck className="h-4 w-4 text-green-600" />} color="bg-green-50" />
-            <StatCard label={t('users.analytics.inactive')} value={userStats.inactiveCount} icon={<UserX className="h-4 w-4 text-red-600" />} color="bg-red-50" />
-            <StatCard label={t('users.analytics.admins')} value={(userStats.byRole['ADMIN'] || 0) + (userStats.byRole['SUPER_ADMIN'] || 0)} icon={<Shield className="h-4 w-4 text-purple-600" />} color="bg-purple-50" />
+            <StatCard label={t('users.analytics.totalUsers')} value={users.length} icon={<Users className="h-4 w-4" />} tone="blue" />
+            <StatCard label={t('users.analytics.active')} value={userStats.activeCount} icon={<UserCheck className="h-4 w-4" />} tone="emerald" />
+            <StatCard label={t('users.analytics.inactive')} value={userStats.inactiveCount} icon={<UserX className="h-4 w-4" />} tone="rose" />
+            <StatCard label={t('users.analytics.admins')} value={(userStats.byRole['ADMIN'] || 0) + (userStats.byRole['SUPER_ADMIN'] || 0)} icon={<Shield className="h-4 w-4" />} tone="violet" />
           </div>
           <div className="space-y-2">
             {Object.entries(userStats.byRole).map(([role, count]) => (

@@ -89,6 +89,24 @@ These serve as the fallback; there is no separate default.css file. */
   --sidebar-ring: oklch(0.708 0 0);
 
   /* fonts */
+  --font-geist: "Geist", "Inter", system-ui, sans-serif;
+  --font-inter: "Inter", system-ui, sans-serif;
+  --font-noto-sans: "Noto Sans", system-ui, sans-serif;
+  --font-nunito-sans: "Nunito Sans", system-ui, sans-serif;
+  --font-figtree: "Figtree", system-ui, sans-serif;
+  --font-roboto: Roboto, Arial, sans-serif;
+  --font-raleway: Raleway, system-ui, sans-serif;
+  --font-dm-sans: "DM Sans", system-ui, sans-serif;
+  --font-public-sans: "Public Sans", system-ui, sans-serif;
+  --font-outfit: Outfit, system-ui, sans-serif;
+  --font-geist-mono: "Geist Mono", ui-monospace, monospace;
+  --font-geist-pixel-square: "Geist Pixel Square", ui-monospace, monospace;
+  --font-jetbrains-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-noto-serif: "Noto Serif", Georgia, serif;
+  --font-roboto-slab: "Roboto Slab", Georgia, serif;
+  --font-merriweather: Merriweather, Georgia, serif;
+  --font-lora: Lora, Georgia, serif;
+  --font-playfair-display: "Playfair Display", Georgia, serif;
   --font-sans: var(--font-geist);
   --font-mono: var(--font-geist-mono);
   --background: oklch(1 0 0);

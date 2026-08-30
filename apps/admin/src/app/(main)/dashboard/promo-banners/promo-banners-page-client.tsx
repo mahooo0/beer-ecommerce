@@ -62,9 +62,9 @@ export function PromoBannersPageClient({ banners, products }: PromoBannersPageCl
       <div className="mb-4">
         <AnalyticsPanel title={t('promoBanners.analytics.title')}>
           <div className="grid grid-cols-3 gap-3">
-            <StatCard label={t('promoBanners.analytics.total')} value={banners.length} icon={<Megaphone className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-            <StatCard label={t('promoBanners.analytics.active')} value={activeCount} icon={<CheckCircle2 className="h-4 w-4 text-green-600" />} color="bg-green-50" />
-            <StatCard label={t('promoBanners.analytics.linked')} value={linkedCount} icon={<LinkIcon className="h-4 w-4 text-purple-600" />} color="bg-purple-50" />
+            <StatCard label={t('promoBanners.analytics.total')} value={banners.length} icon={<Megaphone className="h-4 w-4" />} tone="blue" />
+            <StatCard label={t('promoBanners.analytics.active')} value={activeCount} icon={<CheckCircle2 className="h-4 w-4" />} tone="emerald" />
+            <StatCard label={t('promoBanners.analytics.linked')} value={linkedCount} icon={<LinkIcon className="h-4 w-4" />} tone="violet" />
           </div>
         </AnalyticsPanel>
       </div>

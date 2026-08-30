@@ -106,6 +106,52 @@ export class OrderService {
     return res[0]?.total ?? 0;
   }
 
+  /**
+   * Per-customer order roll-up across ALL signed-in customers in a single pass.
+   * Keyed by Clerk userId (guest orders — those without a userId — are excluded,
+   * they belong to no account). Feeds the admin Customers table so it can show
+   * order count + lifetime spend + recency without one round-trip per customer.
+   *
+   * - `orders`      — every order the customer ever placed (any status)
+   * - `paidOrders`  — orders that reached a paid-ish status
+   * - `totalSpent`  — Σ totalAmount over paid-ish orders (matches getUserSpend / loyalty)
+   * - `lastOrderAt` / `firstOrderAt` — recency + tenure
+   */
+  async getCustomerAggregates(): Promise<
+    Array<{
+      userId: string;
+      orders: number;
+      paidOrders: number;
+      totalSpent: number;
+      lastOrderAt: string | null;
+      firstOrderAt: string | null;
+    }>
+  > {
+    const PAID = ['paid', 'processing', 'shipped', 'delivered'];
+    const rows = await OrderModel.aggregate([
+      { $match: { userId: { $nin: [null, ''] } } },
+      {
+        $group: {
+          _id: '$userId',
+          orders: { $sum: 1 },
+          paidOrders: { $sum: { $cond: [{ $in: ['$status', PAID] }, 1, 0] } },
+          totalSpent: { $sum: { $cond: [{ $in: ['$status', PAID] }, '$totalAmount', 0] } },
+          lastOrderAt: { $max: '$createdAt' },
+          firstOrderAt: { $min: '$createdAt' },
+        },
+      },
+    ]);
+
+    return rows.map((r) => ({
+      userId: r._id as string,
+      orders: r.orders as number,
+      paidOrders: r.paidOrders as number,
+      totalSpent: r.totalSpent as number,
+      lastOrderAt: r.lastOrderAt ? new Date(r.lastOrderAt).toISOString() : null,
+      firstOrderAt: r.firstOrderAt ? new Date(r.firstOrderAt).toISOString() : null,
+    }));
+  }
+
   async getById(id: string) {
     const order = await OrderModel.findById(id).lean();
     if (!order) throw new AppError(404, 'Order not found');
@@ -143,12 +189,15 @@ export class OrderService {
 
     // Wholesale pricing is a signed-in WHOLESALE privilege; everyone else is retail.
     let isWholesale = false;
+    let personalDiscountPercent = 0;
     if (userId) {
       const user = await prisma.user.findUnique({
         where: { clerkId: userId },
-        select: { customerType: true },
+        select: { customerType: true, personalDiscountPercent: true },
       });
       isWholesale = user?.customerType === 'WHOLESALE';
+      // Admin-set per-customer discount (percent). Clamped defensively.
+      personalDiscountPercent = Math.min(100, Math.max(0, user?.personalDiscountPercent ?? 0));
     }
 
     const productIds = [...new Set(input.items.map((i) => i.productId))];
@@ -198,11 +247,14 @@ export class OrderService {
 
     // Loyalty discount: signed-in RETAIL customers only. The tier is resolved
     // from lifetime cumulative paid spend (this pending order not yet counted),
-    // and applies to the goods subtotal. Guests and wholesale get nothing.
+    // and applies to the goods subtotal. Guests and wholesale get nothing. A
+    // manual per-customer discount (personalDiscountPercent) overrides the tier
+    // when it is higher.
     let discountAmount = 0;
     if (userId && !isWholesale) {
       const spent = await this.getUserSpend(userId);
-      const percent = await loyaltyTierService.resolvePercent(spent);
+      const loyaltyPercent = await loyaltyTierService.resolvePercent(spent);
+      const percent = Math.max(loyaltyPercent, personalDiscountPercent);
       discountAmount = Math.round((subtotal * percent) / 100);
     }
 
@@ -287,7 +339,7 @@ export class OrderService {
 
     eventBus.emit('order.shipped', {
       orderId: id,
-      userId: order!.userId,
+      userId: order!.userId ?? '',
       carrier: data.carrier,
       trackingNumber: data.trackingNumber,
     });

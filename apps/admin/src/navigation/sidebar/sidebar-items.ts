@@ -2,10 +2,10 @@ import {
   Award,
   Banknote,
   BarChart3,
-  Boxes,
   Calendar,
   ChartBar,
   Component,
+  Contact,
   FileText,
   Fingerprint,
   FolderTree,
@@ -30,12 +30,10 @@ import {
   PackagePlus,
   PackageSearch,
   ReceiptText,
-  Search,
   ShoppingBag,
   ShoppingCart,
   SquareArrowUpRight,
   Tags,
-  Truck,
   Users,
 } from "lucide-react";
 
@@ -106,17 +104,10 @@ export const sidebarItems: NavGroup[] = [
       { title: "nav.collections", url: "/dashboard/collections", icon: Layers },
       { title: "nav.brands", url: "/dashboard/brands", icon: Award },
       { title: "nav.tags", url: "/dashboard/tags", icon: Tags },
-      {
-        title: "nav.inventory",
-        url: "/dashboard/inventory",
-        icon: Boxes,
-        subItems: [
-          { title: "nav.inventoryOverview", url: "/dashboard/inventory" },
-          { title: "nav.warehouses", url: "/dashboard/inventory/warehouses" },
-          { title: "nav.movements", url: "/dashboard/inventory/movements" },
-          { title: "nav.adjustments", url: "/dashboard/inventory/adjustments" },
-        ],
-      },
+      // Inventory (multi-warehouse) hidden from the nav: stock/availability is
+      // tracked on the product itself (trackQuantity/quantity, isAvailable,
+      // variant.stock) and the live order flow never touches Warehouse/
+      // InventoryItem. Pages still exist under /dashboard/inventory/* by URL.
       { title: "nav.promoBanners", url: "/dashboard/promo-banners", icon: Megaphone },
     ],
   },
@@ -124,7 +115,8 @@ export const sidebarItems: NavGroup[] = [
     id: 4,
     label: "nav.section.customers",
     items: [
-      { title: "nav.users", url: "/dashboard/users", icon: Users },
+      { title: "nav.customers", url: "/dashboard/customers", icon: Contact },
+      { title: "nav.team", url: "/dashboard/users", icon: Users },
       { title: "nav.loyaltyTiers", url: "/dashboard/loyalty-tiers", icon: BadgePercent },
       { title: "nav.leads", url: "/dashboard/leads", icon: Inbox },
     ],
@@ -146,14 +138,12 @@ export const sidebarItems: NavGroup[] = [
       { title: "nav.pages", url: "/dashboard/pages", icon: FileText },
     ],
   },
-  {
-    id: 6,
-    label: "nav.section.ops",
-    items: [
-      { title: "nav.shipping", url: "/dashboard/shipping/zones", icon: Truck },
-      { title: "nav.search", url: "/dashboard/search", icon: Search },
-    ],
-  },
+  // Ops group (Shipping zones + Search) hidden from the nav. The live checkout
+  // uses flat PL delivery methods (kurier/wlasna/poczta), not the multi-country
+  // ShippingZone/ShippingMethod models (only the unrouted generic checkout used
+  // those). Storefront search hits /products?search= (DB filter), not the
+  // Meilisearch settings this page tunes. Pages remain at /dashboard/shipping/*
+  // and /dashboard/search by URL.
   {
     id: 7,
     label: "Template · Dashboards",

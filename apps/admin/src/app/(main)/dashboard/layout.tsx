@@ -41,6 +41,10 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
       <AppSidebar variant={variant} collapsible={collapsible} userRole={role} />
       <SidebarInset
         className={cn(
+          // min-w-0 lets the inset shrink below its content's intrinsic width so
+          // wide children (e.g. the orders kanban) scroll internally instead of
+          // pushing the whole page into horizontal overflow.
+          "min-w-0",
           "[html[data-content-layout=centered]_&>*]:mx-auto",
           "[html[data-content-layout=centered]_&>*]:w-full",
           "[html[data-content-layout=centered]_&>*]:max-w-screen-2xl",
@@ -72,7 +76,7 @@ export default async function Layout({ children }: Readonly<{ children: ReactNod
             </div>
           </div>
         </header>
-        <div className="h-full p-4 md:p-6">{children}</div>
+        <div className="h-full min-w-0 p-4 md:p-6">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

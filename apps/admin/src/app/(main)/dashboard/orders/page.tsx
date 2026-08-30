@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { useTranslation } from 'react-i18next';
 import { api } from '@/lib/api';
 import type { Order } from '@repo/types';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -22,11 +24,15 @@ import {
   TableHead,
   TableCell,
 } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 import { DataTableRowActions } from '@/components/DataTableRowActions';
 import { DataTableFilters, type FilterConfig } from '@/components/DataTableFilters';
-import { Eye, DollarSign, ShoppingCart, Clock, TrendingUp, LayoutGrid, List } from 'lucide-react';
+import { Eye, LayoutGrid, List } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { OrdersBoard } from './_components/orders-board';
+import { OrderInsights } from './_components/order-insights';
+import { useCustomerMap } from './_components/use-customer-map';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400',
@@ -50,8 +56,35 @@ const ALL_STATUSES = [
   'refund_requested',
 ] as const;
 
+// Fulfillment pipeline progress (%) per status — drives the row progress bar.
+const FULFILL_PCT: Record<string, number> = {
+  pending: 12,
+  paid: 38,
+  processing: 60,
+  shipped: 82,
+  delivered: 100,
+  cancelled: 100,
+  returned: 100,
+  refund_requested: 100,
+};
+const BAD_STATUSES = new Set(['cancelled', 'returned', 'refund_requested']);
+
+const paymentBadge: Record<string, string> = {
+  succeeded: 'bg-green-500/15 text-green-600 dark:text-green-400',
+  paid: 'bg-green-500/15 text-green-600 dark:text-green-400',
+  pending: 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400',
+  failed: 'bg-red-500/15 text-red-600 dark:text-red-400',
+  refunded: 'bg-orange-500/15 text-orange-600 dark:text-orange-400',
+  partially_refunded: 'bg-orange-500/15 text-orange-600 dark:text-orange-400',
+};
+
 function formatCurrency(cents: number) {
-  return `${(cents / 100).toFixed(2)} zł`;
+  return new Intl.NumberFormat('pl-PL', { style: 'currency', currency: 'PLN' }).format(cents / 100);
+}
+
+function initials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? '') + (parts[1]?.[0] ?? '')).toUpperCase() || '?';
 }
 
 function formatDate(date: Date | string) {
@@ -70,6 +103,7 @@ export default function OrdersPage() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { t } = useTranslation();
+  const customerMap = useCustomerMap();
   const page = Number(searchParams.get('page')) || 1;
 
   const [view, setView] = useState<'list' | 'board'>(
@@ -252,53 +286,10 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      {/* Stats cards */}
+      {/* Insights: KPI cards + status breakdown donut */}
       {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-md bg-blue-500/15 p-2">
-                <ShoppingCart className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('orders.stats.totalOrders')}</p>
-                <p className="text-xl font-bold">{stats.totalOrders}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-md bg-green-500/15 p-2">
-                <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('orders.stats.revenue')}</p>
-                <p className="text-xl font-bold">{formatCurrency(stats.revenue)}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-md bg-yellow-500/15 p-2">
-                <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('orders.stats.pending')}</p>
-                <p className="text-xl font-bold">{stats.byStatus['pending'] || 0}</p>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <div className="flex items-center gap-3">
-              <div className="rounded-md bg-purple-500/15 p-2">
-                <TrendingUp className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">{t('orders.stats.avgOrderValue')}</p>
-                <p className="text-xl font-bold">{formatCurrency(stats.avgOrderValue)}</p>
-              </div>
-            </div>
-          </div>
+        <div className="mb-6">
+          <OrderInsights stats={stats} />
         </div>
       )}
 
@@ -342,6 +333,7 @@ export default function OrdersPage() {
 
           {/* Orders table */}
           <div className="rounded-lg border bg-card">
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -355,11 +347,11 @@ export default function OrdersPage() {
                   </TableHead>
                   <TableHead>{t('orders.columns.order')}</TableHead>
                   <TableHead>{t('orders.columns.customer')}</TableHead>
-                  <TableHead>{t('orders.columns.items')}</TableHead>
+                  <TableHead className="text-center">{t('orders.columns.items')}</TableHead>
                   <TableHead>{t('orders.columns.total')}</TableHead>
-                  <TableHead>{t('orders.columns.status')}</TableHead>
-                  <TableHead>{t('orders.columns.date')}</TableHead>
-                  <TableHead>{t('orders.columns.actions')}</TableHead>
+                  <TableHead>{t('orders.columns.payment')}</TableHead>
+                  <TableHead className="min-w-[180px]">{t('orders.columns.fulfillment')}</TableHead>
+                  <TableHead className="text-right">{t('orders.columns.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -367,15 +359,26 @@ export default function OrdersPage() {
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
                       <TableCell colSpan={8}>
-                        <div className="h-12 animate-pulse bg-muted rounded" />
+                        <div className="h-14 animate-pulse bg-muted rounded" />
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   orders.map((order: Order) => {
                     const orderId = (order as any)._id || order.orderNumber;
+                    const cust = order.userId ? customerMap.get(order.userId) : undefined;
+                    const custName =
+                      cust?.name ||
+                      (order.shippingAddress
+                        ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`.trim()
+                        : order.guestEmail || order.userId || '—');
+                    const isGuest = !order.userId;
+                    const custSub = isGuest ? t('orders.guest') : cust?.email || t('orders.registered');
+                    const custAvatar = cust?.avatar || null;
+                    const payStatus = (order as any).payment?.status as string | undefined;
+                    const bad = BAD_STATUSES.has(order.status);
                     return (
-                      <TableRow key={orderId}>
+                      <TableRow key={orderId} className="group">
                         <TableCell>
                           <input
                             type="checkbox"
@@ -384,38 +387,105 @@ export default function OrdersPage() {
                             className="size-4 rounded border-input"
                           />
                         </TableCell>
+                        {/* Order # + date */}
                         <TableCell>
-                          <span className="text-sm font-medium text-foreground font-mono">
-                            {order.orderNumber}
-                          </span>
+                          <Link href={`/dashboard/orders/${orderId}`} className="block">
+                            <span className="font-mono text-sm font-medium text-foreground group-hover:underline">
+                              {order.orderNumber}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                              {formatDate(order.createdAt)}
+                            </span>
+                          </Link>
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {order.shippingAddress
-                            ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}`
-                            : order.guestEmail || order.userId}
+                        {/* Customer w/ Clerk avatar — links to the customer page */}
+                        <TableCell>
+                          {isGuest ? (
+                            <div className="flex items-center gap-2.5">
+                              <Avatar className="size-8 ring-1 ring-foreground/10">
+                                {custAvatar ? <AvatarImage src={custAvatar} alt={custName} /> : null}
+                                <AvatarFallback className="text-[11px] font-medium">
+                                  {initials(custName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <div className="max-w-[160px] truncate text-sm font-medium text-foreground">
+                                  {custName}
+                                </div>
+                                <div className="max-w-[160px] truncate text-xs text-muted-foreground">
+                                  {custSub}
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            <Link
+                              href={`/dashboard/customers/${order.userId}`}
+                              className="group/cust flex items-center gap-2.5"
+                            >
+                              <Avatar className="size-8 ring-1 ring-foreground/10">
+                                {custAvatar ? <AvatarImage src={custAvatar} alt={custName} /> : null}
+                                <AvatarFallback className="text-[11px] font-medium">
+                                  {initials(custName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="min-w-0">
+                                <div className="max-w-[160px] truncate text-sm font-medium text-foreground group-hover/cust:underline">
+                                  {custName}
+                                </div>
+                                <div className="max-w-[160px] truncate text-xs text-muted-foreground">
+                                  {custSub}
+                                </div>
+                              </div>
+                            </Link>
+                          )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {t('orders.itemsCount', { count: order.items?.length || 0 })}
+                        {/* Items */}
+                        <TableCell className="text-center text-sm tabular-nums text-muted-foreground">
+                          {order.items?.length || 0}
                         </TableCell>
-                        <TableCell className="text-sm font-medium text-foreground">
+                        {/* Total */}
+                        <TableCell className="text-sm font-semibold tabular-nums text-foreground">
                           {formatCurrency(order.totalAmount)}
                         </TableCell>
+                        {/* Payment */}
                         <TableCell>
-                          <Select value={order.status} onValueChange={(v) => handleStatusChange(orderId, v)}>
-                            <SelectTrigger className={`w-[155px] h-8 text-xs font-semibold ${statusColors[order.status] || ''}`}>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ALL_STATUSES.map((s) => (
-                                <SelectItem key={s} value={s}>{t(`orders.status.${s}`)}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          {payStatus ? (
+                            <Badge
+                              variant="secondary"
+                              className={cn('text-[11px]', paymentBadge[payStatus] || 'bg-muted text-muted-foreground')}
+                            >
+                              {t(`orders.payment.${payStatus}`, payStatus)}
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/50">—</span>
+                          )}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(order.createdAt)}
+                        {/* Fulfillment: status select + progress */}
+                        <TableCell>
+                          <div className="space-y-1.5">
+                            <Select value={order.status} onValueChange={(v) => handleStatusChange(orderId, v)}>
+                              <SelectTrigger className={cn('h-7 w-[150px] text-xs font-semibold', statusColors[order.status])}>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {ALL_STATUSES.map((s) => (
+                                  <SelectItem key={s} value={s}>{t(`orders.status.${s}`)}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Progress
+                              value={FULFILL_PCT[order.status] ?? 0}
+                              className={cn(
+                                'h-1.5 bg-muted',
+                                bad
+                                  ? '*:data-[slot=progress-indicator]:bg-destructive'
+                                  : '*:data-[slot=progress-indicator]:bg-emerald-500',
+                              )}
+                            />
+                          </div>
                         </TableCell>
-                        <TableCell className="text-sm">
+                        {/* Actions */}
+                        <TableCell className="text-right">
                           <DataTableRowActions actions={[
                             { label: t('orders.actions.view'), href: `/dashboard/orders/${orderId}`, icon: <Eye className="h-4 w-4" /> },
                           ]} />
@@ -426,6 +496,7 @@ export default function OrdersPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
             {!loading && orders.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
                 {t('orders.empty')}

@@ -84,9 +84,10 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
       (user?.unsafeMetadata?.customerType as string | undefined)) === "WHOLESALE";
   const tiers = product.wholesaleTiers ?? [];
   const showWholesale = isWholesale && tiers.length > 0;
-  const bestUnit = showWholesale
-    ? Math.min(...sortedWholesaleTiers(tiers).map((tier) => tier.unitPrice))
-    : 0;
+  // Sorted tier rows (ascending minQty, per-unit rate derived) — used both for
+  // the "hurt od …" teaser and the hover panel that drops out below the card.
+  const wholesaleRows = showWholesale ? sortedWholesaleTiers(tiers) : [];
+  const bestUnit = wholesaleRows.length ? Math.min(...wholesaleRows.map((r) => r.unitPrice)) : 0;
 
   const handleAdd = () => {
     if (outOfStock) return;
@@ -106,11 +107,11 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
 
   return (
     <article
-      className={`group relative flex h-[372px] w-[282px] flex-col rounded-[20px] bg-white px-6 pb-6 pt-4 transition-all duration-300 ${
+      className={`group relative flex h-[372px] w-[282px] flex-col rounded-[20px] bg-white px-6 pb-6 pt-4 transition-all duration-300 hover:z-20 ${
         outOfStock
           ? "opacity-75"
           : "hover:-translate-y-1 hover:shadow-[0_24px_48px_-12px_rgba(39,36,34,0.18)]"
-      }`}
+      } ${showWholesale ? "group-hover:rounded-b-none" : ""}`}
     >
       <Link
         href={href}
@@ -190,6 +191,27 @@ export function CatalogCard({ product }: { product: CatalogProduct }) {
           </button>
         </div>
       </div>
+
+      {/* Wholesale tier panel: drops out below the card on hover (overlapping the
+          card underneath) and lists the per-unit price at each quantity break.
+          Only mounted for WHOLESALE customers with tiers. */}
+      {showWholesale && wholesaleRows.length > 0 && (
+        <div className="pointer-events-none absolute inset-x-0 top-full z-10 origin-top overflow-hidden rounded-b-[20px] bg-white px-6 pb-5 opacity-0 shadow-[0_24px_48px_-12px_rgba(39,36,34,0.18)] transition-all duration-300 group-hover:pointer-events-auto group-hover:opacity-100">
+          <div className="border-t border-[#EFEAE0] pt-3">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-red-500">
+              Ceny hurtowe
+            </p>
+            <ul className="space-y-1.5">
+              {wholesaleRows.map((r) => (
+                <li key={r.minQty} className="flex items-baseline justify-between text-sm">
+                  <span className="text-[#7C776C]">od {r.minQty} szt</span>
+                  <span className="font-semibold text-[#443029]">{fmtZl(r.unitPrice)}/szt</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

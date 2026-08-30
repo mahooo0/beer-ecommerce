@@ -4,7 +4,8 @@ import { AppError } from '../../common/middleware/error-handler.js';
 import { generateUniqueSlug } from '../../utils/slug.utils.js';
 import type { ProductFormData, ProductUpdateData, WholesaleTier } from '@repo/types/product-schemas';
 import { productSchema } from '@repo/types/product-schemas';
-import type { ProductStatus } from '@repo/types';
+import type { ProductStatus } from '@repo/db';
+import type { PipelineStage } from 'mongoose';
 import Papa from 'papaparse';
 
 /**
@@ -1115,13 +1116,13 @@ export class ProductService {
   async getFrequentlyBoughtTogether(productId: string, limit = 3) {
     try {
       // MongoDB aggregation to find co-purchased products
-      const pipeline = [
+      const pipeline: PipelineStage[] = [
         { $match: { 'items.productId': productId } },
         { $unwind: '$items' },
         { $match: { 'items.productId': { $ne: productId } } },
         { $group: { _id: '$items.productId', count: { $sum: 1 } } },
         { $match: { count: { $gte: 2 } } },
-        { $sort: { count: -1 } },
+        { $sort: { count: -1 as const } },
         { $limit: limit },
       ];
 

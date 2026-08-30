@@ -104,9 +104,9 @@ export default function ShippingZonesPage() {
       {zones.length > 0 && (
         <AnalyticsPanel title="Shipping Analytics">
           <div className="grid grid-cols-3 gap-3">
-            <StatCard label="Total Zones" value={zones.length} icon={<MapPin className="h-4 w-4 text-blue-600" />} color="bg-blue-50" />
-            <StatCard label="Active Zones" value={activeZones} icon={<CheckCircle className="h-4 w-4 text-green-600" />} color="bg-green-50" subtitle={`${zones.length > 0 ? Math.round((activeZones / zones.length) * 100) : 0}%`} />
-            <StatCard label="Free Shipping" value={freeShippingZones} icon={<Truck className="h-4 w-4 text-purple-600" />} color="bg-purple-50" subtitle={`${zones.length > 0 ? Math.round((freeShippingZones / zones.length) * 100) : 0}% of zones`} />
+            <StatCard label="Total Zones" value={zones.length} icon={<MapPin className="h-4 w-4" />} tone="blue" />
+            <StatCard label="Active Zones" value={activeZones} icon={<CheckCircle className="h-4 w-4" />} tone="emerald" subtitle={`${zones.length > 0 ? Math.round((activeZones / zones.length) * 100) : 0}%`} />
+            <StatCard label="Free Shipping" value={freeShippingZones} icon={<Truck className="h-4 w-4" />} tone="violet" subtitle={`${zones.length > 0 ? Math.round((freeShippingZones / zones.length) * 100) : 0}% of zones`} />
           </div>
         </AnalyticsPanel>
       )}

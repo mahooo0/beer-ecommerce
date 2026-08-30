@@ -1,12 +1,20 @@
 import { prisma } from '@repo/db';
+import type { Prisma } from '@repo/db';
 import type { SearchDocument } from './types.js';
 import { searchService } from './search.service.js';
 import { eventBus } from '../../common/events/event-bus.js';
 
 const BATCH_SIZE = 10000;
 
+type IndexedProduct = Prisma.ProductGetPayload<{
+  include: {
+    category: true;
+    brand: true;
+  };
+}>;
+
 export class SyncService {
-  buildSearchDocument(product: any): SearchDocument {
+  buildSearchDocument(product: IndexedProduct): SearchDocument {
     return {
       id: product.id,
       name: product.name,
@@ -60,7 +68,7 @@ export class SyncService {
     console.log('Starting full product sync to Meilisearch...');
 
     while (true) {
-      const products = await prisma.product.findMany({
+      const products: IndexedProduct[] = await prisma.product.findMany({
         take: BATCH_SIZE,
         ...(cursor && { skip: 1, cursor: { id: cursor } }),
         where: {
@@ -89,7 +97,7 @@ export class SyncService {
         break;
       }
 
-      cursor = products[products.length - 1].id;
+      cursor = products[products.length - 1]!.id;
     }
 
     console.log(`Full sync complete. Total products synced: ${processedCount}`);

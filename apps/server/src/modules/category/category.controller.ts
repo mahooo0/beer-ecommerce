@@ -1,5 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { categoryService } from './category.service.js';
+import { AppError } from '../../common/middleware/error-handler.js';
+
+function routeParam(req: Request, name: string): string {
+  const value = req.params[name];
+  if (typeof value !== 'string') {
+    throw new AppError(400, `Missing route parameter: ${name}`);
+  }
+  return value;
+}
 
 export class CategoryController {
   async getAll(req: Request, res: Response, next: NextFunction) {
@@ -22,7 +31,7 @@ export class CategoryController {
 
   async getById(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await categoryService.getById(req.params.id);
+      const data = await categoryService.getById(routeParam(req, 'id'));
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -31,7 +40,7 @@ export class CategoryController {
 
   async getBySlug(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await categoryService.getBySlug(req.params.slug);
+      const data = await categoryService.getBySlug(routeParam(req, 'slug'));
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -49,7 +58,7 @@ export class CategoryController {
 
   async update(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await categoryService.update(req.params.id, req.body);
+      const data = await categoryService.update(routeParam(req, 'id'), req.body);
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -58,7 +67,7 @@ export class CategoryController {
 
   async delete(req: Request, res: Response, next: NextFunction) {
     try {
-      await categoryService.delete(req.params.id);
+      await categoryService.delete(routeParam(req, 'id'));
       res.json({ success: true, message: 'Category deleted' });
     } catch (error) {
       next(error);
@@ -68,7 +77,7 @@ export class CategoryController {
   async move(req: Request, res: Response, next: NextFunction) {
     try {
       const data = await categoryService.move(
-        req.params.id,
+        routeParam(req, 'id'),
         req.body.newParentId,
         req.body.position
       );
@@ -92,7 +101,7 @@ export class CategoryController {
 
   async getAttributes(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await categoryService.getAttributes(req.params.id);
+      const data = await categoryService.getAttributes(routeParam(req, 'id'));
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -102,7 +111,7 @@ export class CategoryController {
   async createAttribute(req: Request, res: Response, next: NextFunction) {
     try {
       const data = await categoryService.createAttribute(
-        req.params.id,
+        routeParam(req, 'id'),
         req.body
       );
       res.status(201).json({ success: true, data });
@@ -114,7 +123,7 @@ export class CategoryController {
   async updateAttribute(req: Request, res: Response, next: NextFunction) {
     try {
       const data = await categoryService.updateAttribute(
-        req.params.attributeId,
+        routeParam(req, 'attributeId'),
         req.body
       );
       res.json({ success: true, data });
@@ -125,7 +134,7 @@ export class CategoryController {
 
   async deleteAttribute(req: Request, res: Response, next: NextFunction) {
     try {
-      await categoryService.deleteAttribute(req.params.attributeId);
+      await categoryService.deleteAttribute(routeParam(req, 'attributeId'));
       res.json({ success: true, message: 'Attribute deleted' });
     } catch (error) {
       next(error);
@@ -136,7 +145,7 @@ export class CategoryController {
 
   async getFilters(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await categoryService.getFilters(req.params.id);
+      const data = await categoryService.getFilters(routeParam(req, 'id'));
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -145,7 +154,7 @@ export class CategoryController {
 
   async createFilter(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await categoryService.createFilter(req.params.id, req.body);
+      const data = await categoryService.createFilter(routeParam(req, 'id'), req.body);
       res.status(201).json({ success: true, data });
     } catch (error) {
       next(error);
@@ -154,7 +163,7 @@ export class CategoryController {
 
   async updateFilter(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await categoryService.updateFilter(req.params.id, req.body);
+      const data = await categoryService.updateFilter(routeParam(req, 'id'), req.body);
       res.json({ success: true, data });
     } catch (error) {
       next(error);
@@ -163,7 +172,7 @@ export class CategoryController {
 
   async deleteFilter(req: Request, res: Response, next: NextFunction) {
     try {
-      await categoryService.deleteFilter(req.params.id);
+      await categoryService.deleteFilter(routeParam(req, 'id'));
       res.json({ success: true, message: 'Filter deleted' });
     } catch (error) {
       next(error);
@@ -181,7 +190,7 @@ export class CategoryController {
 
   async deleteFilterOption(req: Request, res: Response, next: NextFunction) {
     try {
-      await categoryService.deleteFilterOption(req.params.id);
+      await categoryService.deleteFilterOption(routeParam(req, 'id'));
       res.json({ success: true, message: 'Filter option deleted' });
     } catch (error) {
       next(error);
@@ -190,7 +199,7 @@ export class CategoryController {
 
   async autoPopulateFilter(req: Request, res: Response, next: NextFunction) {
     try {
-      const { count } = await categoryService.autoPopulateFilter(req.params.id);
+      const { count } = await categoryService.autoPopulateFilter(routeParam(req, 'id'));
       res.json({ success: true, data: { count }, message: `Added ${count} options` });
     } catch (error) {
       next(error);

@@ -4,10 +4,10 @@
        See .planning/design-system/DESIGN-SYSTEM.md for source mapping.
        ============================================================ */
 
-    /* Brand fonts — wired to next/font in src/app/fonts.ts */
+    /* Brand fonts */
     --font-taranka-display: var(--font-murs-gothic), "Bowlby One SC", "Anton", "Archivo Black", system-ui, sans-serif;
-    --font-taranka-body: var(--font-montserrat), system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-    --font-taranka-ui: var(--font-poppins), var(--font-montserrat), system-ui, sans-serif;
+    --font-taranka-body: "Montserrat", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --font-taranka-ui: "Poppins", "Montserrat", system-ui, sans-serif;
 
     /* Brand colors — semantic */
     --color-cream-50:  rgb(235 232 221);  /* #EBE8DD — page bg */

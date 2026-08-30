@@ -115,10 +115,19 @@ export class AuthService {
     const clerkUsers = clerkRes.data;
     const total = clerkRes.totalCount;
 
-    // Enrich with local DB rows keyed by clerkId.
+    // Enrich with local DB rows keyed by clerkId. Addresses are pulled so the
+    // admin Customers table can show a country without an extra round-trip.
     const clerkIds = clerkUsers.map((u) => u.id);
     const dbUsers = clerkIds.length
-      ? await prisma.user.findMany({ where: { clerkId: { in: clerkIds } } })
+      ? await prisma.user.findMany({
+          where: { clerkId: { in: clerkIds } },
+          include: {
+            addresses: {
+              select: { country: true, isDefault: true },
+              orderBy: { isDefault: 'desc' },
+            },
+          },
+        })
       : [];
     const dbByClerk = new Map(dbUsers.map((u) => [u.clerkId, u]));
 
@@ -128,6 +137,11 @@ export class AuthService {
         u.emailAddresses.find((e) => e.id === u.primaryEmailAddressId)?.emailAddress ||
         u.emailAddresses[0]?.emailAddress ||
         '';
+      // Country: prefer the default address, else the first address on file.
+      const country =
+        db?.addresses.find((a) => a.isDefault)?.country ||
+        db?.addresses[0]?.country ||
+        null;
       return {
         id: u.id, // clerkId — stable key used across the users UI
         clerkId: u.id,
@@ -135,7 +149,10 @@ export class AuthService {
         firstName: u.firstName || '',
         lastName: u.lastName || '',
         role: (u.publicMetadata?.role as string) || db?.role || 'CUSTOMER',
+        customerType: db?.customerType || 'RETAIL',
         avatar: u.imageUrl || db?.avatar || null,
+        phone: db?.phone || u.phoneNumbers?.[0]?.phoneNumber || null,
+        country,
         isActive: db ? db.isActive : !u.banned,
         banned: u.banned,
         inDb: !!db,

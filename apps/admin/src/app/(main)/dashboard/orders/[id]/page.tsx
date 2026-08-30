@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@clerk/nextjs';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,9 @@ import { api } from '@/lib/api';
 import type { Order } from '@repo/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
+import { useCustomerMap } from '../_components/use-customer-map';
 import {
   Select,
   SelectContent,
@@ -39,6 +41,7 @@ import {
   User,
   XCircle,
   ShoppingBag,
+  ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -140,6 +143,7 @@ export default function OrderDetailPage() {
   const router = useRouter();
   const { getToken } = useAuth();
   const { t } = useTranslation();
+  const customerMap = useCustomerMap();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
@@ -319,13 +323,12 @@ export default function OrderDetailPage() {
                           <div className="flex items-center gap-3">
                             <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-muted">
                               {item.imageUrl ? (
-                                <Image
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
                                   src={item.imageUrl}
                                   alt={item.name || ''}
-                                  width={48}
-                                  height={48}
                                   className="size-full object-cover"
-                                  unoptimized
+                                  loading="lazy"
                                 />
                               ) : (
                                 <Package className="size-5 text-muted-foreground" />
@@ -559,20 +562,52 @@ export default function OrderDetailPage() {
             <h2 className="mb-3 flex items-center gap-2 font-semibold text-lg">
               <User className="size-4 text-muted-foreground" /> {t('orderDetail.customer.title')}
             </h2>
-            <div className="space-y-1 text-muted-foreground text-sm">
-              {shippingAddr && (
-                <p className="font-medium text-foreground">
-                  {shippingAddr.firstName} {shippingAddr.lastName}
-                </p>
-              )}
-              {order.guestEmail && <p>{order.guestEmail}</p>}
-              {order.userId ? (
-                <p className="break-all text-xs">{order.userId}</p>
+            {(() => {
+              const cust = order.userId ? customerMap.get(order.userId) : undefined;
+              const custName =
+                cust?.name ||
+                (shippingAddr ? `${shippingAddr.firstName} ${shippingAddr.lastName}`.trim() : '') ||
+                order.guestEmail ||
+                '—';
+              const custInitials =
+                custName
+                  .split(/\s+/)
+                  .filter(Boolean)
+                  .map((w) => w[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase() || '?';
+              const email = cust?.email || order.guestEmail;
+              const inner = (
+                <div className="flex items-center gap-3">
+                  <Avatar className="size-11 ring-1 ring-foreground/10">
+                    {cust?.avatar ? <AvatarImage src={cust.avatar} alt={custName} /> : null}
+                    <AvatarFallback className="font-medium">{custInitials}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-foreground">{custName}</p>
+                    {email && <p className="truncate text-muted-foreground text-sm">{email}</p>}
+                    {!order.userId && (
+                      <span className="text-muted-foreground text-xs">{t('orderDetail.customer.guest')}</span>
+                    )}
+                  </div>
+                  {order.userId && <ChevronRight className="size-4 shrink-0 text-muted-foreground" />}
+                </div>
+              );
+              return order.userId ? (
+                <Link
+                  href={`/dashboard/customers/${order.userId}`}
+                  className="-m-2 block rounded-lg p-2 transition-colors hover:bg-muted/60"
+                >
+                  {inner}
+                </Link>
               ) : (
-                <p className="text-xs">{t('orderDetail.customer.guest')}</p>
-              )}
-              {shippingAddr?.phone && <p>{shippingAddr.phone}</p>}
-            </div>
+                inner
+              );
+            })()}
+            {shippingAddr?.phone && (
+              <p className="mt-3 text-muted-foreground text-sm">{shippingAddr.phone}</p>
+            )}
           </div>
 
           {/* Shipping Address */}

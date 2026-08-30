@@ -3,7 +3,6 @@ import type {
   PaginatedResponse,
   Product,
   Order,
-  User,
   ShippingZone,
   ShippingMethod,
   Category,
@@ -104,6 +103,39 @@ function blogQs(query?: BlogQuery): string {
   }
   const s = qp.toString();
   return s ? `?${s}` : '';
+}
+
+/**
+ * A row from GET /auth/users — the admin user list. This is a Clerk+DB hybrid
+ * shape (id === clerkId, dates are ISO strings) that differs from the storefront
+ * `User` model, so it gets its own type. Feeds both the Team and Customers tables.
+ */
+export interface AdminUserListItem {
+  id: string; // clerkId
+  clerkId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: 'CUSTOMER' | 'ADMIN' | 'SUPER_ADMIN';
+  customerType: 'RETAIL' | 'WHOLESALE';
+  avatar: string | null;
+  phone: string | null;
+  country: string | null;
+  isActive: boolean;
+  banned: boolean;
+  inDb: boolean;
+  createdAt: string;
+  lastActiveAt: string | null;
+}
+
+/** GET /orders/aggregate/by-user — per-customer order roll-up (keyed by Clerk userId). */
+export interface CustomerAggregate {
+  userId: string;
+  orders: number;
+  paidOrders: number;
+  totalSpent: number; // cents
+  lastOrderAt: string | null;
+  firstOrderAt: string | null;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
@@ -380,6 +412,24 @@ export const api = {
       return fetcher<PaginatedResponse<Order>>(`/orders${qs ? `?${qs}` : ''}`, { token: params?.token });
     },
     getById: (id: string, token?: string) => fetcher<ApiResponse<Order>>(`/orders/${id}`, { token }),
+    // GET /orders/user/:userId — a single customer's orders (newest first).
+    getByUser: (
+      userId: string,
+      params?: { page?: number; limit?: number; status?: string; token?: string },
+    ) => {
+      const qp = new URLSearchParams();
+      if (params?.page) qp.set('page', String(params.page));
+      if (params?.limit) qp.set('limit', String(params.limit));
+      if (params?.status) qp.set('status', params.status);
+      const qs = qp.toString();
+      return fetcher<PaginatedResponse<Order>>(
+        `/orders/user/${userId}${qs ? `?${qs}` : ''}`,
+        { token: params?.token },
+      );
+    },
+    // GET /orders/aggregate/by-user — order count + spend per customer, one pass.
+    aggregateByUser: (token?: string) =>
+      fetcher<ApiResponse<CustomerAggregate[]>>('/orders/aggregate/by-user', { token }),
     updateStatus: (id: string, status: string, token?: string) =>
       fetcher<ApiResponse<Order>>(`/orders/${id}/status`, {
         method: 'PATCH',
@@ -414,7 +464,7 @@ export const api = {
       if (params?.search) qp.set('search', params.search);
       if (params?.role) qp.set('role', params.role);
       const qs = qp.toString();
-      return fetcher<PaginatedResponse<User>>(`/auth/users${qs ? `?${qs}` : ''}`, { token: params?.token });
+      return fetcher<PaginatedResponse<AdminUserListItem>>(`/auth/users${qs ? `?${qs}` : ''}`, { token: params?.token });
     },
   },
   shipping: {

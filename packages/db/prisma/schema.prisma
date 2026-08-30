@@ -23,6 +23,10 @@ model User {
   customerType CustomerType @default(RETAIL)
   companyName String?      // wholesale: "Nazwa firmy"
   taxId       String?      // wholesale: NIP / tax id (optional)
+  // Per-customer manual retail discount (percent, 0–100). Set by admins on the
+  // customer detail page. Applied server-side in order pricing for signed-in
+  // RETAIL customers, taking the greater of this and the loyalty-tier percent.
+  personalDiscountPercent Int?
   avatar      String?      // URL to user avatar
   phone       String?      // unverified, captured at sign-up; identifier lives on CustomerPhone
   isActive    Boolean      @default(true)
